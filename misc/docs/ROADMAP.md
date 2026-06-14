@@ -20,6 +20,7 @@ its own development skill under `.claude/skills/`.
 | Shared data model (`TranscriptSegment` spine, integer-ms `TimeSpan`, `Channel`) | ✅ done | `hearing/types.py`, `hearing/interfaces.py` |
 | Channel handling (load multi-channel file, split mic/system, resample) | ✅ done | `hearing/capture.py` |
 | STT facade + default local engine (faster-whisper) | ✅ done | `hearing/stt.py` |
+| Cloud STT engine (OpenAI) behind the same facade | ✅ done | `OpenAISTT` (whisper-1 / gpt-4o-transcribe); `get_engine()`; `transcribe --engine openai`; verified live. Deepgram/MLX still optional (#3) |
 | "Me vs them" channel-trick diarizer | ✅ done | `hearing/diarize.py` (`ChannelTrickDiarizer`) |
 | Batch agents — Claude (default, pluggable) + offline extractive fallback | ✅ done | `hearing/agents.py` |
 | Pipeline facade `transcribe(...)` + `summarize(...)` (composition/DI) | ✅ done | `hearing/pipeline.py` |

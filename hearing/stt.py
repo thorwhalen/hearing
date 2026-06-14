@@ -16,6 +16,7 @@ are optional — ``transcribe`` raises an informative error telling you what to
 from __future__ import annotations
 
 import functools
+import os
 from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, AsyncIterator, Optional, Sequence
 
@@ -125,25 +126,149 @@ class FasterWhisperSTT:
     ) -> AsyncIterator[TranscriptSegment]:
         """Stream finalized segments as utterances complete (the live path).
 
-        VAD (``self.vad``, default :class:`~hearing.vad.EnergyVAD`) groups the
-        incoming frame blocks into utterances; each utterance is transcribed with
-        the same batch ``transcribe`` and emitted as a FINALIZED segment
-        (``meta['final'] = True``) with its span offset to absolute stream time.
-
-        Same Protocol method, same ``TranscriptSegment`` spine as batch — the
-        live milestone adds no new interface (see hearing-live-pipeline).
+        Delegates to :func:`vad_stream_transcribe`: VAD groups frames into
+        utterances; each is transcribed with the batch ``transcribe`` and emitted
+        as a FINALIZED segment. Same Protocol method, same ``TranscriptSegment``
+        spine as batch — the live milestone adds no new interface.
         """
-        from hearing.vad import segment_utterances
+        async for seg in vad_stream_transcribe(self, frames, sample_rate=sample_rate, vad=self.vad):
+            yield seg
 
-        async for utterance, start_ms in segment_utterances(
-            frames, sample_rate=sample_rate, vad=self.vad
-        ):
-            for seg in self.transcribe(utterance, sample_rate=sample_rate):
-                yield replace(
-                    seg,
-                    span=TimeSpan(seg.span.start_ms + start_ms, seg.span.end_ms + start_ms),
-                    meta={**dict(seg.meta), "final": True},
+
+@dataclass
+class OpenAISTT:
+    """Cloud STT via the OpenAI transcription API — a drop-in ``STTEngine``.
+
+    Demonstrates the facade's payoff: swap the local engine for a cloud one by
+    changing the injected ``engine=`` — nothing downstream changes. Defaults to
+    ``whisper-1`` (returns segment timestamps via ``verbose_json``); ``gpt-4o-
+    transcribe`` returns higher-quality text but as a single segment.
+
+    Needs ``pip install 'hearing[openai]'`` and ``OPENAI_API_KEY`` (or pass
+    ``api_key=`` / inject a ``client=`` for tests). See the hearing-stt skill for
+    the per-minute pricing and the local-vs-cloud decision.
+    """
+
+    model: str = "whisper-1"
+    api_key: Optional[str] = None
+    language: Optional[str] = None
+    vad: Optional["VAD"] = None
+    client: Optional[object] = None  # inject a client (tests); else built lazily
+    _engine_id: str = field(init=False, default="openai")
+    _built: Optional[object] = field(init=False, default=None, repr=False)
+
+    def _get_client(self):
+        if self.client is not None:
+            return self.client
+        if self._built is None:
+            try:
+                import openai
+            except ImportError as e:  # pragma: no cover - guidance path
+                raise ImportError(
+                    "OpenAISTT needs the openai SDK. Install with:\n"
+                    "    pip install 'hearing[openai]'\n"
+                    "or inject a different STTEngine. See the hearing-stt skill."
+                ) from e
+            key = self.api_key or os.getenv("OPENAI_API_KEY")
+            if not key:
+                raise RuntimeError(
+                    "OPENAI_API_KEY is not set. Set it, pass api_key=, or use the "
+                    "local FasterWhisperSTT engine."
                 )
+            self._built = openai.OpenAI(api_key=key)
+        return self._built
+
+    def transcribe(
+        self, audio: np.ndarray, *, sample_rate: int, language: Optional[str] = None
+    ) -> Sequence[TranscriptSegment]:
+        """Transcribe a mono clip via the OpenAI API; return ordered segments."""
+        import tempfile
+
+        import soundfile as sf
+
+        mono16 = resample(_as_mono(audio), sample_rate, STT_SAMPLE_RATE)
+        if mono16.size == 0:
+            return []
+        with tempfile.NamedTemporaryFile(suffix=".wav") as tmp:
+            sf.write(tmp.name, mono16, STT_SAMPLE_RATE, format="WAV")
+            with open(tmp.name, "rb") as f:
+                resp = self._get_client().audio.transcriptions.create(
+                    model=self.model,
+                    file=f,
+                    language=language or self.language,
+                    response_format="verbose_json",
+                )
+        return self._segments_from_response(resp, total_ms=int(len(mono16) / STT_SAMPLE_RATE * 1000))
+
+    def _segments_from_response(self, resp, *, total_ms: int) -> list[TranscriptSegment]:
+        """Map an OpenAI verbose_json response to TranscriptSegments."""
+        raw_segments = getattr(resp, "segments", None)
+        out: list[TranscriptSegment] = []
+        if raw_segments:
+            for s in raw_segments:
+                text = (_attr(s, "text") or "").strip()
+                if not text:
+                    continue
+                out.append(
+                    TranscriptSegment(
+                        text=text,
+                        span=TimeSpan.from_seconds(_attr(s, "start", 0.0), _attr(s, "end", 0.0)),
+                        meta={"engine": self._engine_id, "model": self.model},
+                    )
+                )
+            return out
+        text = (_attr(resp, "text") or "").strip()  # gpt-4o-transcribe: single text
+        if text:
+            out.append(
+                TranscriptSegment(
+                    text=text,
+                    span=TimeSpan(0, total_ms),
+                    meta={"engine": self._engine_id, "model": self.model},
+                )
+            )
+        return out
+
+    async def stream_transcribe(
+        self, frames: AsyncIterator[np.ndarray], *, sample_rate: int
+    ) -> AsyncIterator[TranscriptSegment]:
+        """Live path: VAD utterance finalization, same as the local engine."""
+        async for seg in vad_stream_transcribe(self, frames, sample_rate=sample_rate, vad=self.vad):
+            yield seg
+
+
+async def vad_stream_transcribe(engine, frames, *, sample_rate: int, vad=None):
+    """Shared live wrapper: VAD -> utterance -> ``engine.transcribe`` -> FINAL segment.
+
+    Both :class:`FasterWhisperSTT` and :class:`OpenAISTT` stream through this, so
+    the VAD/finalization logic lives in one place. Spans are offset to absolute
+    stream time and marked ``meta['final'] = True``.
+    """
+    from hearing.vad import segment_utterances
+
+    async for utterance, start_ms in segment_utterances(frames, sample_rate=sample_rate, vad=vad):
+        for seg in engine.transcribe(utterance, sample_rate=sample_rate):
+            yield replace(
+                seg,
+                span=TimeSpan(seg.span.start_ms + start_ms, seg.span.end_ms + start_ms),
+                meta={**dict(seg.meta), "final": True},
+            )
+
+
+def get_engine(name: str = "whisper", **kwargs):
+    """Build an STT engine by name: ``"whisper"``/``"faster-whisper"`` or ``"openai"``."""
+    key = name.lower()
+    if key in ("whisper", "faster-whisper", "local"):
+        return FasterWhisperSTT(**kwargs)
+    if key in ("openai", "cloud"):
+        return OpenAISTT(**kwargs)
+    raise ValueError(f"Unknown STT engine {name!r}; use 'whisper' or 'openai'.")
+
+
+def _attr(obj, name: str, default=None):
+    """Read ``name`` from an object attribute or a mapping key."""
+    if isinstance(obj, dict):
+        return obj.get(name, default)
+    return getattr(obj, name, default)
 
 
 def default_engine(**kwargs) -> FasterWhisperSTT:

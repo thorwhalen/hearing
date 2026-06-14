@@ -49,6 +49,10 @@ whisper = [
 agents = [
     "anthropic>=0.40",
 ]
+# Cloud STT via the OpenAI transcription API (a drop-in STTEngine).
+openai = [
+    "openai>=1.0",
+]
 # Acoustic speaker diarization (separate individual remote speakers).
 diarize = [
     "pyannote.audio>=3.1",
