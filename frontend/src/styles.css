@@ -228,3 +228,68 @@ header h1 {
   font-size: 0.7rem;
   color: var(--muted);
 }
+
+/* command palette (⌘K) */
+.kbd-hint {
+  border: 1px solid var(--panel);
+  background: var(--panel);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.palette-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 12vh;
+  z-index: 100;
+}
+
+.palette {
+  width: min(560px, 92vw);
+  background: var(--panel);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.palette-input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: none;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 1rem;
+  outline: none;
+  border-bottom: 1px solid var(--bg);
+}
+
+.palette-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.3rem;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.palette-list li {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.palette-list li.active {
+  background: var(--me);
+  color: white;
+}
+
+.palette-list li.empty {
+  color: var(--muted);
+  cursor: default;
+}

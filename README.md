@@ -79,6 +79,12 @@ Capturing from a live **device** (`DeviceCapture`, an Aggregate Device with mic
 + BlackHole) is implemented but needs that hardware to verify; streaming a file
 works anywhere.
 
+**Command palette (⌘K).** Press ⌘K (or click the button) for a command palette —
+export the transcript (markdown/SRT/JSON), focus search, clear. Each command is
+defined once (`frontend/src/commands.ts`, the acture pattern) and also projects to
+an AI/MCP tool schema via `toAITools()`, so the same definition can drive the
+palette and an AI assistant. Run the frontend's unit tests with `npm test`.
+
 Example transcript + Claude summary (from `examples/demo_meeting.py`, which
 synthesizes a two-speaker meeting with macOS `say` — no mic needed):
 
