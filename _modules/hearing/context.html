@@ -103,12 +103,19 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">runtime_checkable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">runtime_checkable</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1">#: A batch embedder: maps texts to equal-length float vectors.</span>
+<span class="n">EmbedFn</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]</span>
 
 <span class="n">_DOC_EXTENSIONS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;.md&quot;</span><span class="p">,</span> <span class="s2">&quot;.markdown&quot;</span><span class="p">)</span>
 
@@ -221,6 +228,104 @@
             <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">scored</span><span class="p">[:</span><span class="n">k</span><span class="p">]</span>
         <span class="p">]</span></div>
 </div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_normalize_rows</span><span class="p">(</span><span class="n">matrix</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;L2-normalize each row so a dot product equals cosine similarity.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">matrix</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">matrix</span>
+    <span class="n">norms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">norms</span><span class="p">[</span><span class="n">norms</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="k">return</span> <span class="n">matrix</span> <span class="o">/</span> <span class="n">norms</span>
+
+
+<div class="viewcode-block" id="EmbeddingRetriever">
+<a class="viewcode-back" href="../../module_docs/hearing/context.html#hearing.context.EmbeddingRetriever">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EmbeddingRetriever</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Semantic retriever: ranks chunks by cosine similarity of embeddings.</span>
+
+<span class="sd">    The corpus is embedded once at construction; ``search`` embeds the query and</span>
+<span class="sd">    returns the nearest chunks. The embedder is injected (``embed=``) so it is</span>
+<span class="sd">    backend-agnostic and testable with a deterministic fake — use</span>
+<span class="sd">    :func:`openai_embedder` for real semantic recall.</span>
+
+<span class="sd">    &gt;&gt;&gt; import asyncio</span>
+<span class="sd">    &gt;&gt;&gt; fake = lambda texts: [[t.lower().count(&quot;db&quot;), t.lower().count(&quot;ui&quot;)] for t in texts]</span>
+<span class="sd">    &gt;&gt;&gt; r = EmbeddingRetriever({&quot;a&quot;: &quot;db db&quot;, &quot;b&quot;: &quot;ui ui&quot;}, embed=fake)</span>
+<span class="sd">    &gt;&gt;&gt; asyncio.run(r.search(&quot;db&quot;))[0].title</span>
+<span class="sd">    &#39;a&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">docs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">embed</span><span class="p">:</span> <span class="n">EmbedFn</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_chunks</span> <span class="o">=</span> <span class="n">_coerce_chunks</span><span class="p">(</span><span class="n">docs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_embed</span> <span class="o">=</span> <span class="n">embed</span>
+        <span class="n">texts</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chunks</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_matrix</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">_normalize_rows</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">embed</span><span class="p">(</span><span class="n">texts</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">texts</span>
+            <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="EmbeddingRetriever.search">
+<a class="viewcode-back" href="../../module_docs/hearing/context.html#hearing.context.EmbeddingRetriever.search">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Chunk</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the top-``k`` chunks by cosine similarity to ``query``.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chunks</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="c1"># embedding may hit the network — keep the event loop free</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_embed</span><span class="p">,</span> <span class="p">[</span><span class="n">query</span><span class="p">])</span>
+        <span class="n">qv</span> <span class="o">=</span> <span class="n">_normalize_rows</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">sims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matrix</span> <span class="o">@</span> <span class="n">qv</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="o">-</span><span class="n">sims</span><span class="p">)[:</span><span class="n">k</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">Chunk</span><span class="p">(</span>
+                <span class="n">text</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_chunks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_chunks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
+                <span class="n">source</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_chunks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">source</span><span class="p">,</span>
+                <span class="n">score</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">sims</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="mi">4</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">order</span>
+            <span class="k">if</span> <span class="n">sims</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="p">]</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="openai_embedder">
+<a class="viewcode-back" href="../../module_docs/hearing/context.html#hearing.context.openai_embedder">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">openai_embedder</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;text-embedding-3-small&quot;</span><span class="p">,</span> <span class="n">api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EmbedFn</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return an :data:`EmbedFn` backed by the OpenAI embeddings API.</span>
+
+<span class="sd">    Needs ``pip install &#39;hearing[openai]&#39;`` and ``OPENAI_API_KEY`` (or pass</span>
+<span class="sd">    ``api_key=`` / inject ``client=`` for tests).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">embed</span><span class="p">(</span><span class="n">texts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">client</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">openai</span>
+
+            <span class="n">c</span> <span class="o">=</span> <span class="n">openai</span><span class="o">.</span><span class="n">OpenAI</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="n">api_key</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;OPENAI_API_KEY&quot;</span><span class="p">))</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">embeddings</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="nb">input</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">texts</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">embedding</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">resp</span><span class="o">.</span><span class="n">data</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">embed</span></div>
+
+
+
+<div class="viewcode-block" id="build_embedding_retriever">
+<a class="viewcode-back" href="../../module_docs/hearing/context.html#hearing.context.build_embedding_retriever">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_embedding_retriever</span><span class="p">(</span>
+    <span class="n">source</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">embed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">EmbedFn</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EmbeddingRetriever</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an :class:`EmbeddingRetriever` (default embedder: OpenAI) from a</span>
+<span class="sd">    dict, a list, or a folder of ``.md``/``.txt`` docs (same source forms as</span>
+<span class="sd">    :func:`build_retriever`).&quot;&quot;&quot;</span>
+    <span class="n">kw</span> <span class="o">=</span> <span class="n">build_retriever</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>  <span class="c1"># reuse the source -&gt; chunks logic</span>
+    <span class="k">return</span> <span class="n">EmbeddingRetriever</span><span class="p">(</span><span class="n">kw</span><span class="o">.</span><span class="n">_chunks</span><span class="p">,</span> <span class="n">embed</span><span class="o">=</span><span class="n">embed</span> <span class="ow">or</span> <span class="n">openai_embedder</span><span class="p">())</span></div>
 
 
 
