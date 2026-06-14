@@ -10,11 +10,24 @@ version = "0.0.2"
 description = "Pluggable meeting transcription & context-aware AI agents, batch or live"
 readme = "README.md"
 requires-python = ">=3.10"
-keywords = []
+keywords = [
+    "transcription",
+    "speech-to-text",
+    "meeting",
+    "diarization",
+    "whisper",
+    "macos",
+    "ai-agent",
+]
 authors = [
     { name = "Thor Whalen" },
 ]
-dependencies = []
+dependencies = [
+    "numpy>=1.24",
+    "soundfile>=0.12",
+    "soxr>=0.3",
+    "argh>=0.30",
+]
 
 [project.license]
 text = "mit"
@@ -24,7 +37,36 @@ Homepage = "https://github.com/thorwhalen/hearing"
 Repository = "https://github.com/thorwhalen/hearing"
 Documentation = "https://thorwhalen.github.io/hearing"
 
+[project.scripts]
+hearing = "hearing.cli:main"
+
 [project.optional-dependencies]
+# Default local STT engine (faster-whisper / CTranslate2; no PyTorch).
+whisper = [
+    "faster-whisper>=1.0",
+]
+# Claude-backed agent layer (the offline ExtractiveAgent needs none of this).
+agents = [
+    "anthropic>=0.40",
+]
+# Acoustic speaker diarization (separate individual remote speakers).
+diarize = [
+    "pyannote.audio>=3.1",
+]
+# Live audio-device capture (mic + system audio via an Aggregate Device).
+capture = [
+    "sounddevice>=0.4",
+]
+# Neural VAD for the live pipeline (the dependency-free EnergyVAD is the default).
+vad = [
+    "silero-vad>=5.0",
+]
+# Everything needed for the full app (batch + live).
+all = [
+    "faster-whisper>=1.0",
+    "anthropic>=0.40",
+    "sounddevice>=0.4",
+]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
