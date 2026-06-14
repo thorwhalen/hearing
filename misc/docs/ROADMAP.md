@@ -29,7 +29,7 @@ its own development skill under `.claude/skills/`.
 | **Acoustic diarization** (pyannote) for *individual* remote speakers | 🔬 stubbed | `PyannoteDiarizer` implemented, untested (needs HF token) |
 | **Live macOS capture source** (BlackHole / Core Audio taps → channels) | 🔬 partial | `DeviceCapture` (sounddevice) implemented but needs hardware to verify; `StreamingFileCapture` streams a file today |
 | Transcript persistence (`MeetingStore` over a dol/filesystem store) | ✅ done | `hearing/storage.py`; `transcribe --save`, `hearing meetings`; JSON round-trip |
-| Context-connected agents — RAG over project/meeting context | ✅ done | `hearing/context.py` (`Retriever`/`WebSearch` Protocols + `KeywordRetriever`); `ClaudeAgent(retriever=, web_search=)`; `summarize --context-dir`. Verified: a summary pulled in facts only present in the context docs. |
+| Context-connected agents — RAG over project/meeting context | ✅ done | `hearing/context.py`: `Retriever`/`WebSearch` Protocols + `KeywordRetriever` (TF-IDF, offline) **and** `EmbeddingRetriever` (OpenAI semantic, verified live); `ClaudeAgent(retriever=, web_search=)`; `summarize --context-dir [--retriever keyword|embedding]`. Verified: summaries pull in facts only present in the context docs. |
 | Web search during analysis (bring outside info in) | 🔬 partial | `WebSearch` Protocol + `ClaudeAgent.web_search` hook wired; a real backend (Claude tool-use / the user's `oa`, or deep-research for the deep mode) still to plug in |
 
 ## Milestone 2 — Live path  ·  *core working*

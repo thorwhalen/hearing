@@ -85,6 +85,7 @@ def summarize(
     model: Optional[str] = None,
     context: Optional[str] = None,
     context_dir: Optional[str] = None,
+    retriever: str = "keyword",
     transcribe_model: str = "base",
     split: bool = True,
 ) -> Optional[str]:
@@ -98,6 +99,8 @@ def summarize(
         context: optional literal context string to connect the agent.
         context_dir: a folder/file of .txt/.md context docs (prior takeaways,
             project notes); the agent does RAG over it (context-connected).
+        retriever: "keyword" (TF-IDF, offline) or "embedding" (OpenAI semantic;
+            needs hearing[openai] + OPENAI_API_KEY). Only used with context_dir.
         transcribe_model: whisper model size used for transcription.
         split: split mic/system channels (me vs them).
     """
@@ -105,12 +108,17 @@ def summarize(
     from hearing.pipeline import summarize as _summarize
     from hearing.stt import FasterWhisperSTT
 
-    retriever = None
+    retr = None
     if context_dir:
-        from hearing.context import build_retriever
+        if retriever == "embedding":
+            from hearing.context import build_embedding_retriever
 
-        retriever = build_retriever(context_dir)
-    chosen = build_default_agent(context=context, model=model, prefer=agent, retriever=retriever)
+            retr = build_embedding_retriever(context_dir)
+        else:
+            from hearing.context import build_retriever
+
+            retr = build_retriever(context_dir)
+    chosen = build_default_agent(context=context, model=model, prefer=agent, retriever=retr)
     return _summarize(
         path,
         agent=chosen,
