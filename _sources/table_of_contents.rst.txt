@@ -6,10 +6,12 @@
    module_docs/hearing/agents
    module_docs/hearing/capture
    module_docs/hearing/cli
+   module_docs/hearing/context
    module_docs/hearing/diarize
    module_docs/hearing/http_app
    module_docs/hearing/interfaces
    module_docs/hearing/pipeline
+   module_docs/hearing/storage
    module_docs/hearing/stt
    module_docs/hearing/types
    module_docs/hearing/vad

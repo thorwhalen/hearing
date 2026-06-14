@@ -50,10 +50,12 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/hearing/agents.html">hearing.agents</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/hearing/capture.html">hearing.capture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/hearing/cli.html">hearing.cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/hearing/context.html">hearing.context</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/hearing/diarize.html">hearing.diarize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/hearing/http_app.html">hearing.http_app</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/hearing/interfaces.html">hearing.interfaces</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/hearing/pipeline.html">hearing.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/hearing/storage.html">hearing.storage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/hearing/stt.html">hearing.stt</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/hearing/types.html">hearing.types</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/hearing/vad.html">hearing.vad</a></li>
@@ -92,8 +94,10 @@
  | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
+ | <a href="#G"><strong>G</strong></a>
  | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
+ | <a href="#K"><strong>K</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#O"><strong>O</strong></a>
@@ -141,6 +145,10 @@
       <li><a href="module_docs/hearing/agents.html#hearing.agents.build_default_agent">build_default_agent() (in module hearing.agents)</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/hearing/context.html#hearing.context.build_retriever">build_retriever() (in module hearing.context)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="C">C</h2>
@@ -165,6 +173,8 @@
       <li><a href="module_docs/hearing/capture.html#hearing.capture.ChannelSplitFileCapture">ChannelSplitFileCapture (class in hearing.capture)</a>
 </li>
       <li><a href="module_docs/hearing/diarize.html#hearing.diarize.ChannelTrickDiarizer">ChannelTrickDiarizer (class in hearing.diarize)</a>
+</li>
+      <li><a href="module_docs/hearing/context.html#hearing.context.Chunk">Chunk (class in hearing.context)</a>
 </li>
       <li><a href="module_docs/hearing/agents.html#hearing.agents.ClaudeAgent">ClaudeAgent (class in hearing.agents)</a>
 </li>
@@ -247,6 +257,14 @@
   </ul></td>
 </tr></table>
 
+<h2 id="G">G</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/hearing/storage.html#hearing.storage.get_store">get_store() (in module hearing.storage)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="H">H</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -279,6 +297,13 @@
 </li>
       </ul></li>
       <li>
+    hearing.context
+
+      <ul>
+        <li><a href="module_docs/hearing/context.html#module-hearing.context">module</a>
+</li>
+      </ul></li>
+      <li>
     hearing.diarize
 
       <ul>
@@ -299,6 +324,13 @@
 
       <ul>
         <li><a href="module_docs/hearing/pipeline.html#module-hearing.pipeline">module</a>
+</li>
+      </ul></li>
+      <li>
+    hearing.storage
+
+      <ul>
+        <li><a href="module_docs/hearing/storage.html#module-hearing.storage">module</a>
 </li>
       </ul></li>
       <li>
@@ -341,6 +373,14 @@
   </ul></td>
 </tr></table>
 
+<h2 id="K">K</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/hearing/context.html#hearing.context.KeywordRetriever">KeywordRetriever (class in hearing.context)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -348,14 +388,16 @@
 </li>
       <li><a href="module_docs/hearing/cli.html#hearing.cli.live">live() (in module hearing.cli)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/hearing.html#hearing.live_transcribe">live_transcribe() (in module hearing)</a>
 
       <ul>
         <li><a href="module_docs/hearing/pipeline.html#hearing.pipeline.live_transcribe">(in module hearing.pipeline)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/hearing/storage.html#hearing.storage.MeetingStore.load">load() (hearing.storage.MeetingStore method)</a>
+</li>
       <li><a href="module_docs/hearing/capture.html#hearing.capture.load_audio">load_audio() (in module hearing.capture)</a>
 </li>
   </ul></td>
@@ -365,6 +407,12 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/hearing/cli.html#hearing.cli.main">main() (in module hearing.cli)</a>
+</li>
+      <li><a href="module_docs/hearing/storage.html#hearing.storage.MeetingStore.meeting_ids">meeting_ids() (hearing.storage.MeetingStore method)</a>
+</li>
+      <li><a href="module_docs/hearing/cli.html#hearing.cli.meetings">meetings() (in module hearing.cli)</a>
+</li>
+      <li><a href="module_docs/hearing/storage.html#hearing.storage.MeetingStore">MeetingStore (class in hearing.storage)</a>
 </li>
       <li><a href="module_docs/hearing/types.html#hearing.types.merge_segments">merge_segments() (in module hearing.types)</a>
 </li>
@@ -380,11 +428,15 @@
 </li>
         <li><a href="module_docs/hearing/cli.html#module-hearing.cli">hearing.cli</a>
 </li>
+        <li><a href="module_docs/hearing/context.html#module-hearing.context">hearing.context</a>
+</li>
         <li><a href="module_docs/hearing/diarize.html#module-hearing.diarize">hearing.diarize</a>
 </li>
         <li><a href="module_docs/hearing/interfaces.html#module-hearing.interfaces">hearing.interfaces</a>
 </li>
         <li><a href="module_docs/hearing/pipeline.html#module-hearing.pipeline">hearing.pipeline</a>
+</li>
+        <li><a href="module_docs/hearing/storage.html#module-hearing.storage">hearing.storage</a>
 </li>
         <li><a href="module_docs/hearing/stt.html#module-hearing.stt">hearing.stt</a>
 </li>
@@ -435,6 +487,8 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/hearing/context.html#hearing.context.Retriever">Retriever (class in hearing.context)</a>
+</li>
       <li><a href="module_docs/hearing/capture.html#hearing.capture.rms_energy">rms_energy() (in module hearing.capture)</a>
 </li>
   </ul></td>
@@ -443,6 +497,16 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/hearing/storage.html#hearing.storage.MeetingStore.save">save() (hearing.storage.MeetingStore method)</a>
+</li>
+      <li><a href="module_docs/hearing/context.html#hearing.context.KeywordRetriever.search">search() (hearing.context.KeywordRetriever method)</a>
+
+      <ul>
+        <li><a href="module_docs/hearing/context.html#hearing.context.Retriever.search">(hearing.context.Retriever method)</a>
+</li>
+        <li><a href="module_docs/hearing/context.html#hearing.context.WebSearch.search">(hearing.context.WebSearch method)</a>
+</li>
+      </ul></li>
       <li><a href="module_docs/hearing/vad.html#hearing.vad.segment_utterances">segment_utterances() (in module hearing.vad)</a>
 </li>
       <li><a href="module_docs/hearing/cli.html#hearing.cli.serve">serve() (in module hearing.cli)</a>
@@ -457,6 +521,8 @@
         <li><a href="module_docs/hearing/types.html#hearing.types.Transcript.speakers">(hearing.types.Transcript property)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/hearing/capture.html#hearing.capture.split_channels">split_channels() (in module hearing.capture)</a>
 </li>
       <li><a href="module_docs/hearing/interfaces.html#hearing.interfaces.STTEngine.stream_transcribe">stream_transcribe() (hearing.interfaces.STTEngine method)</a>
@@ -465,8 +531,6 @@
         <li><a href="module_docs/hearing/stt.html#hearing.stt.FasterWhisperSTT.stream_transcribe">(hearing.stt.FasterWhisperSTT method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/hearing/capture.html#hearing.capture.StreamingFileCapture">StreamingFileCapture (class in hearing.capture)</a>
 </li>
       <li><a href="module_docs/hearing/capture.html#hearing.capture.STT_SAMPLE_RATE">STT_SAMPLE_RATE (in module hearing.capture)</a>
@@ -511,8 +575,6 @@
 </li>
       <li><a href="module_docs/hearing/capture.html#hearing.capture.to_mono_16k">to_mono_16k() (in module hearing.capture)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/hearing/interfaces.html#hearing.interfaces.STTEngine.transcribe">transcribe() (hearing.interfaces.STTEngine method)</a>
 
       <ul>
@@ -525,12 +587,18 @@
         <li><a href="module_docs/hearing/pipeline.html#hearing.pipeline.transcribe">(in module hearing.pipeline)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/hearing.html#hearing.Transcript">Transcript (class in hearing)</a>
 
       <ul>
         <li><a href="module_docs/hearing/types.html#hearing.types.Transcript">(class in hearing.types)</a>
 </li>
       </ul></li>
+      <li><a href="module_docs/hearing/storage.html#hearing.storage.transcript_from_json">transcript_from_json() (in module hearing.storage)</a>
+</li>
+      <li><a href="module_docs/hearing/storage.html#hearing.storage.transcript_to_json">transcript_to_json() (in module hearing.storage)</a>
+</li>
       <li><a href="module_docs/hearing.html#hearing.TranscriptSegment">TranscriptSegment (class in hearing)</a>
 
       <ul>
@@ -551,6 +619,8 @@
 <h2 id="W">W</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/hearing/context.html#hearing.context.WebSearch">WebSearch (class in hearing.context)</a>
+</li>
       <li><a href="module_docs/hearing.html#hearing.TranscriptSegment.with_channel">with_channel() (hearing.TranscriptSegment method)</a>
 
       <ul>

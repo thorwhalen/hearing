@@ -50,10 +50,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/agents.html">hearing.agents</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/capture.html">hearing.capture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/cli.html">hearing.cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/context.html">hearing.context</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/diarize.html">hearing.diarize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/http_app.html">hearing.http_app</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/interfaces.html">hearing.interfaces</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/pipeline.html">hearing.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/storage.html">hearing.storage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/stt.html">hearing.stt</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/types.html">hearing.types</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/vad.html">hearing.vad</a></li>
@@ -111,9 +113,12 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Transcript</span><span class="p">,</span> <span class="n">TranscriptSegment</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>  <span class="c1"># retrieval backends are injected; avoid importing at module load</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Retriever</span><span class="p">,</span> <span class="n">WebSearch</span>
 
 <span class="c1">#: A sensible, current default Claude model for meeting analysis. Override via</span>
 <span class="c1">#: ``model=`` (e.g. &quot;claude-opus-4-8&quot; for max capability). See claude-api skill.</span>
@@ -171,6 +176,10 @@
     <span class="n">system_prompt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_DEFAULT_SYSTEM_PROMPT</span>
     <span class="n">max_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1024</span>
     <span class="n">api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">retriever</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;Retriever&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># RAG over project/meeting context</span>
+    <span class="n">web_search</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;WebSearch&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># bring outside info in</span>
+    <span class="n">retrieve_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">web_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
@@ -190,11 +199,32 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">anthropic</span><span class="o">.</span><span class="n">Anthropic</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_analyze_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transcript_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_assemble_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Gather the agent&#39;s context: static context + RAG + web search.</span>
+
+<span class="sd">        Retrieval is async and offloaded so it never blocks the stream; results</span>
+<span class="sd">        for the meeting transcript become part of the prompt&#39;s context block.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">:</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">retriever</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">chunks</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">retriever</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">retrieve_k</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">:</span>
+                <span class="n">label</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">title</span> <span class="ow">or</span> <span class="n">c</span><span class="o">.</span><span class="n">source</span> <span class="ow">or</span> <span class="s2">&quot;context&quot;</span>
+                <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">web_search</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">web_search</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">web_k</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+                <span class="n">src</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; (</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">source</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">source</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+                <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[web: </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">title</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;result&#39;</span><span class="si">}{</span><span class="n">src</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_analyze_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transcript_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context_text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Blocking Claude call; ``on_window`` runs this off the event loop.&quot;&quot;&quot;</span>
         <span class="n">user_parts</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">:</span>
-            <span class="n">user_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Relevant context:</span><span class="se">\n</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">context_text</span><span class="p">:</span>
+            <span class="n">user_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Relevant context:</span><span class="se">\n</span><span class="si">{</span><span class="n">context_text</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">user_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Transcript:</span><span class="se">\n</span><span class="si">{</span><span class="n">transcript_text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="p">()</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
@@ -213,8 +243,9 @@
         <span class="n">text</span> <span class="o">=</span> <span class="n">_transcript_text</span><span class="p">(</span><span class="n">window</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">context_text</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_assemble_context</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
         <span class="c1"># The SDK call is blocking; keep the event loop free (batch &amp; live).</span>
-        <span class="k">return</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_analyze_sync</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_analyze_sync</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">context_text</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ClaudeAgent.on_segment">
@@ -313,19 +344,30 @@
 <div class="viewcode-block" id="build_default_agent">
 <a class="viewcode-back" href="../../module_docs/hearing/agents.html#hearing.agents.build_default_agent">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_default_agent</span><span class="p">(</span>
-    <span class="o">*</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">prefer</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">prefer</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">retriever</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;Retriever&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">web_search</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;WebSearch&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Pick the best available agent.</span>
 
 <span class="sd">    ``prefer=&quot;claude&quot;`` forces Claude; ``&quot;extractive&quot;`` forces the offline</span>
 <span class="sd">    fallback; ``&quot;auto&quot;`` (default) uses Claude when the anthropic SDK and an API</span>
 <span class="sd">    key are available, otherwise the dependency-free :class:`ExtractiveAgent`.</span>
+<span class="sd">    A ``retriever``/``web_search`` make the Claude agent context-connected.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">prefer</span> <span class="o">==</span> <span class="s2">&quot;extractive&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">ExtractiveAgent</span><span class="p">()</span>
     <span class="n">has_claude</span> <span class="o">=</span> <span class="n">_anthropic_available</span><span class="p">()</span> <span class="ow">and</span> <span class="nb">bool</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;ANTHROPIC_API_KEY&quot;</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">prefer</span> <span class="o">==</span> <span class="s2">&quot;claude&quot;</span> <span class="ow">or</span> <span class="p">(</span><span class="n">prefer</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span> <span class="ow">and</span> <span class="n">has_claude</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">ClaudeAgent</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span> <span class="ow">or</span> <span class="n">DEFAULT_CLAUDE_MODEL</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ClaudeAgent</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span> <span class="ow">or</span> <span class="n">DEFAULT_CLAUDE_MODEL</span><span class="p">,</span>
+            <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span>
+            <span class="n">retriever</span><span class="o">=</span><span class="n">retriever</span><span class="p">,</span>
+            <span class="n">web_search</span><span class="o">=</span><span class="n">web_search</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="k">return</span> <span class="n">ExtractiveAgent</span><span class="p">()</span></div>
 
 
@@ -338,14 +380,19 @@
     <span class="n">agent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">context</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">retriever</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;Retriever&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">web_search</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;WebSearch&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Synchronous facade: run a (batch) agent over a transcript, return notes.</span>
 
-<span class="sd">    Builds the default agent when none is injected. Usable on a transcript with</span>
-<span class="sd">    no audio at all.</span>
+<span class="sd">    Builds the default agent when none is injected (context-connected when a</span>
+<span class="sd">    ``retriever``/``web_search`` is supplied). Usable on a transcript with no</span>
+<span class="sd">    audio at all.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">window</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">transcript</span><span class="p">)</span>
-    <span class="n">agent</span> <span class="o">=</span> <span class="n">agent</span> <span class="ow">or</span> <span class="n">build_default_agent</span><span class="p">(</span><span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">agent</span> <span class="o">=</span> <span class="n">agent</span> <span class="ow">or</span> <span class="n">build_default_agent</span><span class="p">(</span>
+        <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">retriever</span><span class="o">=</span><span class="n">retriever</span><span class="p">,</span> <span class="n">web_search</span><span class="o">=</span><span class="n">web_search</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">agent</span><span class="o">.</span><span class="n">on_window</span><span class="p">(</span><span class="n">window</span><span class="p">))</span></div>
 
 
