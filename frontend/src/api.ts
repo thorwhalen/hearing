@@ -5,7 +5,14 @@
 // Zod schemas the UI renders from, so a mismatch between the backend and the UI
 // is caught immediately instead of silently rendering wrong data.
 import { z } from 'zod';
-import { MeetingSchema, SegmentSchema, type Meeting, type Segment } from './schema';
+import {
+  FeedbackSchema,
+  MeetingSchema,
+  SegmentSchema,
+  type Feedback,
+  type Meeting,
+  type Segment,
+} from './schema';
 
 const TranscribeResponseSchema = z.object({
   meeting: MeetingSchema,
@@ -38,6 +45,7 @@ export async function transcribeFile(
 export interface StreamHandlers {
   onMeeting?: (m: { id: string; title: string }) => void;
   onSegment: (s: Segment) => void;
+  onFeedback?: (f: Feedback) => void;
 }
 
 // Live mode: read the NDJSON stream from POST /api/transcribe/stream and invoke
@@ -68,9 +76,15 @@ export async function transcribeStream(
       const line = buffer.slice(0, nl).trim();
       buffer = buffer.slice(nl + 1);
       if (!line) continue;
-      const msg = JSON.parse(line) as { type: string; meeting?: { id: string; title: string }; segment?: unknown };
+      const msg = JSON.parse(line) as {
+        type: string;
+        meeting?: { id: string; title: string };
+        segment?: unknown;
+        feedback?: unknown;
+      };
       if (msg.type === 'meeting' && msg.meeting) handlers.onMeeting?.(msg.meeting);
       else if (msg.type === 'segment') handlers.onSegment(SegmentSchema.parse(msg.segment));
+      else if (msg.type === 'feedback') handlers.onFeedback?.(FeedbackSchema.parse(msg.feedback));
     }
   }
 }

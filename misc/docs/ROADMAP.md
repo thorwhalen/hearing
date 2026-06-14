@@ -63,7 +63,8 @@ See the `hearing-live-pipeline` skill.
 | `zodal-ui-shadcn` renderer registry | 📋 todo | not yet published to npm; current renderer is a thin custom view (swap in when available) |
 | acture command layer (palette / hotkeys / AI+MCP tools) | 📋 todo | export transcript, jump-to-speaker, ask-the-agent, pin-doc |
 | Live transcript streaming (server→client push) | ✅ done | `POST /api/transcribe/stream` (NDJSON) + a "Live" toggle in the UI that appends finalized segments as they arrive |
-| Streamed agent-feedback panel + always-on-top overlay shell | 📋 todo | stream `Feedback` items like segments; study Pluely/Glass for the overlay window |
+| Streamed agent-feedback panel (the live copilot) | ✅ done | the stream also pushes `{"type":"feedback",...}` from the live agent's `on_segment`; the UI's `FeedbackPanel` renders notes/suggested-questions live |
+| Always-on-top overlay shell (floating copilot window) | 📋 todo | study Pluely/Glass for the overlay window; current UI is an in-page panel |
 
 See the `hearing-frontend` skill. (The HTTP layer also advances Milestone 1's
 "interfaces to the outside".)

@@ -6,11 +6,14 @@
 // shared Zod schema, so there's no hand-mapping of API fields to UI fields.
 import { useEffect, useRef, useState } from 'react';
 import { getHealth, transcribeFile, transcribeStream, type TranscribeResponse } from './api';
+import { type Feedback } from './schema';
+import { FeedbackPanel } from './components/FeedbackPanel';
 import { SummaryPanel } from './components/SummaryPanel';
 import { TranscriptView } from './components/TranscriptView';
 
 export function App() {
   const [result, setResult] = useState<TranscribeResponse | null>(null);
+  const [liveFeedback, setLiveFeedback] = useState<Feedback[]>([]);
   const [query, setQuery] = useState('');
   const [summarize, setSummarize] = useState(true);
   const [live, setLive] = useState(false);
@@ -31,6 +34,7 @@ export function App() {
     try {
       if (live) {
         // Live mode: start with an empty meeting and append segments as they stream in.
+        setLiveFeedback([]);
         setResult({
           meeting: { id: '', title: file.name, startedAt: '', durationMs: 0, participants: [], segmentCount: 0 },
           segments: [],
@@ -40,6 +44,7 @@ export function App() {
           {
             onMeeting: (m) =>
               setResult((prev) => (prev ? { ...prev, meeting: { ...prev.meeting, ...m } } : prev)),
+            onFeedback: (f) => setLiveFeedback((prev) => [...prev, f]),
             onSegment: (s) =>
               setResult((prev) => {
                 if (!prev) return prev;
@@ -119,7 +124,7 @@ export function App() {
           </div>
           <div className="layout">
             <TranscriptView segments={result.segments} query={query} />
-            <SummaryPanel summary={result.summary} />
+            {live ? <FeedbackPanel items={liveFeedback} /> : <SummaryPanel summary={result.summary} />}
           </div>
         </>
       )}

@@ -99,6 +99,25 @@ def test_transcribe_stream_emits_ndjson_segments():
     assert all(s["isFinal"] for s in segs)
 
 
+class _AlwaysFeedbackAgent:
+    async def on_segment(self, seg):
+        return f"note about: {seg.text}"
+
+    async def on_window(self, window):  # pragma: no cover
+        return None
+
+
+def test_transcribe_stream_emits_feedback():
+    client = TestClient(create_app(engine=FakeStreamingSTT(), agent=_AlwaysFeedbackAgent()))
+    files = {"file": ("meeting.wav", _stereo_wav_bytes(), "audio/wav")}
+    with client.stream("POST", "/api/transcribe/stream", files=files) as r:
+        msgs = [json.loads(line) for line in r.iter_lines() if line.strip()]
+    fb = [m["feedback"] for m in msgs if m["type"] == "feedback"]
+    assert len(fb) >= 2  # one per finalized segment (mic + system)
+    assert all({"id", "meetingId", "kind", "atMs", "title", "body"} <= set(f) for f in fb)
+    assert all(f["kind"] in ("note", "suggested_question") for f in fb)
+
+
 def test_transcript_to_payload_unit():
     t = Transcript([TranscriptSegment("hi", TimeSpan(0, 1000), Channel.MIC, ME)])
     payload = transcript_to_payload(t, meeting_id="m1", title="T")

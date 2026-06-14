@@ -44,6 +44,7 @@ export const FeedbackSchema = z.object({
   meetingId: z.string(),
   kind: z.enum(['note', 'suggested_question', 'surfaced_doc', 'fact_check']),
   atMs: z.number().int(),
+  triggeredBy: z.string().optional(), // segment id that fired this
   title: z.string(),
   body: z.string(),
   sourceUrl: z.string().optional(),
