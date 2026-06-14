@@ -62,7 +62,7 @@ See the `hearing-live-pipeline` skill.
 | Static transcript viewer (me/them lanes, search) + AI-notes panel | ✅ done | `frontend/` (Vite+React+TS); builds clean; verified in-browser end-to-end |
 | Schema-as-contract API client (Zod-validated responses) | ✅ done | `frontend/src/api.ts` |
 | `zodal-ui-shadcn` renderer registry | 📋 todo | not yet published to npm; current renderer is a thin custom view (swap in when available) |
-| acture command layer (palette / hotkeys / AI+MCP tools) | 📋 todo | export transcript, jump-to-speaker, ask-the-agent, pin-doc |
+| acture command layer (⌘K palette + AI/MCP tool projection) | ✅ done | `frontend/src/commands.ts` (hand-written registry, no acture dep): one command def → palette rows (enum params expand) + `toAITools()` AI/MCP schema. Commands: export (md/srt/json), search, clear. Browser-verified; +6 vitest tests |
 | Live transcript streaming (server→client push) | ✅ done | `POST /api/transcribe/stream` (NDJSON) + a "Live" toggle in the UI that appends finalized segments as they arrive |
 | Streamed agent-feedback panel (the live copilot) | ✅ done | the stream also pushes `{"type":"feedback",...}` from the live agent's `on_segment`; the UI's `FeedbackPanel` renders notes/suggested-questions live |
 | Always-on-top overlay shell (floating copilot window) | 📋 todo | study Pluely/Glass for the overlay window; current UI is an in-page panel |

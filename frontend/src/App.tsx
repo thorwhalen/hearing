@@ -4,9 +4,11 @@
 // State is deliberately minimal and local (useState) — for a frontend novice,
 // that's the simplest correct tool. The transcript shape comes straight from the
 // shared Zod schema, so there's no hand-mapping of API fields to UI fields.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { getHealth, transcribeFile, transcribeStream, type TranscribeResponse } from './api';
+import { buildCommands, type CommandContext } from './commands';
 import { type Feedback } from './schema';
+import { CommandPalette } from './components/CommandPalette';
 import { FeedbackPanel } from './components/FeedbackPanel';
 import { SummaryPanel } from './components/SummaryPanel';
 import { TranscriptView } from './components/TranscriptView';
@@ -20,13 +22,37 @@ export function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState<string | null>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     getHealth()
       .then((h) => setVersion(h.version))
       .catch(() => setVersion(null)); // backend not running yet — that's fine
   }, []);
+
+  // ⌘K / Ctrl+K toggles the command palette.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setPaletteOpen((o) => !o);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const commands = useMemo(() => buildCommands(), []);
+  const commandCtx: CommandContext = {
+    result,
+    focusSearch: () => searchRef.current?.focus(),
+    clear: () => {
+      setResult(null);
+      setLiveFeedback([]);
+    },
+  };
 
   async function onUpload(file: File) {
     setLoading(true);
@@ -104,6 +130,7 @@ export function App() {
           Live stream
         </label>
         <input
+          ref={searchRef}
           className="search"
           type="search"
           placeholder="Search transcript…"
@@ -111,6 +138,9 @@ export function App() {
           onChange={(e) => setQuery(e.target.value)}
           disabled={!result}
         />
+        <button className="kbd-hint" onClick={() => setPaletteOpen(true)} title="Command palette">
+          ⌘K
+        </button>
       </section>
 
       {loading && <p className="status">Transcribing… (first run downloads the model)</p>}
@@ -128,6 +158,13 @@ export function App() {
           </div>
         </>
       )}
+
+      <CommandPalette
+        commands={commands}
+        ctx={commandCtx}
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+      />
     </div>
   );
 }
