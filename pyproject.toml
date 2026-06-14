@@ -67,6 +67,10 @@ http = [
     "uvicorn>=0.27",
     "python-multipart>=0.0.9",
 ]
+# Persisting transcripts to a dol store (a filesystem fallback works without it).
+storage = [
+    "dol>=3",
+]
 # Everything needed for the full app (batch + live).
 all = [
     "faster-whisper>=1.0",
