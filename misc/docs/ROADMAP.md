@@ -62,7 +62,8 @@ See the `hearing-live-pipeline` skill.
 | Schema-as-contract API client (Zod-validated responses) | ✅ done | `frontend/src/api.ts` |
 | `zodal-ui-shadcn` renderer registry | 📋 todo | not yet published to npm; current renderer is a thin custom view (swap in when available) |
 | acture command layer (palette / hotkeys / AI+MCP tools) | 📋 todo | export transcript, jump-to-speaker, ask-the-agent, pin-doc |
-| Live copilot overlay (append-only stream via SSE/WS) | 📋 todo | build on the static view once the live HTTP stream exists |
+| Live transcript streaming (server→client push) | ✅ done | `POST /api/transcribe/stream` (NDJSON) + a "Live" toggle in the UI that appends finalized segments as they arrive |
+| Streamed agent-feedback panel + always-on-top overlay shell | 📋 todo | stream `Feedback` items like segments; study Pluely/Glass for the overlay window |
 
 See the `hearing-frontend` skill. (The HTTP layer also advances Milestone 1's
 "interfaces to the outside".)

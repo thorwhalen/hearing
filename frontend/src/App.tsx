@@ -5,7 +5,7 @@
 // that's the simplest correct tool. The transcript shape comes straight from the
 // shared Zod schema, so there's no hand-mapping of API fields to UI fields.
 import { useEffect, useRef, useState } from 'react';
-import { getHealth, transcribeFile, type TranscribeResponse } from './api';
+import { getHealth, transcribeFile, transcribeStream, type TranscribeResponse } from './api';
 import { SummaryPanel } from './components/SummaryPanel';
 import { TranscriptView } from './components/TranscriptView';
 
@@ -13,6 +13,7 @@ export function App() {
   const [result, setResult] = useState<TranscribeResponse | null>(null);
   const [query, setQuery] = useState('');
   const [summarize, setSummarize] = useState(true);
+  const [live, setLive] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState<string | null>(null);
@@ -28,7 +29,38 @@ export function App() {
     setLoading(true);
     setError(null);
     try {
-      setResult(await transcribeFile(file, { summarize }));
+      if (live) {
+        // Live mode: start with an empty meeting and append segments as they stream in.
+        setResult({
+          meeting: { id: '', title: file.name, startedAt: '', durationMs: 0, participants: [], segmentCount: 0 },
+          segments: [],
+        });
+        await transcribeStream(
+          file,
+          {
+            onMeeting: (m) =>
+              setResult((prev) => (prev ? { ...prev, meeting: { ...prev.meeting, ...m } } : prev)),
+            onSegment: (s) =>
+              setResult((prev) => {
+                if (!prev) return prev;
+                const segments = [...prev.segments, s];
+                return {
+                  ...prev,
+                  segments,
+                  meeting: {
+                    ...prev.meeting,
+                    segmentCount: segments.length,
+                    durationMs: Math.max(prev.meeting.durationMs, s.endMs),
+                    participants: Array.from(new Set(segments.map((x) => x.speaker))),
+                  },
+                };
+              }),
+          },
+          { title: file.name },
+        );
+      } else {
+        setResult(await transcribeFile(file, { summarize }));
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -54,8 +86,17 @@ export function App() {
           disabled={loading}
         />
         <label className="check">
-          <input type="checkbox" checked={summarize} onChange={(e) => setSummarize(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={summarize}
+            disabled={live}
+            onChange={(e) => setSummarize(e.target.checked)}
+          />
           AI notes
+        </label>
+        <label className="check">
+          <input type="checkbox" checked={live} onChange={(e) => setLive(e.target.checked)} />
+          Live stream
         </label>
         <input
           className="search"
