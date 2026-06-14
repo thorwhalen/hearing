@@ -26,23 +26,27 @@ its own development skill under `.claude/skills/`.
 | `argh` CLI (`transcribe` / `summarize` / `info`) | ✅ done | `hearing/cli.py` |
 | Tests + runnable demo | ✅ done | `tests/`, `examples/demo_meeting.py` |
 | **Acoustic diarization** (pyannote) for *individual* remote speakers | 🔬 stubbed | `PyannoteDiarizer` implemented, untested (needs HF token) |
-| **Live macOS capture source** (BlackHole / Core Audio taps → channels) | 📋 todo | today you bring a recorded multi-channel file |
+| **Live macOS capture source** (BlackHole / Core Audio taps → channels) | 🔬 partial | `DeviceCapture` (sounddevice) implemented but needs hardware to verify; `StreamingFileCapture` streams a file today |
 | Persistence (`record=` dol store for transcripts/recordings) | 📋 todo | hook present in `transcribe(record=...)`; flesh out per `python-storage` |
 | Context-connected agents over a knowledge store (RAG) | 📋 todo | `ClaudeAgent.context` hook present; add retrieval per `hearing-agents` |
 
-## Milestone 2 — Live path  ·  *not started (designed)*
+## Milestone 2 — Live path  ·  *core working*
 
 > Streaming STT, VAD-based utterance finalization, low-latency in-meeting agent
 > feedback. Additive on top of Milestone 1 — same STT/diarizer/agent interfaces.
 
-- `STTEngine.stream_transcribe` (a streaming backend: RealtimeSTT / WhisperLive
-  / OpenAI Realtime API).
-- VAD (silero / webrtc) → buffer utterance → emit a **finalized** segment
-  (`meta['final']`) onto an `asyncio.Queue`.
-- Decoupled async stages (capture / STT / diarization / agent) so a slow LLM
-  call never stalls capture.
-- `live_transcribe(...)` facade (the async generator is stubbed today).
-- See the `hearing-live-pipeline` skill.
+| Piece | Status | Notes |
+|---|---|---|
+| `STTEngine.stream_transcribe` (VAD → utterance → finalized segment) | ✅ done | `hearing/stt.py`; reuses the batch `transcribe` per utterance |
+| VAD + utterance segmentation | ✅ done | `hearing/vad.py`: `EnergyVAD` (default, dep-free) + `SileroVAD` (optional); `segment_utterances` |
+| `live_transcribe(...)` orchestrator (decoupled async stages, bounded queues) | ✅ done | `hearing/pipeline.py`; per-channel demux preserves "me vs them"; fire-and-forget agent |
+| Streaming source for testing/demo | ✅ done | `StreamingFileCapture` (+ `hearing live FILE` CLI) |
+| Tests (VAD, live orchestration, real-whisper live integration) | ✅ done | `tests/test_vad.py`, `tests/test_live_pipeline.py` |
+| Cloud / lower-latency streaming engines (Deepgram, OpenAI Realtime, WhisperLive) | 📋 todo | behind the same `STTEngine` facade |
+| Semantic turn detection (beats naive VAD on mid-sentence pauses) | 📋 todo | see the skill's latency section |
+| Live mic/device capture verified on hardware | 📋 todo | `DeviceCapture` written; needs a BlackHole + Aggregate Device to confirm |
+
+See the `hearing-live-pipeline` skill.
 
 ## Milestone 3 — Frontend  ·  *not started (designed)*
 

@@ -102,20 +102,92 @@ async def live_transcribe(
     engine: Optional[STTEngine] = None,
     diarizer: Optional[Diarizer] = None,
     agent: Optional[AgentConsumer] = None,
-    trigger: str = "vad",
-):  # pragma: no cover - live milestone
-    """Stream finalized segments as a meeting unfolds (milestone 2).
+    audio_queue_max: int = 50,
+    segment_queue_max: int = 100,
+):
+    """Stream FINALIZED segments as a meeting unfolds (the live path).
 
-    Same components as :func:`transcribe`; only the *source* (a streaming sink
-    instead of a file) and the *trigger cadence* change. Implementing this is
-    the live milestone — see the ``hearing-live-pipeline`` skill. The batch path
-    works today.
+    Same components as :func:`transcribe` — only the *source* (a streaming
+    :class:`~hearing.interfaces.CaptureSource` instead of a file) and the trigger
+    cadence (VAD utterance turn-ends instead of run-once) change. The
+    ``STTEngine`` and ``AgentConsumer`` interfaces are unchanged.
+
+    Each channel is demuxed onto its own bounded queue and driven through
+    ``engine.stream_transcribe`` as an independent async task, so a slow agent
+    never stalls capture (backpressure) and the channel "me vs them" label rides
+    every segment. Diarization defaults to the free channel trick; the agent's
+    ``on_segment`` is fired fire-and-forget. Yields segments as utterances finalize.
+
+    See the ``hearing-live-pipeline`` skill.
     """
-    raise NotImplementedError(
-        "live_transcribe is the live milestone (streaming STT + VAD finalization). "
-        "See the hearing-live-pipeline skill. The batch transcribe() works now."
-    )
-    yield  # pragma: no cover - marks this as an async generator
+    engine = engine or _default_engine()
+    seg_q: asyncio.Queue = asyncio.Queue(maxsize=segment_queue_max)
+    chan_queues: dict[Channel, asyncio.Queue] = {}
+    stt_tasks: list[asyncio.Task] = []
+    agent_tasks: list[asyncio.Task] = []
+    sample_rate = int(getattr(source, "sample_rate", 16_000))
+
+    async def _channel_frames(q: asyncio.Queue):
+        while True:
+            blk = await q.get()
+            if blk is None:  # end-of-channel sentinel
+                return
+            yield blk
+
+    async def _stt_for_channel(channel: Channel, q: asyncio.Queue) -> None:
+        default_diar = ChannelTrickDiarizer()
+        async for seg in engine.stream_transcribe(
+            _channel_frames(q), sample_rate=sample_rate
+        ):
+            if not seg.meta.get("final"):  # downstream acts only on finalized turns
+                continue
+            seg = seg.with_channel(channel)
+            if diarizer is not None:
+                seg = next(iter(diarizer.assign_speakers([seg], sample_rate=sample_rate)))
+            elif channel is not Channel.MIXED:
+                seg = next(iter(default_diar.assign_speakers([seg])))
+            if agent is not None:
+                agent_tasks.append(asyncio.create_task(_safe_on_segment(agent, seg)))
+            await seg_q.put(seg)
+
+    async def _router() -> None:
+        async for channel, frames in source.astream():
+            q = chan_queues.get(channel)
+            if q is None:  # spin up a per-channel STT task on first sight
+                q = asyncio.Queue(maxsize=audio_queue_max)
+                chan_queues[channel] = q
+                stt_tasks.append(asyncio.create_task(_stt_for_channel(channel, q)))
+            await q.put(np.asarray(frames))  # backpressure to the source
+        for q in chan_queues.values():
+            await q.put(None)  # sentinel each channel
+
+    async def _supervisor() -> None:
+        await _router()
+        if stt_tasks:
+            await asyncio.gather(*stt_tasks, return_exceptions=True)
+        if agent_tasks:
+            await asyncio.gather(*agent_tasks, return_exceptions=True)
+        await seg_q.put(None)  # final sentinel
+
+    sup = asyncio.create_task(_supervisor())
+    try:
+        while True:
+            seg = await seg_q.get()
+            if seg is None:
+                break
+            yield seg
+    finally:
+        sup.cancel()
+        for t in [*stt_tasks, *agent_tasks]:
+            t.cancel()
+
+
+async def _safe_on_segment(agent: AgentConsumer, seg: TranscriptSegment) -> None:
+    """Run ``agent.on_segment`` without letting a failure crash the stream."""
+    try:
+        await agent.on_segment(seg)
+    except Exception:  # noqa: BLE001 - agent/RAG failure must not kill capture
+        pass
 
 
 def summarize(

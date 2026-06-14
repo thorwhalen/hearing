@@ -42,8 +42,32 @@ hearing transcribe meeting.wav                      # diarized transcript to std
 hearing transcribe meeting.wav --model small --out notes.json
 hearing summarize  meeting.wav                      # transcribe + AI notes (Claude)
 hearing summarize  meeting.wav --agent extractive   # offline, no API key needed
+hearing live       meeting.wav                      # STREAM it: finalized segments as utterances complete
 hearing info                                        # what's installed / available
 ```
+
+### Live / streaming (milestone 2 — core working)
+
+The same pipeline runs as a low-latency loop: VAD finds utterance boundaries,
+each finalized utterance is transcribed and emitted as it completes, and the
+channel split still labels "me vs them" — the `STTEngine` and agent interfaces
+are unchanged from batch.
+
+```python
+import asyncio
+from hearing import live_transcribe
+from hearing.capture import StreamingFileCapture   # or DeviceCapture for a live mic+system device
+
+async def main():
+    async for seg in live_transcribe(source=StreamingFileCapture("meeting.wav")):
+        print(seg.speaker, seg.text)   # finalized (seg.meta['final']) segments, as they land
+
+asyncio.run(main())
+```
+
+Capturing from a live **device** (`DeviceCapture`, an Aggregate Device with mic
++ BlackHole) is implemented but needs that hardware to verify; streaming a file
+works anywhere.
 
 Example transcript + Claude summary (from `examples/demo_meeting.py`, which
 synthesizes a two-speaker meeting with macOS `say` — no mic needed):
@@ -96,11 +120,15 @@ Live device capture is the next milestone; today you bring a recording.
 
 ## Not yet (designed, on the roadmap)
 
-- **Live / streaming** path (VAD-based utterance finalization, low-latency
-  in-meeting agent feedback). The architecture is additive — see
-  `hearing-live-pipeline`. Tracked in [`misc/docs/ROADMAP.md`](misc/docs/ROADMAP.md).
+- **Cloud / lower-latency streaming engines** (Deepgram, OpenAI Realtime,
+  WhisperLive) behind the same `STTEngine` facade, and **semantic turn
+  detection** — see `hearing-live-pipeline`.
+- **Live device capture verified on hardware** (`DeviceCapture` is written; needs
+  a BlackHole + Aggregate Device) — see `hearing-audio-capture`.
 - **TypeScript frontend** (schema-driven transcript viewer + copilot overlay
   with zodal/acture) — see `hearing-frontend`.
+
+Full status in [`misc/docs/ROADMAP.md`](misc/docs/ROADMAP.md).
 
 ## Architecture & development
 

@@ -16,13 +16,16 @@ are optional — ``transcribe`` raises an informative error telling you what to
 from __future__ import annotations
 
 import functools
-from dataclasses import dataclass, field
-from typing import AsyncIterator, Optional, Sequence
+from dataclasses import dataclass, field, replace
+from typing import TYPE_CHECKING, AsyncIterator, Optional, Sequence
 
 import numpy as np
 
 from hearing.capture import STT_SAMPLE_RATE, resample
 from hearing.types import TimeSpan, TranscriptSegment, Word
+
+if TYPE_CHECKING:  # avoid importing the vad module at package import time
+    from hearing.vad import VAD
 
 #: Default local model. "base" balances speed/quality; tests use "tiny".
 DEFAULT_WHISPER_MODEL: str = "base"
@@ -50,6 +53,7 @@ class FasterWhisperSTT:
     word_timestamps: bool = False
     vad_filter: bool = True  # drop non-speech; reduces hallucinated text
     beam_size: int = 5
+    vad: Optional["VAD"] = None  # utterance segmenter for stream_transcribe (default: EnergyVAD)
     _engine_id: str = field(init=False, default="faster-whisper")
 
     @functools.cached_property
@@ -118,19 +122,28 @@ class FasterWhisperSTT:
 
     async def stream_transcribe(
         self, frames: AsyncIterator[np.ndarray], *, sample_rate: int
-    ) -> AsyncIterator[TranscriptSegment]:  # pragma: no cover - live milestone
-        """Live transcription is the milestone-2 path; see hearing-live-pipeline.
+    ) -> AsyncIterator[TranscriptSegment]:
+        """Stream finalized segments as utterances complete (the live path).
 
-        The batch ``transcribe`` is fully implemented and tested. Streaming
-        (VAD-based utterance finalization, partial vs final segments) belongs to
-        the live milestone and a streaming-oriented backend (RealtimeSTT,
-        WhisperLive, the OpenAI Realtime API). Implement against this signature.
+        VAD (``self.vad``, default :class:`~hearing.vad.EnergyVAD`) groups the
+        incoming frame blocks into utterances; each utterance is transcribed with
+        the same batch ``transcribe`` and emitted as a FINALIZED segment
+        (``meta['final'] = True``) with its span offset to absolute stream time.
+
+        Same Protocol method, same ``TranscriptSegment`` spine as batch — the
+        live milestone adds no new interface (see hearing-live-pipeline).
         """
-        raise NotImplementedError(
-            "stream_transcribe is the live milestone. See the hearing-live-pipeline "
-            "skill; the batch path (transcribe) works today."
-        )
-        yield  # pragma: no cover - makes this an async generator
+        from hearing.vad import segment_utterances
+
+        async for utterance, start_ms in segment_utterances(
+            frames, sample_rate=sample_rate, vad=self.vad
+        ):
+            for seg in self.transcribe(utterance, sample_rate=sample_rate):
+                yield replace(
+                    seg,
+                    span=TimeSpan(seg.span.start_ms + start_ms, seg.span.end_ms + start_ms),
+                    meta={**dict(seg.meta), "final": True},
+                )
 
 
 def default_engine(**kwargs) -> FasterWhisperSTT:

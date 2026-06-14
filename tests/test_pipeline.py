@@ -9,7 +9,7 @@ real (heavy) STT model. A real model is exercised in
 import numpy as np
 import pytest
 
-from hearing.pipeline import live_transcribe, transcribe
+from hearing.pipeline import transcribe
 from hearing.types import ME, THEM, Channel, TimeSpan, Transcript, TranscriptSegment
 
 soundfile = pytest.importorskip("soundfile")
@@ -73,15 +73,3 @@ def test_transcribe_runs_agent_and_stores_insight(stereo_file):
 
     t = transcribe(stereo_file, engine=FakeSTT(), agent=FakeAgent())
     assert t.meta["insight"] == "2 segments analyzed"
-
-
-def test_live_transcribe_is_not_implemented_yet():
-    # live_transcribe is an async generator; advancing it must raise.
-    import asyncio
-
-    async def _drive():
-        async for _ in live_transcribe(source=object()):  # type: ignore[arg-type]
-            pass
-
-    with pytest.raises(NotImplementedError):
-        asyncio.run(_drive())

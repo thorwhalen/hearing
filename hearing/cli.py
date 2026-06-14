@@ -99,6 +99,50 @@ def summarize(
     )
 
 
+def live(
+    path: Optional[str] = None,
+    *,
+    model: str = "base",
+    device: Optional[str] = None,
+    block_ms: int = 200,
+    realtime: bool = False,
+) -> None:
+    """Run the LIVE streaming pipeline, printing segments as utterances finalize.
+
+    Args:
+        path: stream this audio FILE through the live loop (great for a demo /
+            no hardware). Omit to capture from an audio DEVICE instead.
+        model: whisper model size for the streaming STT.
+        device: audio device index/name for live capture (an Aggregate Device
+            with mic + BlackHole; see the hearing-audio-capture skill).
+        block_ms: streaming block size in milliseconds.
+        realtime: when streaming a file, pace it in real time (else as-fast-as).
+    """
+    import asyncio
+
+    from hearing.capture import DeviceCapture, StreamingFileCapture
+    from hearing.pipeline import live_transcribe
+    from hearing.stt import FasterWhisperSTT
+    from hearing.types import _ms_to_clock
+
+    engine = FasterWhisperSTT(model_size=model)
+    if path:
+        source = StreamingFileCapture(path, block_ms=block_ms, realtime=realtime)
+    else:
+        source = DeviceCapture(device=device, block_ms=block_ms)
+        print("Listening (Ctrl+C to stop)…", file=sys.stderr)
+
+    async def _run() -> None:
+        async for seg in live_transcribe(source=source, engine=engine):
+            who = seg.speaker or seg.channel.value
+            print(f"[{_ms_to_clock(seg.span.start_ms)}] {who}: {seg.text.strip()}", flush=True)
+
+    try:
+        asyncio.run(_run())
+    except KeyboardInterrupt:  # pragma: no cover
+        print("\nstopped.", file=sys.stderr)
+
+
 def info() -> str:
     """Report which optional components are installed and what's missing."""
     lines = ["hearing — component availability:"]
@@ -136,8 +180,16 @@ def main(argv=None) -> None:
     except ImportError:  # pragma: no cover - argh is a core dependency
         print("hearing CLI needs `argh` (pip install argh).", file=sys.stderr)
         raise SystemExit(1)
+    from argh.assembling import NameMappingPolicy
+
     parser = argh.ArghParser(description="hearing — meeting transcription & AI agents")
-    argh.add_commands(parser, [transcribe, summarize, info])
+    # BY_NAME_IF_KWONLY: positional params stay positional (optional when they have
+    # a default, e.g. `hearing live [FILE]`); keyword-only params become --options.
+    argh.add_commands(
+        parser,
+        [transcribe, summarize, live, info],
+        name_mapping_policy=NameMappingPolicy.BY_NAME_IF_KWONLY,
+    )
     parser.dispatch(argv)
 
 
