@@ -195,11 +195,14 @@ class ExtractiveAgent:
         return "\n".join(out)
 
     async def on_segment(self, segment: TranscriptSegment) -> Optional[str]:
-        """Live per-segment hook: surface action-item cues immediately."""
-        low = segment.text.lower()
+        """Live per-segment hook: surface questions and action-item cues."""
+        text = segment.text.strip()
+        low = text.lower()
+        who = segment.speaker or segment.channel.value
+        if text.endswith("?"):
+            return f"Suggested follow-up to {who}'s question: {text}"
         if any(cue in low for cue in self.action_cues):
-            who = segment.speaker or segment.channel.value
-            return f"[action?] {who}: {segment.text.strip()}"
+            return f"Possible action item ({who}): {text}"
         return None
 
 

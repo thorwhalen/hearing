@@ -174,8 +174,14 @@ def create_app(*, engine=None, agent=None, cors_origins: Optional[list] = None) 
         meeting_id = str(uuid.uuid4())
 
         async def gen():
+            from hearing.agents import ExtractiveAgent
             from hearing.capture import StreamingFileCapture
             from hearing.pipeline import live_transcribe
+
+            # The live agent runs per finalized segment and may surface feedback.
+            # Default to the fast, offline ExtractiveAgent so the panel populates
+            # without a per-segment LLM call; inject a richer agent via create_app.
+            live_agent = app.state.agent or ExtractiveAgent()
 
             tmp = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
             try:
@@ -188,8 +194,21 @@ def create_app(*, engine=None, agent=None, cors_origins: Optional[list] = None) 
                 source = StreamingFileCapture(tmp.name, block_ms=200)
                 i = 0
                 async for seg in live_transcribe(source=source, engine=_engine()):
-                    line = {"type": "segment", "segment": segment_to_dict(seg, meeting_id=meeting_id, index=i)}
-                    yield json.dumps(line) + "\n"
+                    seg_dict = segment_to_dict(seg, meeting_id=meeting_id, index=i)
+                    yield json.dumps({"type": "segment", "segment": seg_dict}) + "\n"
+                    note = await live_agent.on_segment(seg)
+                    if note:
+                        kind = "suggested_question" if seg.text.strip().endswith("?") else "note"
+                        feedback = {
+                            "id": str(uuid.uuid5(_SEGMENT_NS, f"{meeting_id}:fb:{i}")),
+                            "meetingId": meeting_id,
+                            "kind": kind,
+                            "atMs": seg.span.end_ms,
+                            "triggeredBy": seg_dict["id"],
+                            "title": "Suggested question" if kind == "suggested_question" else "Note",
+                            "body": note,
+                        }
+                        yield json.dumps({"type": "feedback", "feedback": feedback}) + "\n"
                     i += 1
                 yield json.dumps({"type": "done", "count": i}) + "\n"
             finally:

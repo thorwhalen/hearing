@@ -165,3 +165,66 @@ header h1 {
 .empty {
   color: var(--muted);
 }
+
+/* live copilot feedback panel */
+.summary .count {
+  color: var(--muted);
+  font-weight: normal;
+  font-size: 0.85rem;
+}
+
+.fb {
+  border-left: 3px solid var(--them);
+  padding: 0.4rem 0.6rem;
+  margin-bottom: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+}
+
+.fb-note {
+  border-left-color: var(--me);
+}
+
+.fb-suggested_question {
+  border-left-color: #f59e0b;
+}
+
+.fb-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.2rem;
+}
+
+.badge {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.1rem 0.4rem;
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--muted);
+}
+
+.badge-note {
+  color: var(--me);
+}
+
+.badge-suggested_question {
+  color: #f59e0b;
+}
+
+.fb-body {
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.fb-src {
+  font-size: 0.75rem;
+  color: var(--me);
+}
+
+.time {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
