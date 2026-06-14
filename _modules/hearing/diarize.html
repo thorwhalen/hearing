@@ -1,0 +1,273 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hearing.diarize &mdash; hearing 0.0.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=e3a6060d"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            hearing
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing.html">hearing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/agents.html">hearing.agents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/capture.html">hearing.capture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/cli.html">hearing.cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/diarize.html">hearing.diarize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/interfaces.html">hearing.interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/pipeline.html">hearing.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/stt.html">hearing.stt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/types.html">hearing.types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/vad.html">hearing.vad</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hearing</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">hearing.diarize</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hearing.diarize</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Diarization and speaker labelling for the hearing pipeline.</span>
+
+<span class="sd">Two ideas, one interface (:class:`~hearing.interfaces.Diarizer`):</span>
+
+<span class="sd">1. **The channel trick (default, free).** Because capture keeps the mic and the</span>
+<span class="sd">   system audio on *separate channels*, we already know who is local: the</span>
+<span class="sd">   ``MIC`` channel is &quot;me&quot;, the ``SYSTEM`` channel is the remote participants.</span>
+<span class="sd">   :class:`ChannelTrickDiarizer` just maps channel -&gt; speaker. No model, no</span>
+<span class="sd">   audio, no error from overlap on the local side. This beats voice</span>
+<span class="sd">   fingerprinting for the &quot;is it me?&quot; question.</span>
+
+<span class="sd">2. **Real diarization (the upgrade).** To separate *multiple remote* speakers</span>
+<span class="sd">   you need acoustic diarization. :class:`PyannoteDiarizer` wraps</span>
+<span class="sd">   ``pyannote.audio`` and runs only on the system channel. A diarized transcript</span>
+<span class="sd">   is standoff interval annotation with a speaker tier — see the</span>
+<span class="sd">   ``annotation-systems`` skill.</span>
+
+<span class="sd">See the ``hearing-diarization`` skill for the full landscape (pyannote vs NeMo</span>
+<span class="sd">vs WhisperX vs SpeechBrain, DER numbers, enrollment).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">hearing.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ME</span><span class="p">,</span> <span class="n">THEM</span><span class="p">,</span> <span class="n">Channel</span><span class="p">,</span> <span class="n">SpeakerLabel</span><span class="p">,</span> <span class="n">TranscriptSegment</span>
+
+
+<div class="viewcode-block" id="ChannelTrickDiarizer">
+<a class="viewcode-back" href="../../module_docs/hearing/diarize.html#hearing.diarize.ChannelTrickDiarizer">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ChannelTrickDiarizer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Label speakers from the capture channel — the free, reliable default.</span>
+
+<span class="sd">    ``MIC`` -&gt; ``me_label`` (the local user), ``SYSTEM`` -&gt; ``them_label`` (a</span>
+<span class="sd">    remote participant). Segments already carrying a speaker, or coming from a</span>
+<span class="sd">    ``MIXED`` channel, are passed through unchanged (there is nothing to infer).</span>
+
+<span class="sd">    This is the architecture&#39;s default diarizer whenever channel information is</span>
+<span class="sd">    present. To distinguish *individual* remote speakers, compose this with (or</span>
+<span class="sd">    replace it by) :class:`PyannoteDiarizer`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">me_label</span><span class="p">:</span> <span class="n">SpeakerLabel</span> <span class="o">=</span> <span class="n">ME</span>
+    <span class="n">them_label</span><span class="p">:</span> <span class="n">SpeakerLabel</span> <span class="o">=</span> <span class="n">THEM</span>
+
+<div class="viewcode-block" id="ChannelTrickDiarizer.assign_speakers">
+<a class="viewcode-back" href="../../module_docs/hearing/diarize.html#hearing.diarize.ChannelTrickDiarizer.assign_speakers">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">assign_speakers</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">segments</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">],</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">audio</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># unused; kept for interface parity</span>
+        <span class="n">sample_rate</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Yield segments with ``.speaker`` set from their ``.channel``.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">seg</span><span class="o">.</span><span class="n">speaker</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">seg</span>
+            <span class="k">elif</span> <span class="n">seg</span><span class="o">.</span><span class="n">channel</span> <span class="ow">is</span> <span class="n">Channel</span><span class="o">.</span><span class="n">MIC</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">seg</span><span class="o">.</span><span class="n">with_speaker</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">me_label</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">seg</span><span class="o">.</span><span class="n">channel</span> <span class="ow">is</span> <span class="n">Channel</span><span class="o">.</span><span class="n">SYSTEM</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">seg</span><span class="o">.</span><span class="n">with_speaker</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">them_label</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">seg</span>  <span class="c1"># MIXED: unknown, leave for a real diarizer</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="PyannoteDiarizer">
+<a class="viewcode-back" href="../../module_docs/hearing/diarize.html#hearing.diarize.PyannoteDiarizer">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PyannoteDiarizer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Acoustic diarization via ``pyannote.audio`` (the upgrade path).</span>
+
+<span class="sd">    Runs the pretrained pipeline over the audio, then assigns each segment the</span>
+<span class="sd">    speaker whose diarized turn overlaps it most. Intended to run on the</span>
+<span class="sd">    *system* channel only (the mic channel is already known to be &quot;me&quot;).</span>
+
+<span class="sd">    Requires ``pip install hearing[diarize]`` and a Hugging Face token with the</span>
+<span class="sd">    pyannote model licenses accepted. This implementation is provided for the</span>
+<span class="sd">    diarization milestone; it is import-guarded so the package works without it.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;pyannote/speaker-diarization-3.1&quot;</span>
+    <span class="n">hf_token</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">speaker_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;spk_&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">pyannote.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pipeline</span>
+        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pragma: no cover - guidance path</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                <span class="s2">&quot;PyannoteDiarizer needs pyannote.audio. Install with:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;    pip install hearing[diarize]</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;and accept the model license at hf.co, passing hf_token=.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;Tip: the ChannelTrickDiarizer needs none of this and already &quot;</span>
+                <span class="s2">&quot;gives you &#39;me vs them&#39; for free.&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+<span class="w">        </span><span class="kn">import</span> <span class="n">os</span>
+
+        <span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hf_token</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;HUGGINGFACE_TOKEN&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;HF_TOKEN&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Pipeline</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">use_auth_token</span><span class="o">=</span><span class="n">token</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PyannoteDiarizer.assign_speakers">
+<a class="viewcode-back" href="../../module_docs/hearing/diarize.html#hearing.diarize.PyannoteDiarizer.assign_speakers">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">assign_speakers</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">segments</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">],</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">audio</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sample_rate</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">]:</span>  <span class="c1"># pragma: no cover - needs model + token</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Yield segments labelled with the most-overlapping diarized speaker.&quot;&quot;&quot;</span>
+        <span class="n">segments</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">segments</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">audio</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">sample_rate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Nothing to run on; fall back to the channel trick.</span>
+            <span class="k">yield from</span> <span class="n">ChannelTrickDiarizer</span><span class="p">()</span><span class="o">.</span><span class="n">assign_speakers</span><span class="p">(</span><span class="n">segments</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">pipeline</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="p">()</span>
+        <span class="n">diarization</span> <span class="o">=</span> <span class="n">pipeline</span><span class="p">(</span>
+            <span class="p">{</span><span class="s2">&quot;waveform&quot;</span><span class="p">:</span> <span class="n">_as_torch</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span> <span class="s2">&quot;sample_rate&quot;</span><span class="p">:</span> <span class="n">sample_rate</span><span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">turns</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">start</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">end</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">speaker_prefix</span><span class="si">}{</span><span class="n">label</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">diarization</span><span class="o">.</span><span class="n">itertracks</span><span class="p">(</span><span class="n">yield_label</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">seg</span><span class="o">.</span><span class="n">speaker</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">seg</span>
+                <span class="k">continue</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="n">_best_overlap</span><span class="p">(</span><span class="n">seg</span><span class="o">.</span><span class="n">span</span><span class="o">.</span><span class="n">start_ms</span><span class="p">,</span> <span class="n">seg</span><span class="o">.</span><span class="n">span</span><span class="o">.</span><span class="n">end_ms</span><span class="p">,</span> <span class="n">turns</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">seg</span><span class="o">.</span><span class="n">with_speaker</span><span class="p">(</span><span class="n">label</span><span class="p">)</span> <span class="k">if</span> <span class="n">label</span> <span class="k">else</span> <span class="n">seg</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_as_torch</span><span class="p">(</span><span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>  <span class="c1"># pragma: no cover - needs torch</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Shape a mono float array as the ``(1, n)`` torch tensor pyannote wants.&quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ascontiguousarray</span><span class="p">(</span><span class="n">audio</span><span class="p">))</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_best_overlap</span><span class="p">(</span>
+    <span class="n">start_ms</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">end_ms</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">turns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the label of the diarized turn with the largest overlap, if any.&quot;&quot;&quot;</span>
+    <span class="n">best_label</span><span class="p">,</span> <span class="n">best_overlap</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">t_start</span><span class="p">,</span> <span class="n">t_end</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">turns</span><span class="p">:</span>
+        <span class="n">overlap</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">end_ms</span><span class="p">,</span> <span class="n">t_end</span><span class="p">)</span> <span class="o">-</span> <span class="nb">max</span><span class="p">(</span><span class="n">start_ms</span><span class="p">,</span> <span class="n">t_start</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">overlap</span> <span class="o">&gt;</span> <span class="n">best_overlap</span><span class="p">:</span>
+            <span class="n">best_label</span><span class="p">,</span> <span class="n">best_overlap</span> <span class="o">=</span> <span class="n">label</span><span class="p">,</span> <span class="n">overlap</span>
+    <span class="k">return</span> <span class="n">best_label</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

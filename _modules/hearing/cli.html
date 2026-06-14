@@ -1,0 +1,327 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hearing.cli &mdash; hearing 0.0.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=e3a6060d"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            hearing
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing.html">hearing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/agents.html">hearing.agents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/capture.html">hearing.capture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/cli.html">hearing.cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/diarize.html">hearing.diarize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/interfaces.html">hearing.interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/pipeline.html">hearing.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/stt.html">hearing.stt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/types.html">hearing.types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/vad.html">hearing.vad</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hearing</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">hearing.cli</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hearing.cli</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Command-line interface for hearing, dispatched with `argh`.</span>
+
+<span class="sd">Surfaces the Python facades (`transcribe`, `summarize`) as subcommands — it does</span>
+<span class="sd">not reimplement them (the facades are the SSOT; see the ``python-dispatching``</span>
+<span class="sd">and ``hearing-architecture`` skills). Installed as the ``hearing`` console</span>
+<span class="sd">script::</span>
+
+<span class="sd">    hearing transcribe meeting.wav</span>
+<span class="sd">    hearing transcribe meeting.wav --model small --out notes.json</span>
+<span class="sd">    hearing summarize meeting.wav            # transcribe + AI meeting notes</span>
+<span class="sd">    hearing info                             # check what&#39;s installed/available</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+
+<div class="viewcode-block" id="transcribe">
+<a class="viewcode-back" href="../../module_docs/hearing/cli.html#hearing.cli.transcribe">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">transcribe</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;base&quot;</span><span class="p">,</span>
+    <span class="n">language</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">split</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">diarize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">out</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transcribe an audio file to text or JSON.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path: audio file (wav/flac/aiff/...; convert mp3/m4a with ffmpeg first).</span>
+<span class="sd">        model: whisper model size (tiny/base/small/medium/large-v3/...).</span>
+<span class="sd">        language: force a language code (e.g. &quot;en&quot;); omit to auto-detect.</span>
+<span class="sd">        split: split mic/system channels for multi-channel files (me vs them).</span>
+<span class="sd">        diarize: apply the channel-trick &quot;me vs them&quot; labelling.</span>
+<span class="sd">        out: write to this path (.json -&gt; JSON, else formatted text); else stdout.</span>
+<span class="sd">        fmt: stdout/text format — &quot;text&quot; or &quot;json&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing</span><span class="w"> </span><span class="kn">import</span> <span class="n">transcribe</span> <span class="k">as</span> <span class="n">_transcribe</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.diarize</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChannelTrickDiarizer</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.stt</span><span class="w"> </span><span class="kn">import</span> <span class="n">FasterWhisperSTT</span>
+
+    <span class="n">transcript</span> <span class="o">=</span> <span class="n">_transcribe</span><span class="p">(</span>
+        <span class="n">path</span><span class="p">,</span>
+        <span class="n">engine</span><span class="o">=</span><span class="n">FasterWhisperSTT</span><span class="p">(</span><span class="n">model_size</span><span class="o">=</span><span class="n">model</span><span class="p">),</span>
+        <span class="n">diarizer</span><span class="o">=</span><span class="n">ChannelTrickDiarizer</span><span class="p">()</span> <span class="k">if</span> <span class="n">diarize</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">language</span><span class="o">=</span><span class="n">language</span><span class="p">,</span>
+        <span class="n">split</span><span class="o">=</span><span class="n">split</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">out</span><span class="p">:</span>
+        <span class="n">out_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">out_path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;.json&quot;</span><span class="p">:</span>
+            <span class="n">out_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">transcript</span><span class="o">.</span><span class="n">to_jsonable</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">transcript</span><span class="o">.</span><span class="n">formatted</span><span class="p">())</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrote </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">transcript</span><span class="p">)</span><span class="si">}</span><span class="s2"> segments to </span><span class="si">{</span><span class="n">out_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;json&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">transcript</span><span class="o">.</span><span class="n">to_jsonable</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">transcript</span><span class="o">.</span><span class="n">formatted</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="summarize">
+<a class="viewcode-back" href="../../module_docs/hearing/cli.html#hearing.cli.summarize">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">summarize</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">agent</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">transcribe_model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;base&quot;</span><span class="p">,</span>
+    <span class="n">split</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transcribe a meeting and produce AI notes (summary, actions, questions).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path: audio file to transcribe and analyze.</span>
+<span class="sd">        agent: &quot;auto&quot; (Claude if available, else offline extractive), &quot;claude&quot;,</span>
+<span class="sd">            or &quot;extractive&quot; (deterministic, no API key needed).</span>
+<span class="sd">        model: Claude model id (only used by the claude/auto agent).</span>
+<span class="sd">        context: optional context to connect the agent to a project/meeting.</span>
+<span class="sd">        transcribe_model: whisper model size used for transcription.</span>
+<span class="sd">        split: split mic/system channels (me vs them).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.agents</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_default_agent</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">summarize</span> <span class="k">as</span> <span class="n">_summarize</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.stt</span><span class="w"> </span><span class="kn">import</span> <span class="n">FasterWhisperSTT</span>
+
+    <span class="n">chosen</span> <span class="o">=</span> <span class="n">build_default_agent</span><span class="p">(</span><span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">prefer</span><span class="o">=</span><span class="n">agent</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_summarize</span><span class="p">(</span>
+        <span class="n">path</span><span class="p">,</span>
+        <span class="n">agent</span><span class="o">=</span><span class="n">chosen</span><span class="p">,</span>
+        <span class="n">engine</span><span class="o">=</span><span class="n">FasterWhisperSTT</span><span class="p">(</span><span class="n">model_size</span><span class="o">=</span><span class="n">transcribe_model</span><span class="p">),</span>
+        <span class="n">split</span><span class="o">=</span><span class="n">split</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="live">
+<a class="viewcode-back" href="../../module_docs/hearing/cli.html#hearing.cli.live">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">live</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;base&quot;</span><span class="p">,</span>
+    <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">block_ms</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
+    <span class="n">realtime</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the LIVE streaming pipeline, printing segments as utterances finalize.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path: stream this audio FILE through the live loop (great for a demo /</span>
+<span class="sd">            no hardware). Omit to capture from an audio DEVICE instead.</span>
+<span class="sd">        model: whisper model size for the streaming STT.</span>
+<span class="sd">        device: audio device index/name for live capture (an Aggregate Device</span>
+<span class="sd">            with mic + BlackHole; see the hearing-audio-capture skill).</span>
+<span class="sd">        block_ms: streaming block size in milliseconds.</span>
+<span class="sd">        realtime: when streaming a file, pace it in real time (else as-fast-as).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.capture</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeviceCapture</span><span class="p">,</span> <span class="n">StreamingFileCapture</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">live_transcribe</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.stt</span><span class="w"> </span><span class="kn">import</span> <span class="n">FasterWhisperSTT</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">_ms_to_clock</span>
+
+    <span class="n">engine</span> <span class="o">=</span> <span class="n">FasterWhisperSTT</span><span class="p">(</span><span class="n">model_size</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">path</span><span class="p">:</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">StreamingFileCapture</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">block_ms</span><span class="o">=</span><span class="n">block_ms</span><span class="p">,</span> <span class="n">realtime</span><span class="o">=</span><span class="n">realtime</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">DeviceCapture</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">block_ms</span><span class="o">=</span><span class="n">block_ms</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Listening (Ctrl+C to stop)…&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_run</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">async</span> <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">live_transcribe</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="n">engine</span><span class="p">):</span>
+            <span class="n">who</span> <span class="o">=</span> <span class="n">seg</span><span class="o">.</span><span class="n">speaker</span> <span class="ow">or</span> <span class="n">seg</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">value</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">_ms_to_clock</span><span class="p">(</span><span class="n">seg</span><span class="o">.</span><span class="n">span</span><span class="o">.</span><span class="n">start_ms</span><span class="p">)</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">who</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">seg</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">_run</span><span class="p">())</span>
+    <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">stopped.&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="info">
+<a class="viewcode-back" href="../../module_docs/hearing/cli.html#hearing.cli.info">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">info</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Report which optional components are installed and what&#39;s missing.&quot;&quot;&quot;</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;hearing — component availability:&quot;</span><span class="p">]</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_check</span><span class="p">(</span><span class="s2">&quot;soundfile&quot;</span><span class="p">,</span> <span class="s2">&quot;audio file reading&quot;</span><span class="p">))</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_check</span><span class="p">(</span><span class="s2">&quot;soxr&quot;</span><span class="p">,</span> <span class="s2">&quot;high-quality resampling (optional; linear fallback)&quot;</span><span class="p">))</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_check</span><span class="p">(</span><span class="s2">&quot;faster_whisper&quot;</span><span class="p">,</span> <span class="s2">&quot;default local STT engine  [hearing[whisper]]&quot;</span><span class="p">))</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_check</span><span class="p">(</span><span class="s2">&quot;anthropic&quot;</span><span class="p">,</span> <span class="s2">&quot;Claude agent backend          [hearing[agents]]&quot;</span><span class="p">))</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_check</span><span class="p">(</span><span class="s2">&quot;pyannote.audio&quot;</span><span class="p">,</span> <span class="s2">&quot;speaker diarization          [hearing[diarize]]&quot;</span><span class="p">))</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+    <span class="n">key</span> <span class="o">=</span> <span class="s2">&quot;set&quot;</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;ANTHROPIC_API_KEY&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;NOT set&quot;</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  ANTHROPIC_API_KEY: </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;  (system-audio capture on macOS needs BlackHole or Core Audio&quot;</span><span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;   taps — see the hearing-audio-capture skill.)&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">what</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One availability line for `info`.&quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">importlib.util</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># find_spec raises (not returns None) when a parent package is missing,</span>
+        <span class="c1"># e.g. &quot;pyannote.audio&quot; with no &quot;pyannote&quot; installed — treat as absent.</span>
+        <span class="n">found</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">find_spec</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
+        <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;  [</span><span class="si">{</span><span class="s1">&#39;x&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">found</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39; &#39;</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">module</span><span class="si">:</span><span class="s2">&lt;16</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">what</span><span class="si">}</span><span class="s2">&quot;</span>
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../module_docs/hearing/cli.html#hearing.cli.main">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Entry point for the ``hearing`` console script.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">argh</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - argh is a core dependency</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;hearing CLI needs `argh` (pip install argh).&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">argh.assembling</span><span class="w"> </span><span class="kn">import</span> <span class="n">NameMappingPolicy</span>
+
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argh</span><span class="o">.</span><span class="n">ArghParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;hearing — meeting transcription &amp; AI agents&quot;</span><span class="p">)</span>
+    <span class="c1"># BY_NAME_IF_KWONLY: positional params stay positional (optional when they have</span>
+    <span class="c1"># a default, e.g. `hearing live [FILE]`); keyword-only params become --options.</span>
+    <span class="n">argh</span><span class="o">.</span><span class="n">add_commands</span><span class="p">(</span>
+        <span class="n">parser</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">transcribe</span><span class="p">,</span> <span class="n">summarize</span><span class="p">,</span> <span class="n">live</span><span class="p">,</span> <span class="n">info</span><span class="p">],</span>
+        <span class="n">name_mapping_policy</span><span class="o">=</span><span class="n">NameMappingPolicy</span><span class="o">.</span><span class="n">BY_NAME_IF_KWONLY</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

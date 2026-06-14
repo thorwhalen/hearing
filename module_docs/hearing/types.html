@@ -1,0 +1,288 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hearing.types &mdash; hearing 0.0.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=e3a6060d"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="hearing.vad" href="vad.html" />
+    <link rel="prev" title="hearing.stt" href="stt.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            hearing
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../hearing.html">hearing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="agents.html">hearing.agents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="capture.html">hearing.capture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">hearing.cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diarize.html">hearing.diarize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html">hearing.interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">hearing.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="stt.html">hearing.stt</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">hearing.types</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.types.Channel"><code class="docutils literal notranslate"><span class="pre">Channel</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.types.TimeSpan"><code class="docutils literal notranslate"><span class="pre">TimeSpan</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.types.TimeSpan.duration_ms"><code class="docutils literal notranslate"><span class="pre">TimeSpan.duration_ms</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.types.TimeSpan.from_seconds"><code class="docutils literal notranslate"><span class="pre">TimeSpan.from_seconds()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.types.Transcript"><code class="docutils literal notranslate"><span class="pre">Transcript</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.types.Transcript.duration_ms"><code class="docutils literal notranslate"><span class="pre">Transcript.duration_ms</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.types.Transcript.formatted"><code class="docutils literal notranslate"><span class="pre">Transcript.formatted()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.types.Transcript.speakers"><code class="docutils literal notranslate"><span class="pre">Transcript.speakers</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.types.Transcript.text"><code class="docutils literal notranslate"><span class="pre">Transcript.text</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.types.Transcript.to_jsonable"><code class="docutils literal notranslate"><span class="pre">Transcript.to_jsonable()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.types.Transcript.with_meta"><code class="docutils literal notranslate"><span class="pre">Transcript.with_meta()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.types.TranscriptSegment"><code class="docutils literal notranslate"><span class="pre">TranscriptSegment</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.types.TranscriptSegment.with_channel"><code class="docutils literal notranslate"><span class="pre">TranscriptSegment.with_channel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.types.TranscriptSegment.with_speaker"><code class="docutils literal notranslate"><span class="pre">TranscriptSegment.with_speaker()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.types.Word"><code class="docutils literal notranslate"><span class="pre">Word</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.types.merge_segments"><code class="docutils literal notranslate"><span class="pre">merge_segments()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="vad.html">hearing.vad</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hearing</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">hearing.types</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/module_docs/hearing/types.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-hearing.types">
+<span id="hearing-types"></span><h1>hearing.types<a class="headerlink" href="#module-hearing.types" title="Link to this heading"></a></h1>
+<p>Shared data model for the hearing pipeline.</p>
+<p>This is the SSOT data spine that every concern (capture, STT, diarization,
+agents) speaks. A transcript is <em>standoff interval annotation</em> over the audio:
+segments reference the audio by time (a <a class="reference internal" href="#hearing.types.TimeSpan" title="hearing.types.TimeSpan"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeSpan</span></code></a>) and never carry the
+samples themselves. Time is integer milliseconds — never bare float seconds —
+so it is accumulation-safe, hashable, and round-trippable.</p>
+<p>See the <code class="docutils literal notranslate"><span class="pre">hearing-architecture</span></code> skill for the rationale behind every choice
+here, and the <code class="docutils literal notranslate"><span class="pre">annotation-systems</span></code> skill for the standoff-annotation theory.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="hearing.types.Channel">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.types.</span></span><span class="sig-name descname"><span class="pre">Channel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/hearing/types.html#Channel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.types.Channel" title="Link to this definition"></a></dt>
+<dd><p>Which capture channel a segment came from.</p>
+<p>The channel <em>is</em> the “me vs them” signal, for free: <code class="docutils literal notranslate"><span class="pre">MIC</span></code> is the local
+user, <code class="docutils literal notranslate"><span class="pre">SYSTEM</span></code> is everyone else (audio that came out of the speakers).
+<code class="docutils literal notranslate"><span class="pre">MIXED</span></code> is a single-channel / unknown source.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hearing.types.TimeSpan">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.types.</span></span><span class="sig-name descname"><span class="pre">TimeSpan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_ms</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_ms</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/hearing/types.html#TimeSpan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.types.TimeSpan" title="Link to this definition"></a></dt>
+<dd><p>A half-open interval <code class="docutils literal notranslate"><span class="pre">[start_ms,</span> <span class="pre">end_ms)</span></code> in integer milliseconds.</p>
+<p>Integer time, never float seconds — accumulation-safe and hashable.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">TimeSpan</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1500</span><span class="p">)</span><span class="o">.</span><span class="n">duration_ms</span>
+<span class="go">1500</span>
+</pre></div>
+</div>
+<dl class="py property">
+<dt class="sig sig-object py" id="hearing.types.TimeSpan.duration_ms">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">duration_ms</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#hearing.types.TimeSpan.duration_ms" title="Link to this definition"></a></dt>
+<dd><p>Length of the interval in milliseconds.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.types.TimeSpan.from_seconds">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_seconds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#hearing.types.TimeSpan" title="hearing.types.TimeSpan"><span class="pre">TimeSpan</span></a></span></span><a class="reference internal" href="../../_modules/hearing/types.html#TimeSpan.from_seconds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.types.TimeSpan.from_seconds" title="Link to this definition"></a></dt>
+<dd><p>Build a span from float seconds (e.g. from an STT engine).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hearing.types.Transcript">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.types.</span></span><span class="sig-name descname"><span class="pre">Transcript</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">segments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple[~hearing.types.TranscriptSegment</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">...]</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object]</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/hearing/types.html#Transcript"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.types.Transcript" title="Link to this definition"></a></dt>
+<dd><p>A finished transcript: an ordered collection of segments plus metadata.</p>
+<p>Iterable and <code class="docutils literal notranslate"><span class="pre">len</span></code>-able, so it stands in for a <code class="docutils literal notranslate"><span class="pre">Sequence</span></code> of segments
+wherever the architecture’s facades return “segments”. Adds convenience
+accessors the CLI/agents need.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">Transcript</span><span class="p">((</span><span class="n">TranscriptSegment</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="n">TimeSpan</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1000</span><span class="p">),</span> <span class="n">speaker</span><span class="o">=</span><span class="n">ME</span><span class="p">),</span>
+<span class="gp">... </span>                 <span class="n">TranscriptSegment</span><span class="p">(</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="n">TimeSpan</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">2000</span><span class="p">),</span> <span class="n">speaker</span><span class="o">=</span><span class="n">THEM</span><span class="p">)))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="o">.</span><span class="n">text</span>
+<span class="go">&#39;a b&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+<span class="go">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">sorted</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">speakers</span><span class="p">)</span>
+<span class="go">[&#39;me&#39;, &#39;them&#39;]</span>
+</pre></div>
+</div>
+<dl class="py property">
+<dt class="sig sig-object py" id="hearing.types.Transcript.duration_ms">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">duration_ms</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#hearing.types.Transcript.duration_ms" title="Link to this definition"></a></dt>
+<dd><p>End of the last segment, or 0 if empty.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.types.Transcript.formatted">
+<span class="sig-name descname"><span class="pre">formatted</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">speakers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/hearing/types.html#Transcript.formatted"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.types.Transcript.formatted" title="Link to this definition"></a></dt>
+<dd><p>Render as a human-readable transcript, one line per segment.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="hearing.types.Transcript.speakers">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">speakers</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#hearing.types.Transcript.speakers" title="Link to this definition"></a></dt>
+<dd><p>The distinct speaker labels present (ignoring <code class="docutils literal notranslate"><span class="pre">None</span></code>).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="hearing.types.Transcript.text">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">text</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#hearing.types.Transcript.text" title="Link to this definition"></a></dt>
+<dd><p>All segment texts joined by a single space.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.types.Transcript.to_jsonable">
+<span class="sig-name descname"><span class="pre">to_jsonable</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/hearing/types.html#Transcript.to_jsonable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.types.Transcript.to_jsonable" title="Link to this definition"></a></dt>
+<dd><p>A plain <code class="docutils literal notranslate"><span class="pre">list[dict]</span></code> ready for <code class="docutils literal notranslate"><span class="pre">json.dumps</span></code> (segments only).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.types.Transcript.with_meta">
+<span class="sig-name descname"><span class="pre">with_meta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#hearing.types.Transcript" title="hearing.types.Transcript"><span class="pre">Transcript</span></a></span></span><a class="reference internal" href="../../_modules/hearing/types.html#Transcript.with_meta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.types.Transcript.with_meta" title="Link to this definition"></a></dt>
+<dd><p>Return a copy with extra metadata merged in.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hearing.types.TranscriptSegment">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.types.</span></span><span class="sig-name descname"><span class="pre">TranscriptSegment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#hearing.types.TimeSpan" title="hearing.types.TimeSpan"><span class="pre">TimeSpan</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#hearing.types.Channel" title="hearing.types.Channel"><span class="pre">Channel</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Channel.MIXED</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">speaker</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">words</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple[~hearing.types.Word</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">...]</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object]</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/hearing/types.html#TranscriptSegment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.types.TranscriptSegment" title="Link to this definition"></a></dt>
+<dd><p>The data spine — a standoff interval annotation over the audio.</p>
+<p>Required fields are <code class="docutils literal notranslate"><span class="pre">text</span></code> and <code class="docutils literal notranslate"><span class="pre">span</span></code>. Everything else is optional
+metadata that a concern <em>enriches</em>: STT sets <code class="docutils literal notranslate"><span class="pre">text</span></code>/<code class="docutils literal notranslate"><span class="pre">span</span></code>/
+<code class="docutils literal notranslate"><span class="pre">confidence</span></code>; capture sets <code class="docutils literal notranslate"><span class="pre">channel</span></code>; diarization sets <code class="docutils literal notranslate"><span class="pre">speaker</span></code>.
+Segments are frozen — enrich by copying (<code class="docutils literal notranslate"><span class="pre">with_speaker</span></code>/<code class="docutils literal notranslate"><span class="pre">with_channel</span></code>),
+never mutate.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">seg</span> <span class="o">=</span> <span class="n">TranscriptSegment</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">,</span> <span class="n">TimeSpan</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">500</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">seg</span><span class="o">.</span><span class="n">with_speaker</span><span class="p">(</span><span class="n">ME</span><span class="p">)</span><span class="o">.</span><span class="n">speaker</span>
+<span class="go">&#39;me&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">seg</span><span class="o">.</span><span class="n">text</span>
+<span class="go">&#39;hello&#39;</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.types.TranscriptSegment.with_channel">
+<span class="sig-name descname"><span class="pre">with_channel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#hearing.types.Channel" title="hearing.types.Channel"><span class="pre">Channel</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#hearing.types.TranscriptSegment" title="hearing.types.TranscriptSegment"><span class="pre">TranscriptSegment</span></a></span></span><a class="reference internal" href="../../_modules/hearing/types.html#TranscriptSegment.with_channel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.types.TranscriptSegment.with_channel" title="Link to this definition"></a></dt>
+<dd><p>Return a copy carrying a channel label (frozen -&gt; copy, don’t mutate).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.types.TranscriptSegment.with_speaker">
+<span class="sig-name descname"><span class="pre">with_speaker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">speaker</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#hearing.types.TranscriptSegment" title="hearing.types.TranscriptSegment"><span class="pre">TranscriptSegment</span></a></span></span><a class="reference internal" href="../../_modules/hearing/types.html#TranscriptSegment.with_speaker"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.types.TranscriptSegment.with_speaker" title="Link to this definition"></a></dt>
+<dd><p>Return a copy carrying a speaker label (frozen -&gt; copy, don’t mutate).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hearing.types.Word">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.types.</span></span><span class="sig-name descname"><span class="pre">Word</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#hearing.types.TimeSpan" title="hearing.types.TimeSpan"><span class="pre">TimeSpan</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/hearing/types.html#Word"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.types.Word" title="Link to this definition"></a></dt>
+<dd><p>Optional word-level timing (WhisperX / <code class="docutils literal notranslate"><span class="pre">word_timestamps=True</span></code>).</p>
+<p>Lets an agent trigger on a keyword mid-utterance instead of waiting for the
+end of a turn. Purely optional metadata on a <a class="reference internal" href="#hearing.types.TranscriptSegment" title="hearing.types.TranscriptSegment"><code class="xref py py-class docutils literal notranslate"><span class="pre">TranscriptSegment</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hearing.types.merge_segments">
+<span class="sig-prename descclassname"><span class="pre">hearing.types.</span></span><span class="sig-name descname"><span class="pre">merge_segments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">segment_groups</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#hearing.types.TranscriptSegment" title="hearing.types.TranscriptSegment"><span class="pre">TranscriptSegment</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#hearing.types.TranscriptSegment" title="hearing.types.TranscriptSegment"><span class="pre">TranscriptSegment</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/hearing/types.html#merge_segments"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.types.merge_segments" title="Link to this definition"></a></dt>
+<dd><p>Merge several segment sequences into one list ordered by start time.</p>
+<p>Used when transcribing the mic and system channels separately and then
+interleaving them back into a single chronological transcript.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="stt.html" class="btn btn-neutral float-left" title="hearing.stt" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="vad.html" class="btn btn-neutral float-right" title="hearing.vad" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

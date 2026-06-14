@@ -1,0 +1,196 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hearing.stt &mdash; hearing 0.0.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=e3a6060d"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="hearing.types" href="types.html" />
+    <link rel="prev" title="hearing.pipeline" href="pipeline.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            hearing
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../hearing.html">hearing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="agents.html">hearing.agents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="capture.html">hearing.capture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">hearing.cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diarize.html">hearing.diarize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html">hearing.interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">hearing.pipeline</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">hearing.stt</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.stt.DEFAULT_WHISPER_MODEL"><code class="docutils literal notranslate"><span class="pre">DEFAULT_WHISPER_MODEL</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.stt.FasterWhisperSTT"><code class="docutils literal notranslate"><span class="pre">FasterWhisperSTT</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.stt.FasterWhisperSTT.stream_transcribe"><code class="docutils literal notranslate"><span class="pre">FasterWhisperSTT.stream_transcribe()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.stt.FasterWhisperSTT.transcribe"><code class="docutils literal notranslate"><span class="pre">FasterWhisperSTT.transcribe()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.stt.default_engine"><code class="docutils literal notranslate"><span class="pre">default_engine()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">hearing.types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vad.html">hearing.vad</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hearing</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">hearing.stt</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/module_docs/hearing/stt.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-hearing.stt">
+<span id="hearing-stt"></span><h1>hearing.stt<a class="headerlink" href="#module-hearing.stt" title="Link to this heading"></a></h1>
+<p>Speech-to-text engines behind the hearing STT facade.</p>
+<p>The rest of the architecture only ever sees the
+<a class="reference internal" href="interfaces.html#hearing.interfaces.STTEngine" title="hearing.interfaces.STTEngine"><code class="xref py py-class docutils literal notranslate"><span class="pre">STTEngine</span></code></a> Protocol: <code class="docutils literal notranslate"><span class="pre">transcribe(audio)</span> <span class="pre">-&gt;</span> <span class="pre">segments</span></code>.
+Swap the engine (local Whisper for cloud Deepgram, say) by changing one line of
+assembly — nothing downstream knows or cares. See the <code class="docutils literal notranslate"><span class="pre">hearing-stt</span></code> skill for
+the full engine landscape, the per-minute pricing table, and the local-vs-cloud
+decision thresholds.</p>
+<p>The default engine is <a class="reference internal" href="#hearing.stt.FasterWhisperSTT" title="hearing.stt.FasterWhisperSTT"><code class="xref py py-class docutils literal notranslate"><span class="pre">FasterWhisperSTT</span></code></a> (faster-whisper / CTranslate2):
+fast, CPU-friendly via int8, no PyTorch, runs well on Apple Silicon. Heavy deps
+are optional — <code class="docutils literal notranslate"><span class="pre">transcribe</span></code> raises an informative error telling you what to
+<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span></code> if the engine isn’t available.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="hearing.stt.DEFAULT_WHISPER_MODEL">
+<span class="sig-prename descclassname"><span class="pre">hearing.stt.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_WHISPER_MODEL</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'base'</span></span><a class="headerlink" href="#hearing.stt.DEFAULT_WHISPER_MODEL" title="Link to this definition"></a></dt>
+<dd><p>Default local model. “base” balances speed/quality; tests use “tiny”.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hearing.stt.FasterWhisperSTT">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.stt.</span></span><span class="sig-name descname"><span class="pre">FasterWhisperSTT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'base'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'int8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">word_timestamps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vad_filter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vad</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'VAD'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/hearing/stt.html#FasterWhisperSTT"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.stt.FasterWhisperSTT" title="Link to this definition"></a></dt>
+<dd><p>Local STT via <cite>faster-whisper</cite> (CTranslate2) — the default engine.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_size</strong> – whisper size name (“tiny”, “base”, “small”, “medium”,
+“large-v3”, “large-v3-turbo”, …) or a CTranslate2 model path.</p></li>
+<li><p><strong>device</strong> – “cpu”, “cuda”, or “auto”.</p></li>
+<li><p><strong>compute_type</strong> – “int8” (default, lean) / “int8_float16” / “float16” / …</p></li>
+<li><p><strong>word_timestamps</strong> – emit per-<code class="xref py py-class docutils literal notranslate"><span class="pre">Word</span></code> timing (enables mid-utterance
+keyword triggers in the agent layer).</p></li>
+</ul>
+</dd>
+</dl>
+<p>The model is loaded lazily on first use (<code class="docutils literal notranslate"><span class="pre">functools.cached_property</span></code>), so
+constructing the engine is cheap and import-time stays light.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.stt.FasterWhisperSTT.stream_transcribe">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">stream_transcribe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AsyncIterator</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">AsyncIterator</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="types.html#hearing.types.TranscriptSegment" title="hearing.types.TranscriptSegment"><span class="pre">TranscriptSegment</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/hearing/stt.html#FasterWhisperSTT.stream_transcribe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.stt.FasterWhisperSTT.stream_transcribe" title="Link to this definition"></a></dt>
+<dd><p>Stream finalized segments as utterances complete (the live path).</p>
+<p>VAD (<code class="docutils literal notranslate"><span class="pre">self.vad</span></code>, default <a class="reference internal" href="vad.html#hearing.vad.EnergyVAD" title="hearing.vad.EnergyVAD"><code class="xref py py-class docutils literal notranslate"><span class="pre">EnergyVAD</span></code></a>) groups the
+incoming frame blocks into utterances; each utterance is transcribed with
+the same batch <code class="docutils literal notranslate"><span class="pre">transcribe</span></code> and emitted as a FINALIZED segment
+(<code class="docutils literal notranslate"><span class="pre">meta['final']</span> <span class="pre">=</span> <span class="pre">True</span></code>) with its span offset to absolute stream time.</p>
+<p>Same Protocol method, same <code class="docutils literal notranslate"><span class="pre">TranscriptSegment</span></code> spine as batch — the
+live milestone adds no new interface (see hearing-live-pipeline).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.stt.FasterWhisperSTT.transcribe">
+<span class="sig-name descname"><span class="pre">transcribe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">audio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">language</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="types.html#hearing.types.TranscriptSegment" title="hearing.types.TranscriptSegment"><span class="pre">TranscriptSegment</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/hearing/stt.html#FasterWhisperSTT.transcribe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.stt.FasterWhisperSTT.transcribe" title="Link to this definition"></a></dt>
+<dd><p>Transcribe a whole mono clip; return ordered segments.</p>
+<p><code class="docutils literal notranslate"><span class="pre">audio</span></code> is a 1-D float array. It is resampled to 16 kHz if needed, so
+callers may pass native-rate audio.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hearing.stt.default_engine">
+<span class="sig-prename descclassname"><span class="pre">hearing.stt.</span></span><span class="sig-name descname"><span class="pre">default_engine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#hearing.stt.FasterWhisperSTT" title="hearing.stt.FasterWhisperSTT"><span class="pre">FasterWhisperSTT</span></a></span></span><a class="reference internal" href="../../_modules/hearing/stt.html#default_engine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.stt.default_engine" title="Link to this definition"></a></dt>
+<dd><p>Return the project’s default STT engine (faster-whisper).</p>
+<p>Tests and quick runs typically pass <code class="docutils literal notranslate"><span class="pre">model_size=&quot;tiny&quot;</span></code>.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="pipeline.html" class="btn btn-neutral float-left" title="hearing.pipeline" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="types.html" class="btn btn-neutral float-right" title="hearing.types" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

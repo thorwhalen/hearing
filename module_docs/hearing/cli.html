@@ -1,0 +1,210 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hearing.cli &mdash; hearing 0.0.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=e3a6060d"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="hearing.diarize" href="diarize.html" />
+    <link rel="prev" title="hearing.capture" href="capture.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            hearing
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../hearing.html">hearing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="agents.html">hearing.agents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="capture.html">hearing.capture</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">hearing.cli</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.cli.info"><code class="docutils literal notranslate"><span class="pre">info()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.cli.live"><code class="docutils literal notranslate"><span class="pre">live()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.cli.summarize"><code class="docutils literal notranslate"><span class="pre">summarize()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.cli.transcribe"><code class="docutils literal notranslate"><span class="pre">transcribe()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="diarize.html">hearing.diarize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html">hearing.interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">hearing.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="stt.html">hearing.stt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">hearing.types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vad.html">hearing.vad</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hearing</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">hearing.cli</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/module_docs/hearing/cli.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-hearing.cli">
+<span id="hearing-cli"></span><h1>hearing.cli<a class="headerlink" href="#module-hearing.cli" title="Link to this heading"></a></h1>
+<p>Command-line interface for hearing, dispatched with <cite>argh</cite>.</p>
+<p>Surfaces the Python facades (<cite>transcribe</cite>, <cite>summarize</cite>) as subcommands — it does
+not reimplement them (the facades are the SSOT; see the <code class="docutils literal notranslate"><span class="pre">python-dispatching</span></code>
+and <code class="docutils literal notranslate"><span class="pre">hearing-architecture</span></code> skills). Installed as the <code class="docutils literal notranslate"><span class="pre">hearing</span></code> console
+script:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">hearing</span> <span class="n">transcribe</span> <span class="n">meeting</span><span class="o">.</span><span class="n">wav</span>
+<span class="n">hearing</span> <span class="n">transcribe</span> <span class="n">meeting</span><span class="o">.</span><span class="n">wav</span> <span class="o">--</span><span class="n">model</span> <span class="n">small</span> <span class="o">--</span><span class="n">out</span> <span class="n">notes</span><span class="o">.</span><span class="n">json</span>
+<span class="n">hearing</span> <span class="n">summarize</span> <span class="n">meeting</span><span class="o">.</span><span class="n">wav</span>            <span class="c1"># transcribe + AI meeting notes</span>
+<span class="n">hearing</span> <span class="n">info</span>                             <span class="c1"># check what&#39;s installed/available</span>
+</pre></div>
+</div>
+<dl class="py function">
+<dt class="sig sig-object py" id="hearing.cli.info">
+<span class="sig-prename descclassname"><span class="pre">hearing.cli.</span></span><span class="sig-name descname"><span class="pre">info</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/hearing/cli.html#info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.cli.info" title="Link to this definition"></a></dt>
+<dd><p>Report which optional components are installed and what’s missing.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hearing.cli.live">
+<span class="sig-prename descclassname"><span class="pre">hearing.cli.</span></span><span class="sig-name descname"><span class="pre">live</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'base'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">block_ms</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">realtime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/hearing/cli.html#live"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.cli.live" title="Link to this definition"></a></dt>
+<dd><p>Run the LIVE streaming pipeline, printing segments as utterances finalize.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> – stream this audio FILE through the live loop (great for a demo /
+no hardware). Omit to capture from an audio DEVICE instead.</p></li>
+<li><p><strong>model</strong> – whisper model size for the streaming STT.</p></li>
+<li><p><strong>device</strong> – audio device index/name for live capture (an Aggregate Device
+with mic + BlackHole; see the hearing-audio-capture skill).</p></li>
+<li><p><strong>block_ms</strong> – streaming block size in milliseconds.</p></li>
+<li><p><strong>realtime</strong> – when streaming a file, pace it in real time (else as-fast-as).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hearing.cli.main">
+<span class="sig-prename descclassname"><span class="pre">hearing.cli.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">argv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/hearing/cli.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.cli.main" title="Link to this definition"></a></dt>
+<dd><p>Entry point for the <code class="docutils literal notranslate"><span class="pre">hearing</span></code> console script.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hearing.cli.summarize">
+<span class="sig-prename descclassname"><span class="pre">hearing.cli.</span></span><span class="sig-name descname"><span class="pre">summarize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">agent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transcribe_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'base'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/hearing/cli.html#summarize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.cli.summarize" title="Link to this definition"></a></dt>
+<dd><p>Transcribe a meeting and produce AI notes (summary, actions, questions).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> – audio file to transcribe and analyze.</p></li>
+<li><p><strong>agent</strong> – “auto” (Claude if available, else offline extractive), “claude”,
+or “extractive” (deterministic, no API key needed).</p></li>
+<li><p><strong>model</strong> – Claude model id (only used by the claude/auto agent).</p></li>
+<li><p><strong>context</strong> – optional context to connect the agent to a project/meeting.</p></li>
+<li><p><strong>transcribe_model</strong> – whisper model size used for transcription.</p></li>
+<li><p><strong>split</strong> – split mic/system channels (me vs them).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hearing.cli.transcribe">
+<span class="sig-prename descclassname"><span class="pre">hearing.cli.</span></span><span class="sig-name descname"><span class="pre">transcribe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'base'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">language</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diarize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'text'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/hearing/cli.html#transcribe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.cli.transcribe" title="Link to this definition"></a></dt>
+<dd><p>Transcribe an audio file to text or JSON.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> – audio file (wav/flac/aiff/…; convert mp3/m4a with ffmpeg first).</p></li>
+<li><p><strong>model</strong> – whisper model size (tiny/base/small/medium/large-v3/…).</p></li>
+<li><p><strong>language</strong> – force a language code (e.g. “en”); omit to auto-detect.</p></li>
+<li><p><strong>split</strong> – split mic/system channels for multi-channel files (me vs them).</p></li>
+<li><p><strong>diarize</strong> – apply the channel-trick “me vs them” labelling.</p></li>
+<li><p><strong>out</strong> – write to this path (.json -&gt; JSON, else formatted text); else stdout.</p></li>
+<li><p><strong>fmt</strong> – stdout/text format — “text” or “json”.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="capture.html" class="btn btn-neutral float-left" title="hearing.capture" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="diarize.html" class="btn btn-neutral float-right" title="hearing.diarize" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,4 @@
+hearing.pipeline
+================
+.. automodule:: hearing.pipeline
+   :members:

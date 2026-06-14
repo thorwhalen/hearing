@@ -1,0 +1,4 @@
+hearing.diarize
+===============
+.. automodule:: hearing.diarize
+   :members:

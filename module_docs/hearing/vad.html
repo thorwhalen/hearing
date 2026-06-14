@@ -1,0 +1,222 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hearing.vad &mdash; hearing 0.0.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=e3a6060d"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="prev" title="hearing.types" href="types.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            hearing
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../hearing.html">hearing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="agents.html">hearing.agents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="capture.html">hearing.capture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">hearing.cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diarize.html">hearing.diarize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html">hearing.interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">hearing.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="stt.html">hearing.stt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">hearing.types</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">hearing.vad</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.vad.DEFAULT_MAX_UTTERANCE_MS"><code class="docutils literal notranslate"><span class="pre">DEFAULT_MAX_UTTERANCE_MS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.vad.DEFAULT_MIN_SPEECH_MS"><code class="docutils literal notranslate"><span class="pre">DEFAULT_MIN_SPEECH_MS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.vad.DEFAULT_SILENCE_MS"><code class="docutils literal notranslate"><span class="pre">DEFAULT_SILENCE_MS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.vad.EnergyVAD"><code class="docutils literal notranslate"><span class="pre">EnergyVAD</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.vad.EnergyVAD.is_speech"><code class="docutils literal notranslate"><span class="pre">EnergyVAD.is_speech()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.vad.SileroVAD"><code class="docutils literal notranslate"><span class="pre">SileroVAD</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.vad.SileroVAD.is_speech"><code class="docutils literal notranslate"><span class="pre">SileroVAD.is_speech()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.vad.VAD"><code class="docutils literal notranslate"><span class="pre">VAD</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.vad.VAD.is_speech"><code class="docutils literal notranslate"><span class="pre">VAD.is_speech()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.vad.segment_utterances"><code class="docutils literal notranslate"><span class="pre">segment_utterances()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hearing</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">hearing.vad</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/module_docs/hearing/vad.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-hearing.vad">
+<span id="hearing-vad"></span><h1>hearing.vad<a class="headerlink" href="#module-hearing.vad" title="Link to this heading"></a></h1>
+<p>Voice-activity detection and utterance segmentation for the live pipeline.</p>
+<p>VAD owns utterance boundaries (never fixed time-slicing, which cuts words and
+wrecks WER): detect speech -&gt; buffer the utterance -&gt; on trailing silence,
+finalize. <a class="reference internal" href="#hearing.vad.segment_utterances" title="hearing.vad.segment_utterances"><code class="xref py py-func docutils literal notranslate"><span class="pre">segment_utterances()</span></code></a> turns an async stream of audio blocks into
+an async stream of <code class="docutils literal notranslate"><span class="pre">(utterance_samples,</span> <span class="pre">start_ms)</span></code> pairs that the streaming STT
+engine transcribes one at a time.</p>
+<p>Two detectors behind a tiny protocol:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#hearing.vad.EnergyVAD" title="hearing.vad.EnergyVAD"><code class="xref py py-class docutils literal notranslate"><span class="pre">EnergyVAD</span></code></a> — dependency-free RMS-threshold VAD. The default; great for
+clean/loud meeting audio and fully deterministic (so tests need no models).</p></li>
+<li><p><a class="reference internal" href="#hearing.vad.SileroVAD" title="hearing.vad.SileroVAD"><code class="xref py py-class docutils literal notranslate"><span class="pre">SileroVAD</span></code></a> — neural VAD (accurate on noisy audio); optional, lazy.</p></li>
+</ul>
+<p>See the <code class="docutils literal notranslate"><span class="pre">hearing-live-pipeline</span></code> skill for the rationale and the latency budget.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="hearing.vad.DEFAULT_MAX_UTTERANCE_MS">
+<span class="sig-prename descclassname"><span class="pre">hearing.vad.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_MAX_UTTERANCE_MS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">30000</span></span><a class="headerlink" href="#hearing.vad.DEFAULT_MAX_UTTERANCE_MS" title="Link to this definition"></a></dt>
+<dd><p>Force-flush an utterance that runs this long without a silence (ms).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="hearing.vad.DEFAULT_MIN_SPEECH_MS">
+<span class="sig-prename descclassname"><span class="pre">hearing.vad.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_MIN_SPEECH_MS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">200</span></span><a class="headerlink" href="#hearing.vad.DEFAULT_MIN_SPEECH_MS" title="Link to this definition"></a></dt>
+<dd><p>Minimum speech (ms) for an utterance to be worth transcribing.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="hearing.vad.DEFAULT_SILENCE_MS">
+<span class="sig-prename descclassname"><span class="pre">hearing.vad.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_SILENCE_MS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">700</span></span><a class="headerlink" href="#hearing.vad.DEFAULT_SILENCE_MS" title="Link to this definition"></a></dt>
+<dd><p>Default trailing-silence (ms) that marks a turn end.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hearing.vad.EnergyVAD">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.vad.</span></span><span class="sig-name descname"><span class="pre">EnergyVAD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/hearing/vad.html#EnergyVAD"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.vad.EnergyVAD" title="Link to this definition"></a></dt>
+<dd><p>RMS-energy threshold VAD — dependency-free default.</p>
+<p>A block counts as speech when its RMS energy exceeds <code class="docutils literal notranslate"><span class="pre">threshold</span></code>. Simple
+and deterministic; for noisy real-world audio prefer <a class="reference internal" href="#hearing.vad.SileroVAD" title="hearing.vad.SileroVAD"><code class="xref py py-class docutils literal notranslate"><span class="pre">SileroVAD</span></code></a>.
+<code class="docutils literal notranslate"><span class="pre">threshold</span></code> is in the same units as the float audio (roughly [-1, 1]).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.vad.EnergyVAD.is_speech">
+<span class="sig-name descname"><span class="pre">is_speech</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../_modules/hearing/vad.html#EnergyVAD.is_speech"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.vad.EnergyVAD.is_speech" title="Link to this definition"></a></dt>
+<dd><p>True if the block’s RMS energy is above <code class="docutils literal notranslate"><span class="pre">threshold</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hearing.vad.SileroVAD">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.vad.</span></span><span class="sig-name descname"><span class="pre">SileroVAD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">speech_prob_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/hearing/vad.html#SileroVAD"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.vad.SileroVAD" title="Link to this definition"></a></dt>
+<dd><p>Neural VAD via silero-vad (optional, lazy). Accurate on noisy audio.</p>
+<p>Requires <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">silero-vad</span></code> (or torch.hub). Falls back with an
+informative error if unavailable; <a class="reference internal" href="#hearing.vad.EnergyVAD" title="hearing.vad.EnergyVAD"><code class="xref py py-class docutils literal notranslate"><span class="pre">EnergyVAD</span></code></a> needs no dependencies.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.vad.SileroVAD.is_speech">
+<span class="sig-name descname"><span class="pre">is_speech</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../_modules/hearing/vad.html#SileroVAD.is_speech"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.vad.SileroVAD.is_speech" title="Link to this definition"></a></dt>
+<dd><p>True if silero’s speech probability for the block exceeds the threshold.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hearing.vad.VAD">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.vad.</span></span><span class="sig-name descname"><span class="pre">VAD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/hearing/vad.html#VAD"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.vad.VAD" title="Link to this definition"></a></dt>
+<dd><p>Decides whether a block of audio contains speech.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.vad.VAD.is_speech">
+<span class="sig-name descname"><span class="pre">is_speech</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../_modules/hearing/vad.html#VAD.is_speech"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.vad.VAD.is_speech" title="Link to this definition"></a></dt>
+<dd><p>True if <code class="docutils literal notranslate"><span class="pre">block</span></code> (mono float32) contains speech.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hearing.vad.segment_utterances">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.vad.</span></span><span class="sig-name descname"><span class="pre">segment_utterances</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AsyncIterator</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vad</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#hearing.vad.VAD" title="hearing.vad.VAD"><span class="pre">VAD</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silence_ms</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">700</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_speech_ms</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_utterance_ms</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30000</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">AsyncIterator</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/hearing/vad.html#segment_utterances"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.vad.segment_utterances" title="Link to this definition"></a></dt>
+<dd><p>Group an async stream of audio blocks into utterances.</p>
+<p>Yields <code class="docutils literal notranslate"><span class="pre">(utterance_samples,</span> <span class="pre">start_ms)</span></code> once per finalized utterance:
+speech accumulates into a buffer; after <code class="docutils literal notranslate"><span class="pre">silence_ms</span></code> of trailing silence
+(or <code class="docutils literal notranslate"><span class="pre">max_utterance_ms</span></code> of continuous speech) the buffer is emitted with its
+start offset (integer ms from the beginning of the stream). Utterances with
+less than <code class="docutils literal notranslate"><span class="pre">min_speech_ms</span></code> of actual speech are dropped as noise.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="types.html" class="btn btn-neutral float-left" title="hearing.types" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

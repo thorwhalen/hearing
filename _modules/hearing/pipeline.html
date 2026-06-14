@@ -1,0 +1,384 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hearing.pipeline &mdash; hearing 0.0.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=e3a6060d"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            hearing
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing.html">hearing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/agents.html">hearing.agents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/capture.html">hearing.capture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/cli.html">hearing.cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/diarize.html">hearing.diarize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/interfaces.html">hearing.interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/pipeline.html">hearing.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/stt.html">hearing.stt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/types.html">hearing.types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/vad.html">hearing.vad</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hearing</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">hearing.pipeline</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hearing.pipeline</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Pipeline assembly — compose the four concerns by dependency injection.</span>
+
+<span class="sd">This is where progressive disclosure lives: ``transcribe(&quot;meeting.wav&quot;)`` is a</span>
+<span class="sd">one-liner with smart defaults, while the engine, diarizer, agent, channel</span>
+<span class="sd">routing, and persistence are all optional keyword-only arguments. The same</span>
+<span class="sd">shape powers the live path (``live_transcribe``); only the *source* and the</span>
+<span class="sd">*trigger cadence* differ (milestone 2).</span>
+
+<span class="sd">See the ``hearing-architecture`` skill — this module is the thin orchestrator it</span>
+<span class="sd">describes; swapping any one component touches only the assembly call.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">hearing.capture</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChannelSplitFileCapture</span><span class="p">,</span> <span class="n">to_mono</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hearing.diarize</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChannelTrickDiarizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hearing.interfaces</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentConsumer</span><span class="p">,</span> <span class="n">CaptureSource</span><span class="p">,</span> <span class="n">Diarizer</span><span class="p">,</span> <span class="n">STTEngine</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hearing.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Channel</span><span class="p">,</span> <span class="n">Transcript</span><span class="p">,</span> <span class="n">TranscriptSegment</span><span class="p">,</span> <span class="n">merge_segments</span>
+
+
+<div class="viewcode-block" id="transcribe">
+<a class="viewcode-back" href="../../module_docs/hearing/pipeline.html#hearing.transcribe">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">transcribe</span><span class="p">(</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="n">CaptureSource</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">engine</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">STTEngine</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">diarizer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Diarizer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">agent</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AgentConsumer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">language</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">split</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">mic_channels</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,),</span>
+    <span class="n">system_channels</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,),</span>
+    <span class="n">record</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Transcript</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transcribe an audio source to a :class:`~hearing.types.Transcript`.</span>
+
+<span class="sd">    The one-liner ``transcribe(&quot;meeting.wav&quot;)`` works with all defaults: the</span>
+<span class="sd">    default local engine (faster-whisper), automatic channel splitting when the</span>
+<span class="sd">    file is multi-channel, and the free &quot;me vs them&quot; channel-trick diarizer.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        source: a file path or any :class:`~hearing.interfaces.CaptureSource`.</span>
+<span class="sd">        engine: STT engine (default: faster-whisper). Inject any ``STTEngine``.</span>
+<span class="sd">        diarizer: speaker labeller. ``None`` -&gt; the channel trick is applied</span>
+<span class="sd">            automatically when channel info is present (mic=&quot;me&quot;, system=&quot;them&quot;).</span>
+<span class="sd">            Inject a ``PyannoteDiarizer`` to separate individual remote speakers.</span>
+<span class="sd">        agent: optional ``AgentConsumer`` run over the finished transcript</span>
+<span class="sd">            (batch). Its output is stored under ``transcript.meta[&#39;insight&#39;]``.</span>
+<span class="sd">        language: force a language code (e.g. &quot;en&quot;); ``None`` = auto-detect.</span>
+<span class="sd">        split: split mic/system channels when the source is multi-channel.</span>
+<span class="sd">        mic_channels / system_channels: column indices for the channel split.</span>
+<span class="sd">        record: optional ``MutableMapping`` store (e.g. a dol store) to persist</span>
+<span class="sd">            the transcript JSON under key ``&quot;&lt;source&gt;.transcript.json&quot;``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A :class:`Transcript` (iterable/len-able, so it stands in for a sequence</span>
+<span class="sd">        of segments). Segments carry text, span, channel, and speaker.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">engine</span> <span class="o">=</span> <span class="n">engine</span> <span class="ow">or</span> <span class="n">_default_engine</span><span class="p">()</span>
+    <span class="n">channels</span><span class="p">,</span> <span class="n">native_sr</span> <span class="o">=</span> <span class="n">_source_channels</span><span class="p">(</span>
+        <span class="n">source</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="n">split</span><span class="p">,</span> <span class="n">mic_channels</span><span class="o">=</span><span class="n">mic_channels</span><span class="p">,</span> <span class="n">system_channels</span><span class="o">=</span><span class="n">system_channels</span>
+    <span class="p">)</span>
+
+    <span class="n">groups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">channel</span><span class="p">,</span> <span class="n">samples</span> <span class="ow">in</span> <span class="n">channels</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">segs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">engine</span><span class="o">.</span><span class="n">transcribe</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="n">native_sr</span><span class="p">,</span> <span class="n">language</span><span class="o">=</span><span class="n">language</span><span class="p">))</span>
+        <span class="n">groups</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">s</span><span class="o">.</span><span class="n">with_channel</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">segs</span><span class="p">])</span>
+    <span class="n">segments</span> <span class="o">=</span> <span class="n">merge_segments</span><span class="p">(</span><span class="o">*</span><span class="n">groups</span><span class="p">)</span>
+
+    <span class="c1"># Default diarization: the free channel trick whenever channels are known.</span>
+    <span class="k">if</span> <span class="n">diarizer</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">channel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Channel</span><span class="o">.</span><span class="n">MIXED</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">):</span>
+        <span class="n">diarizer</span> <span class="o">=</span> <span class="n">ChannelTrickDiarizer</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">diarizer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">segments</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">diarizer</span><span class="o">.</span><span class="n">assign_speakers</span><span class="p">(</span><span class="n">segments</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="n">native_sr</span><span class="p">))</span>
+
+    <span class="n">transcript</span> <span class="o">=</span> <span class="n">Transcript</span><span class="p">(</span>
+        <span class="nb">tuple</span><span class="p">(</span><span class="n">segments</span><span class="p">),</span>
+        <span class="n">sample_rate</span><span class="o">=</span><span class="n">native_sr</span><span class="p">,</span>
+        <span class="n">meta</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="n">source</span><span class="p">)),</span>
+            <span class="s2">&quot;channels&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">channels</span><span class="p">],</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">agent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">insight</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">agent</span><span class="o">.</span><span class="n">on_window</span><span class="p">(</span><span class="n">transcript</span><span class="o">.</span><span class="n">segments</span><span class="p">))</span>
+        <span class="n">transcript</span> <span class="o">=</span> <span class="n">transcript</span><span class="o">.</span><span class="n">with_meta</span><span class="p">(</span><span class="n">insight</span><span class="o">=</span><span class="n">insight</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">record</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_persist</span><span class="p">(</span><span class="n">transcript</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">record</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">transcript</span></div>
+
+
+
+<div class="viewcode-block" id="live_transcribe">
+<a class="viewcode-back" href="../../module_docs/hearing/pipeline.html#hearing.live_transcribe">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">live_transcribe</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">source</span><span class="p">:</span> <span class="n">CaptureSource</span><span class="p">,</span>
+    <span class="n">engine</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">STTEngine</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">diarizer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Diarizer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">agent</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AgentConsumer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">audio_queue_max</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+    <span class="n">segment_queue_max</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stream FINALIZED segments as a meeting unfolds (the live path).</span>
+
+<span class="sd">    Same components as :func:`transcribe` — only the *source* (a streaming</span>
+<span class="sd">    :class:`~hearing.interfaces.CaptureSource` instead of a file) and the trigger</span>
+<span class="sd">    cadence (VAD utterance turn-ends instead of run-once) change. The</span>
+<span class="sd">    ``STTEngine`` and ``AgentConsumer`` interfaces are unchanged.</span>
+
+<span class="sd">    Each channel is demuxed onto its own bounded queue and driven through</span>
+<span class="sd">    ``engine.stream_transcribe`` as an independent async task, so a slow agent</span>
+<span class="sd">    never stalls capture (backpressure) and the channel &quot;me vs them&quot; label rides</span>
+<span class="sd">    every segment. Diarization defaults to the free channel trick; the agent&#39;s</span>
+<span class="sd">    ``on_segment`` is fired fire-and-forget. Yields segments as utterances finalize.</span>
+
+<span class="sd">    See the ``hearing-live-pipeline`` skill.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">engine</span> <span class="o">=</span> <span class="n">engine</span> <span class="ow">or</span> <span class="n">_default_engine</span><span class="p">()</span>
+    <span class="n">seg_q</span><span class="p">:</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Queue</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Queue</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="n">segment_queue_max</span><span class="p">)</span>
+    <span class="n">chan_queues</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Channel</span><span class="p">,</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Queue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">stt_tasks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">asyncio</span><span class="o">.</span><span class="n">Task</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">agent_tasks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">asyncio</span><span class="o">.</span><span class="n">Task</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">sample_rate</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s2">&quot;sample_rate&quot;</span><span class="p">,</span> <span class="mi">16_000</span><span class="p">))</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_channel_frames</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Queue</span><span class="p">):</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">blk</span> <span class="o">=</span> <span class="k">await</span> <span class="n">q</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">blk</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># end-of-channel sentinel</span>
+                <span class="k">return</span>
+            <span class="k">yield</span> <span class="n">blk</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_stt_for_channel</span><span class="p">(</span><span class="n">channel</span><span class="p">:</span> <span class="n">Channel</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Queue</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">default_diar</span> <span class="o">=</span> <span class="n">ChannelTrickDiarizer</span><span class="p">()</span>
+        <span class="k">async</span> <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">engine</span><span class="o">.</span><span class="n">stream_transcribe</span><span class="p">(</span>
+            <span class="n">_channel_frames</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">seg</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;final&quot;</span><span class="p">):</span>  <span class="c1"># downstream acts only on finalized turns</span>
+                <span class="k">continue</span>
+            <span class="n">seg</span> <span class="o">=</span> <span class="n">seg</span><span class="o">.</span><span class="n">with_channel</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">diarizer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">seg</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">diarizer</span><span class="o">.</span><span class="n">assign_speakers</span><span class="p">([</span><span class="n">seg</span><span class="p">],</span> <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">)))</span>
+            <span class="k">elif</span> <span class="n">channel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Channel</span><span class="o">.</span><span class="n">MIXED</span><span class="p">:</span>
+                <span class="n">seg</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">default_diar</span><span class="o">.</span><span class="n">assign_speakers</span><span class="p">([</span><span class="n">seg</span><span class="p">])))</span>
+            <span class="k">if</span> <span class="n">agent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">agent_tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">_safe_on_segment</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="n">seg</span><span class="p">)))</span>
+            <span class="k">await</span> <span class="n">seg_q</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">seg</span><span class="p">)</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_router</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">async</span> <span class="k">for</span> <span class="n">channel</span><span class="p">,</span> <span class="n">frames</span> <span class="ow">in</span> <span class="n">source</span><span class="o">.</span><span class="n">astream</span><span class="p">():</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="n">chan_queues</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">q</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># spin up a per-channel STT task on first sight</span>
+                <span class="n">q</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Queue</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="n">audio_queue_max</span><span class="p">)</span>
+                <span class="n">chan_queues</span><span class="p">[</span><span class="n">channel</span><span class="p">]</span> <span class="o">=</span> <span class="n">q</span>
+                <span class="n">stt_tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">_stt_for_channel</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">q</span><span class="p">)))</span>
+            <span class="k">await</span> <span class="n">q</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">frames</span><span class="p">))</span>  <span class="c1"># backpressure to the source</span>
+        <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">chan_queues</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">await</span> <span class="n">q</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># sentinel each channel</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_supervisor</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">_router</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">stt_tasks</span><span class="p">:</span>
+            <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="n">stt_tasks</span><span class="p">,</span> <span class="n">return_exceptions</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">agent_tasks</span><span class="p">:</span>
+            <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="n">agent_tasks</span><span class="p">,</span> <span class="n">return_exceptions</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">seg_q</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># final sentinel</span>
+
+    <span class="n">sup</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">_supervisor</span><span class="p">())</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">seg</span> <span class="o">=</span> <span class="k">await</span> <span class="n">seg_q</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">seg</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">yield</span> <span class="n">seg</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">sup</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="p">[</span><span class="o">*</span><span class="n">stt_tasks</span><span class="p">,</span> <span class="o">*</span><span class="n">agent_tasks</span><span class="p">]:</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span></div>
+
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_safe_on_segment</span><span class="p">(</span><span class="n">agent</span><span class="p">:</span> <span class="n">AgentConsumer</span><span class="p">,</span> <span class="n">seg</span><span class="p">:</span> <span class="n">TranscriptSegment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run ``agent.on_segment`` without letting a failure crash the stream.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">agent</span><span class="o">.</span><span class="n">on_segment</span><span class="p">(</span><span class="n">seg</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - agent/RAG failure must not kill capture</span>
+        <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="summarize">
+<a class="viewcode-back" href="../../module_docs/hearing/pipeline.html#hearing.summarize">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">summarize</span><span class="p">(</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="n">CaptureSource</span> <span class="o">|</span> <span class="n">Transcript</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">agent</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AgentConsumer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">transcribe_kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transcribe (if needed) then run an agent to produce meeting notes.</span>
+
+<span class="sd">    Accepts an audio source or an already-built :class:`Transcript`. Builds the</span>
+<span class="sd">    default agent (Claude if available, else the offline extractive fallback)</span>
+<span class="sd">    when none is injected.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.agents</span><span class="w"> </span><span class="kn">import</span> <span class="n">summarize_transcript</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">Transcript</span><span class="p">):</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">transcribe</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="o">**</span><span class="n">transcribe_kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">summarize_transcript</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ── internals ────────────────────────────────────────────────────────────────</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_default_engine</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">STTEngine</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The project default STT engine (lazy import keeps package import light).&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.stt</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_engine</span>
+
+    <span class="k">return</span> <span class="n">default_engine</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_source_channels</span><span class="p">(</span>
+    <span class="n">source</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">split</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">mic_channels</span><span class="p">,</span> <span class="n">system_channels</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">Channel</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve any source to ``({channel: mono_array}, native_sample_rate)``.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">)):</span>
+        <span class="n">cap</span> <span class="o">=</span> <span class="n">ChannelSplitFileCapture</span><span class="p">(</span>
+            <span class="n">source</span><span class="p">,</span> <span class="n">mic_channels</span><span class="o">=</span><span class="n">mic_channels</span><span class="p">,</span> <span class="n">system_channels</span><span class="o">=</span><span class="n">system_channels</span>
+        <span class="p">)</span>
+        <span class="n">chans</span> <span class="o">=</span> <span class="n">cap</span><span class="o">.</span><span class="n">channels</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">split</span> <span class="ow">and</span> <span class="p">(</span><span class="n">Channel</span><span class="o">.</span><span class="n">MIC</span> <span class="ow">in</span> <span class="n">chans</span> <span class="ow">or</span> <span class="n">Channel</span><span class="o">.</span><span class="n">SYSTEM</span> <span class="ow">in</span> <span class="n">chans</span><span class="p">):</span>
+            <span class="c1"># Collapse the split back to a single mixed channel.</span>
+            <span class="n">mixed</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">chans</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">chans</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">Channel</span><span class="o">.</span><span class="n">MIXED</span><span class="p">:</span> <span class="n">mixed</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">)},</span> <span class="n">cap</span><span class="o">.</span><span class="n">sample_rate</span>
+        <span class="k">return</span> <span class="n">chans</span><span class="p">,</span> <span class="n">cap</span><span class="o">.</span><span class="n">sample_rate</span>
+
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s2">&quot;channels&quot;</span><span class="p">):</span>  <span class="c1"># a capture source exposing channels()</span>
+        <span class="k">return</span> <span class="n">source</span><span class="o">.</span><span class="n">channels</span><span class="p">(),</span> <span class="nb">int</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">CaptureSource</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s2">&quot;frames&quot;</span><span class="p">):</span>
+        <span class="n">sr</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s2">&quot;sample_rate&quot;</span><span class="p">,</span> <span class="mi">16_000</span><span class="p">))</span>
+        <span class="n">collected</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Channel</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">channel</span><span class="p">,</span> <span class="n">frames</span> <span class="ow">in</span> <span class="n">source</span><span class="o">.</span><span class="n">frames</span><span class="p">():</span>
+            <span class="n">collected</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">to_mono</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">frames</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">parts</span> <span class="ow">in</span> <span class="n">collected</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span> <span class="n">sr</span>
+
+    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Unsupported source </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">source</span><span class="p">)</span><span class="si">!r}</span><span class="s2">; pass a file path or a CaptureSource.&quot;</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_persist</span><span class="p">(</span><span class="n">transcript</span><span class="p">:</span> <span class="n">Transcript</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">record</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Store the transcript JSON in a MutableMapping (e.g. a dol store).&quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+    <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;path&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">source</span><span class="p">)))</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.transcript.json&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">record</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">transcript</span><span class="o">.</span><span class="n">to_jsonable</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># pragma: no cover - store may want bytes</span>
+        <span class="n">record</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">transcript</span><span class="o">.</span><span class="n">to_jsonable</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

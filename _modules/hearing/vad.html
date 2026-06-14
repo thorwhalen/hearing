@@ -1,0 +1,292 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hearing.vad &mdash; hearing 0.0.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=e3a6060d"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            hearing
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing.html">hearing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/agents.html">hearing.agents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/capture.html">hearing.capture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/cli.html">hearing.cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/diarize.html">hearing.diarize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/interfaces.html">hearing.interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/pipeline.html">hearing.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/stt.html">hearing.stt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/types.html">hearing.types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/vad.html">hearing.vad</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hearing</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">hearing.vad</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hearing.vad</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Voice-activity detection and utterance segmentation for the live pipeline.</span>
+
+<span class="sd">VAD owns utterance boundaries (never fixed time-slicing, which cuts words and</span>
+<span class="sd">wrecks WER): detect speech -&gt; buffer the utterance -&gt; on trailing silence,</span>
+<span class="sd">finalize. :func:`segment_utterances` turns an async stream of audio blocks into</span>
+<span class="sd">an async stream of ``(utterance_samples, start_ms)`` pairs that the streaming STT</span>
+<span class="sd">engine transcribes one at a time.</span>
+
+<span class="sd">Two detectors behind a tiny protocol:</span>
+
+<span class="sd">* :class:`EnergyVAD` — dependency-free RMS-threshold VAD. The default; great for</span>
+<span class="sd">  clean/loud meeting audio and fully deterministic (so tests need no models).</span>
+<span class="sd">* :class:`SileroVAD` — neural VAD (accurate on noisy audio); optional, lazy.</span>
+
+<span class="sd">See the ``hearing-live-pipeline`` skill for the rationale and the latency budget.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncIterator</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">runtime_checkable</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">hearing.capture</span><span class="w"> </span><span class="kn">import</span> <span class="n">rms_energy</span>
+
+<span class="c1">#: Default trailing-silence (ms) that marks a turn end.</span>
+<span class="n">DEFAULT_SILENCE_MS</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">700</span>
+<span class="c1">#: Minimum speech (ms) for an utterance to be worth transcribing.</span>
+<span class="n">DEFAULT_MIN_SPEECH_MS</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="c1">#: Force-flush an utterance that runs this long without a silence (ms).</span>
+<span class="n">DEFAULT_MAX_UTTERANCE_MS</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30_000</span>
+
+
+<div class="viewcode-block" id="VAD">
+<a class="viewcode-back" href="../../module_docs/hearing/vad.html#hearing.vad.VAD">[docs]</a>
+<span class="nd">@runtime_checkable</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">VAD</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decides whether a block of audio contains speech.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="VAD.is_speech">
+<a class="viewcode-back" href="../../module_docs/hearing/vad.html#hearing.vad.VAD.is_speech">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_speech</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;True if ``block`` (mono float32) contains speech.&quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="EnergyVAD">
+<a class="viewcode-back" href="../../module_docs/hearing/vad.html#hearing.vad.EnergyVAD">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EnergyVAD</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;RMS-energy threshold VAD — dependency-free default.</span>
+
+<span class="sd">    A block counts as speech when its RMS energy exceeds ``threshold``. Simple</span>
+<span class="sd">    and deterministic; for noisy real-world audio prefer :class:`SileroVAD`.</span>
+<span class="sd">    ``threshold`` is in the same units as the float audio (roughly [-1, 1]).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span>
+
+<div class="viewcode-block" id="EnergyVAD.is_speech">
+<a class="viewcode-back" href="../../module_docs/hearing/vad.html#hearing.vad.EnergyVAD.is_speech">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_speech</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;True if the block&#39;s RMS energy is above ``threshold``.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">rms_energy</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">))</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SileroVAD">
+<a class="viewcode-back" href="../../module_docs/hearing/vad.html#hearing.vad.SileroVAD">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SileroVAD</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Neural VAD via silero-vad (optional, lazy). Accurate on noisy audio.</span>
+
+<span class="sd">    Requires ``pip install silero-vad`` (or torch.hub). Falls back with an</span>
+<span class="sd">    informative error if unavailable; :class:`EnergyVAD` needs no dependencies.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">speech_prob_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># pragma: no cover - needs torch/silero</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">silero_vad</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_silero_vad</span>
+            <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                    <span class="s2">&quot;SileroVAD needs silero-vad. Install with: pip install silero-vad</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;or use EnergyVAD (the dependency-free default).&quot;</span>
+                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">load_silero_vad</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span>
+
+<div class="viewcode-block" id="SileroVAD.is_speech">
+<a class="viewcode-back" href="../../module_docs/hearing/vad.html#hearing.vad.SileroVAD.is_speech">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_speech</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;True if silero&#39;s speech probability for the block exceeds the threshold.&quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_model</span><span class="p">()</span>
+        <span class="n">tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ascontiguousarray</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">))</span>
+        <span class="n">prob</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">prob</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">speech_prob_threshold</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="segment_utterances">
+<a class="viewcode-back" href="../../module_docs/hearing/vad.html#hearing.vad.segment_utterances">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">segment_utterances</span><span class="p">(</span>
+    <span class="n">frames</span><span class="p">:</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">vad</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">VAD</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">silence_ms</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_SILENCE_MS</span><span class="p">,</span>
+    <span class="n">min_speech_ms</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_MIN_SPEECH_MS</span><span class="p">,</span>
+    <span class="n">max_utterance_ms</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_MAX_UTTERANCE_MS</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Group an async stream of audio blocks into utterances.</span>
+
+<span class="sd">    Yields ``(utterance_samples, start_ms)`` once per finalized utterance:</span>
+<span class="sd">    speech accumulates into a buffer; after ``silence_ms`` of trailing silence</span>
+<span class="sd">    (or ``max_utterance_ms`` of continuous speech) the buffer is emitted with its</span>
+<span class="sd">    start offset (integer ms from the beginning of the stream). Utterances with</span>
+<span class="sd">    less than ``min_speech_ms`` of actual speech are dropped as noise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">vad</span> <span class="o">=</span> <span class="n">vad</span> <span class="ow">or</span> <span class="n">EnergyVAD</span><span class="p">()</span>
+    <span class="n">buf</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">in_speech</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">trailing_silence_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">speech_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">consumed</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># absolute samples consumed so far</span>
+    <span class="n">start_sample</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_emit</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+        <span class="k">if</span> <span class="n">buf</span> <span class="ow">and</span> <span class="n">speech_ms</span> <span class="o">&gt;=</span> <span class="n">min_speech_ms</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">buf</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">start_sample</span> <span class="o">/</span> <span class="n">sample_rate</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">))</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">async</span> <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">:</span>
+        <span class="n">block</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+        <span class="n">block_ms</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">block</span><span class="p">)</span> <span class="o">/</span> <span class="n">sample_rate</span> <span class="o">*</span> <span class="mi">1000</span>
+        <span class="n">is_speech</span> <span class="o">=</span> <span class="n">vad</span><span class="o">.</span><span class="n">is_speech</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">is_speech</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">in_speech</span><span class="p">:</span>
+                <span class="n">in_speech</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">trailing_silence_ms</span><span class="p">,</span> <span class="n">speech_ms</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="p">[],</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span>
+                <span class="n">start_sample</span> <span class="o">=</span> <span class="n">consumed</span>
+            <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+            <span class="n">speech_ms</span> <span class="o">+=</span> <span class="n">block_ms</span>
+            <span class="n">trailing_silence_ms</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">elif</span> <span class="n">in_speech</span><span class="p">:</span>
+            <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>  <span class="c1"># keep a little trailing silence for the decoder</span>
+            <span class="n">trailing_silence_ms</span> <span class="o">+=</span> <span class="n">block_ms</span>
+            <span class="k">if</span> <span class="n">trailing_silence_ms</span> <span class="o">&gt;=</span> <span class="n">silence_ms</span><span class="p">:</span>
+                <span class="n">emitted</span> <span class="o">=</span> <span class="n">_emit</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">emitted</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">emitted</span>
+                <span class="n">in_speech</span><span class="p">,</span> <span class="n">buf</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="p">[]</span>
+
+        <span class="n">consumed</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">in_speech</span> <span class="ow">and</span> <span class="p">(</span><span class="n">consumed</span> <span class="o">-</span> <span class="n">start_sample</span><span class="p">)</span> <span class="o">/</span> <span class="n">sample_rate</span> <span class="o">*</span> <span class="mi">1000</span> <span class="o">&gt;=</span> <span class="n">max_utterance_ms</span><span class="p">:</span>
+            <span class="n">emitted</span> <span class="o">=</span> <span class="n">_emit</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">emitted</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">emitted</span>
+            <span class="n">in_speech</span><span class="p">,</span> <span class="n">buf</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="n">in_speech</span><span class="p">:</span>  <span class="c1"># flush the final utterance at end-of-stream</span>
+        <span class="n">emitted</span> <span class="o">=</span> <span class="n">_emit</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">emitted</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">emitted</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

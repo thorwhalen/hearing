@@ -1,0 +1,386 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hearing.agents &mdash; hearing 0.0.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=e3a6060d"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            hearing
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing.html">hearing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/agents.html">hearing.agents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/capture.html">hearing.capture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/cli.html">hearing.cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/diarize.html">hearing.diarize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/interfaces.html">hearing.interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/pipeline.html">hearing.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/stt.html">hearing.stt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/types.html">hearing.types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/vad.html">hearing.vad</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hearing</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">hearing.agents</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hearing.agents</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;The agent / &quot;copilot&quot; layer — the actual point of the hearing project.</span>
+
+<span class="sd">An agent consumes a (speaker-labelled) transcript and produces feedback. The</span>
+<span class="sd">*same* :class:`~hearing.interfaces.AgentConsumer` interface serves both modes;</span>
+<span class="sd">only *when* and *what granularity* it consumes differs:</span>
+
+<span class="sd">* **batch** — ``on_window(whole_transcript)`` -&gt; summary, action items,</span>
+<span class="sd">  decisions, open questions, follow-up research (post-meeting).</span>
+<span class="sd">* **live** — ``on_segment(finalized_segment)`` -&gt; running notes, suggested</span>
+<span class="sd">  questions, surfaced docs, fact-checks (as the meeting unfolds).</span>
+
+<span class="sd">Agents are meant to be *context-connected*: bound to a meeting/project and able</span>
+<span class="sd">to draw on accumulated knowledge (prior takeaways, the codebase, research</span>
+<span class="sd">reports) and live web search. The ``context`` field is that hook.</span>
+
+<span class="sd">The default backend is Claude (latest/most capable) but stays pluggable — see</span>
+<span class="sd">the ``claude-api`` skill for model ids, pricing, tool use, and structured</span>
+<span class="sd">output, and the ``hearing-agents`` skill for the queue-consumer pattern, RAG,</span>
+<span class="sd">and the batch≡live unification.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">hearing.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Transcript</span><span class="p">,</span> <span class="n">TranscriptSegment</span>
+
+<span class="c1">#: A sensible, current default Claude model for meeting analysis. Override via</span>
+<span class="c1">#: ``model=`` (e.g. &quot;claude-opus-4-8&quot; for max capability). See claude-api skill.</span>
+<span class="n">DEFAULT_CLAUDE_MODEL</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;claude-sonnet-4-6&quot;</span>
+
+<span class="n">_DEFAULT_SYSTEM_PROMPT</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">You are a meeting assistant. Given a (speaker-labelled) transcript, produce a </span><span class="se">\</span>
+<span class="s2">concise, well-structured analysis with these sections, omitting any that don&#39;t </span><span class="se">\</span>
+<span class="s2">apply:</span>
+
+<span class="s2">## Summary</span>
+<span class="s2">2-4 sentences capturing what the meeting was about and its outcome.</span>
+
+<span class="s2">## Decisions</span>
+<span class="s2">Bullet points of decisions that were made.</span>
+
+<span class="s2">## Action items</span>
+<span class="s2">Bullet points as &quot;- [owner] action&quot; when an owner is identifiable, else &quot;- action&quot;.</span>
+
+<span class="s2">## Open questions / follow-ups</span>
+<span class="s2">Bullet points of unresolved questions or things worth researching afterwards.</span>
+
+<span class="s2">Be faithful to the transcript; do not invent facts. Speakers labelled &quot;me&quot; are </span><span class="se">\</span>
+<span class="s2">the local user; &quot;them&quot;/&quot;spk_*&quot; are remote participants.</span><span class="se">\</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_transcript_text</span><span class="p">(</span><span class="n">window</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a window of segments as ``speaker: text`` lines for a prompt.&quot;&quot;&quot;</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">window</span><span class="p">:</span>
+        <span class="n">who</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">speaker</span> <span class="ow">or</span> <span class="n">s</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">who</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ClaudeAgent">
+<a class="viewcode-back" href="../../module_docs/hearing/agents.html#hearing.agents.ClaudeAgent">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ClaudeAgent</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Context-connected meeting agent backed by Claude (the default).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model: Claude model id (see the ``claude-api`` skill).</span>
+<span class="sd">        context: optional context to connect the agent to a meeting/project —</span>
+<span class="sd">            prior takeaways, project notes, etc. Prepended to the prompt.</span>
+<span class="sd">        system_prompt: override the default meeting-assistant instructions.</span>
+<span class="sd">        max_tokens: output cap.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_CLAUDE_MODEL</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">system_prompt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_DEFAULT_SYSTEM_PROMPT</span>
+    <span class="n">max_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1024</span>
+    <span class="n">api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">anthropic</span>
+        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pragma: no cover - guidance path</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                <span class="s2">&quot;ClaudeAgent needs the anthropic SDK. Install with:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;    pip install &#39;hearing[agents]&#39;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;or inject a different AgentConsumer (e.g. ExtractiveAgent, which &quot;</span>
+                <span class="s2">&quot;needs no API key or deps).&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_key</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;ANTHROPIC_API_KEY&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;ANTHROPIC_API_KEY is not set. Set it, pass api_key=, or use &quot;</span>
+                <span class="s2">&quot;ExtractiveAgent for an offline, dependency-free fallback.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">anthropic</span><span class="o">.</span><span class="n">Anthropic</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_analyze_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transcript_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Blocking Claude call; ``on_window`` runs this off the event loop.&quot;&quot;&quot;</span>
+        <span class="n">user_parts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">:</span>
+            <span class="n">user_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Relevant context:</span><span class="se">\n</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">user_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Transcript:</span><span class="se">\n</span><span class="si">{</span><span class="n">transcript_text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="p">()</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">max_tokens</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_tokens</span><span class="p">,</span>
+            <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system_prompt</span><span class="p">,</span>
+            <span class="n">messages</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">user_parts</span><span class="p">)}],</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">block</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">message</span><span class="o">.</span><span class="n">content</span> <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;text&quot;</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+<div class="viewcode-block" id="ClaudeAgent.on_window">
+<a class="viewcode-back" href="../../module_docs/hearing/agents.html#hearing.agents.ClaudeAgent.on_window">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">window</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Analyze a whole transcript (batch) and return structured notes.&quot;&quot;&quot;</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">_transcript_text</span><span class="p">(</span><span class="n">window</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="c1"># The SDK call is blocking; keep the event loop free (batch &amp; live).</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_analyze_sync</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ClaudeAgent.on_segment">
+<a class="viewcode-back" href="../../module_docs/hearing/agents.html#hearing.agents.ClaudeAgent.on_segment">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_segment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">segment</span><span class="p">:</span> <span class="n">TranscriptSegment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Live per-segment hook (milestone 2). No-op in the batch milestone.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ExtractiveAgent">
+<a class="viewcode-back" href="../../module_docs/hearing/agents.html#hearing.agents.ExtractiveAgent">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExtractiveAgent</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deterministic, dependency-free fallback agent (no API, no network).</span>
+
+<span class="sd">    Produces a usable summary by extraction/heuristics so the app always does</span>
+<span class="sd">    *something* offline and tests stay deterministic. Detects naive action</span>
+<span class="sd">    items (imperative / commitment cues) and open questions (``?``).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">max_key_points</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="c1">#: cues that hint a segment is an action item / commitment</span>
+    <span class="n">action_cues</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;let&#39;s&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;we should&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;i&#39;ll&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;we&#39;ll&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;need to&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;action&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;todo&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;to do&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;follow up&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;next step&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;assign&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;by friday&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;by monday&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;deadline&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="ExtractiveAgent.on_window">
+<a class="viewcode-back" href="../../module_docs/hearing/agents.html#hearing.agents.ExtractiveAgent.on_window">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">window</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a deterministic extractive summary of the window.&quot;&quot;&quot;</span>
+        <span class="n">segs</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">window</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">segs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">speakers</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">s</span><span class="o">.</span><span class="n">speaker</span> <span class="ow">or</span> <span class="n">s</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">segs</span><span class="p">})</span>
+        <span class="n">total_ms</span> <span class="o">=</span> <span class="nb">max</span><span class="p">((</span><span class="n">s</span><span class="o">.</span><span class="n">span</span><span class="o">.</span><span class="n">end_ms</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">segs</span><span class="p">),</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">actions</span><span class="p">,</span> <span class="n">questions</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">segs</span><span class="p">:</span>
+            <span class="n">low</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="n">who</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">speaker</span> <span class="ow">or</span> <span class="n">s</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">cue</span> <span class="ow">in</span> <span class="n">low</span> <span class="k">for</span> <span class="n">cue</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_cues</span><span class="p">):</span>
+                <span class="n">actions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- [</span><span class="si">{</span><span class="n">who</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">sentence</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(?&lt;=[.?!])\s+&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()):</span>
+                <span class="k">if</span> <span class="n">sentence</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">):</span>
+                    <span class="n">questions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- (</span><span class="si">{</span><span class="n">who</span><span class="si">}</span><span class="s2">) </span><span class="si">{</span><span class="n">sentence</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">key_points</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">segs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">text</span><span class="p">),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">key_points</span> <span class="o">=</span> <span class="n">key_points</span><span class="p">[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_key_points</span><span class="p">]</span>
+        <span class="n">key_points</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">span</span><span class="o">.</span><span class="n">start_ms</span><span class="p">)</span>
+
+        <span class="n">out</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;## Summary (extractive — offline fallback)&quot;</span><span class="p">]</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">segs</span><span class="p">)</span><span class="si">}</span><span class="s2"> segments, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">speakers</span><span class="p">)</span><span class="si">}</span><span class="s2"> speaker(s) &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">speakers</span><span class="p">)</span><span class="si">}</span><span class="s2">), ~</span><span class="si">{</span><span class="n">total_ms</span><span class="w"> </span><span class="o">//</span><span class="w"> </span><span class="mi">1000</span><span class="si">}</span><span class="s2">s.&quot;</span>
+        <span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">## Key points&quot;</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;- </span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">key_points</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">actions</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">## Possible action items&quot;</span><span class="p">)</span>
+            <span class="n">out</span> <span class="o">+=</span> <span class="n">actions</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">questions</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">## Open questions&quot;</span><span class="p">)</span>
+            <span class="n">out</span> <span class="o">+=</span> <span class="n">questions</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ExtractiveAgent.on_segment">
+<a class="viewcode-back" href="../../module_docs/hearing/agents.html#hearing.agents.ExtractiveAgent.on_segment">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_segment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">segment</span><span class="p">:</span> <span class="n">TranscriptSegment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Live per-segment hook: surface action-item cues immediately.&quot;&quot;&quot;</span>
+        <span class="n">low</span> <span class="o">=</span> <span class="n">segment</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">cue</span> <span class="ow">in</span> <span class="n">low</span> <span class="k">for</span> <span class="n">cue</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_cues</span><span class="p">):</span>
+            <span class="n">who</span> <span class="o">=</span> <span class="n">segment</span><span class="o">.</span><span class="n">speaker</span> <span class="ow">or</span> <span class="n">segment</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;[action?] </span><span class="si">{</span><span class="n">who</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">segment</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="build_default_agent">
+<a class="viewcode-back" href="../../module_docs/hearing/agents.html#hearing.agents.build_default_agent">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_default_agent</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">prefer</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pick the best available agent.</span>
+
+<span class="sd">    ``prefer=&quot;claude&quot;`` forces Claude; ``&quot;extractive&quot;`` forces the offline</span>
+<span class="sd">    fallback; ``&quot;auto&quot;`` (default) uses Claude when the anthropic SDK and an API</span>
+<span class="sd">    key are available, otherwise the dependency-free :class:`ExtractiveAgent`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">prefer</span> <span class="o">==</span> <span class="s2">&quot;extractive&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ExtractiveAgent</span><span class="p">()</span>
+    <span class="n">has_claude</span> <span class="o">=</span> <span class="n">_anthropic_available</span><span class="p">()</span> <span class="ow">and</span> <span class="nb">bool</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;ANTHROPIC_API_KEY&quot;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">prefer</span> <span class="o">==</span> <span class="s2">&quot;claude&quot;</span> <span class="ow">or</span> <span class="p">(</span><span class="n">prefer</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span> <span class="ow">and</span> <span class="n">has_claude</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ClaudeAgent</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span> <span class="ow">or</span> <span class="n">DEFAULT_CLAUDE_MODEL</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ExtractiveAgent</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="summarize_transcript">
+<a class="viewcode-back" href="../../module_docs/hearing/agents.html#hearing.agents.summarize_transcript">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">summarize_transcript</span><span class="p">(</span>
+    <span class="n">transcript</span><span class="p">:</span> <span class="n">Transcript</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">agent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Synchronous facade: run a (batch) agent over a transcript, return notes.</span>
+
+<span class="sd">    Builds the default agent when none is injected. Usable on a transcript with</span>
+<span class="sd">    no audio at all.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">window</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">transcript</span><span class="p">)</span>
+    <span class="n">agent</span> <span class="o">=</span> <span class="n">agent</span> <span class="ow">or</span> <span class="n">build_default_agent</span><span class="p">(</span><span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">agent</span><span class="o">.</span><span class="n">on_window</span><span class="p">(</span><span class="n">window</span><span class="p">))</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_anthropic_available</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;True if the anthropic SDK can be imported.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">anthropic</span>  <span class="c1"># noqa: F401</span>
+
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

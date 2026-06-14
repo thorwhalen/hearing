@@ -1,0 +1,236 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hearing.agents &mdash; hearing 0.0.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=e3a6060d"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="hearing.capture" href="capture.html" />
+    <link rel="prev" title="hearing" href="../hearing.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            hearing
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../hearing.html">hearing</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">hearing.agents</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.agents.ClaudeAgent"><code class="docutils literal notranslate"><span class="pre">ClaudeAgent</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.agents.ClaudeAgent.on_segment"><code class="docutils literal notranslate"><span class="pre">ClaudeAgent.on_segment()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.agents.ClaudeAgent.on_window"><code class="docutils literal notranslate"><span class="pre">ClaudeAgent.on_window()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.agents.DEFAULT_CLAUDE_MODEL"><code class="docutils literal notranslate"><span class="pre">DEFAULT_CLAUDE_MODEL</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.agents.ExtractiveAgent"><code class="docutils literal notranslate"><span class="pre">ExtractiveAgent</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.agents.ExtractiveAgent.action_cues"><code class="docutils literal notranslate"><span class="pre">ExtractiveAgent.action_cues</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.agents.ExtractiveAgent.on_segment"><code class="docutils literal notranslate"><span class="pre">ExtractiveAgent.on_segment()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.agents.ExtractiveAgent.on_window"><code class="docutils literal notranslate"><span class="pre">ExtractiveAgent.on_window()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.agents.build_default_agent"><code class="docutils literal notranslate"><span class="pre">build_default_agent()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.agents.summarize_transcript"><code class="docutils literal notranslate"><span class="pre">summarize_transcript()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="capture.html">hearing.capture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">hearing.cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diarize.html">hearing.diarize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html">hearing.interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">hearing.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="stt.html">hearing.stt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">hearing.types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vad.html">hearing.vad</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hearing</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">hearing.agents</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/module_docs/hearing/agents.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-hearing.agents">
+<span id="hearing-agents"></span><h1>hearing.agents<a class="headerlink" href="#module-hearing.agents" title="Link to this heading"></a></h1>
+<p>The agent / “copilot” layer — the actual point of the hearing project.</p>
+<p>An agent consumes a (speaker-labelled) transcript and produces feedback. The
+<em>same</em> <a class="reference internal" href="interfaces.html#hearing.interfaces.AgentConsumer" title="hearing.interfaces.AgentConsumer"><code class="xref py py-class docutils literal notranslate"><span class="pre">AgentConsumer</span></code></a> interface serves both modes;
+only <em>when</em> and <em>what granularity</em> it consumes differs:</p>
+<ul class="simple">
+<li><p><strong>batch</strong> — <code class="docutils literal notranslate"><span class="pre">on_window(whole_transcript)</span></code> -&gt; summary, action items,
+decisions, open questions, follow-up research (post-meeting).</p></li>
+<li><p><strong>live</strong> — <code class="docutils literal notranslate"><span class="pre">on_segment(finalized_segment)</span></code> -&gt; running notes, suggested
+questions, surfaced docs, fact-checks (as the meeting unfolds).</p></li>
+</ul>
+<p>Agents are meant to be <em>context-connected</em>: bound to a meeting/project and able
+to draw on accumulated knowledge (prior takeaways, the codebase, research
+reports) and live web search. The <code class="docutils literal notranslate"><span class="pre">context</span></code> field is that hook.</p>
+<p>The default backend is Claude (latest/most capable) but stays pluggable — see
+the <code class="docutils literal notranslate"><span class="pre">claude-api</span></code> skill for model ids, pricing, tool use, and structured
+output, and the <code class="docutils literal notranslate"><span class="pre">hearing-agents</span></code> skill for the queue-consumer pattern, RAG,
+and the batch≡live unification.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="hearing.agents.ClaudeAgent">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.agents.</span></span><span class="sig-name descname"><span class="pre">ClaudeAgent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'claude-sonnet-4-6'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_prompt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'You</span> <span class="pre">are</span> <span class="pre">a</span> <span class="pre">meeting</span> <span class="pre">assistant.</span> <span class="pre">Given</span> <span class="pre">a</span> <span class="pre">(speaker-labelled)</span> <span class="pre">transcript,</span> <span class="pre">produce</span> <span class="pre">a</span> <span class="pre">concise,</span> <span class="pre">well-structured</span> <span class="pre">analysis</span> <span class="pre">with</span> <span class="pre">these</span> <span class="pre">sections,</span> <span class="pre">omitting</span> <span class="pre">any</span> <span class="pre">that</span> <span class="pre">don\'t</span> <span class="pre">apply:\n\n##</span> <span class="pre">Summary\n2-4</span> <span class="pre">sentences</span> <span class="pre">capturing</span> <span class="pre">what</span> <span class="pre">the</span> <span class="pre">meeting</span> <span class="pre">was</span> <span class="pre">about</span> <span class="pre">and</span> <span class="pre">its</span> <span class="pre">outcome.\n\n##</span> <span class="pre">Decisions\nBullet</span> <span class="pre">points</span> <span class="pre">of</span> <span class="pre">decisions</span> <span class="pre">that</span> <span class="pre">were</span> <span class="pre">made.\n\n##</span> <span class="pre">Action</span> <span class="pre">items\nBullet</span> <span class="pre">points</span> <span class="pre">as</span> <span class="pre">&quot;-</span> <span class="pre">[owner]</span> <span class="pre">action&quot;</span> <span class="pre">when</span> <span class="pre">an</span> <span class="pre">owner</span> <span class="pre">is</span> <span class="pre">identifiable,</span> <span class="pre">else</span> <span class="pre">&quot;-</span> <span class="pre">action&quot;.\n\n##</span> <span class="pre">Open</span> <span class="pre">questions</span> <span class="pre">/</span> <span class="pre">follow-ups\nBullet</span> <span class="pre">points</span> <span class="pre">of</span> <span class="pre">unresolved</span> <span class="pre">questions</span> <span class="pre">or</span> <span class="pre">things</span> <span class="pre">worth</span> <span class="pre">researching</span> <span class="pre">afterwards.\n\nBe</span> <span class="pre">faithful</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">transcript;</span> <span class="pre">do</span> <span class="pre">not</span> <span class="pre">invent</span> <span class="pre">facts.</span> <span class="pre">Speakers</span> <span class="pre">labelled</span> <span class="pre">&quot;me&quot;</span> <span class="pre">are</span> <span class="pre">the</span> <span class="pre">local</span> <span class="pre">user;</span> <span class="pre">&quot;them&quot;/&quot;spk_*&quot;</span> <span class="pre">are</span> <span class="pre">remote</span> <span class="pre">participants.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1024</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/hearing/agents.html#ClaudeAgent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.agents.ClaudeAgent" title="Link to this definition"></a></dt>
+<dd><p>Context-connected meeting agent backed by Claude (the default).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – Claude model id (see the <code class="docutils literal notranslate"><span class="pre">claude-api</span></code> skill).</p></li>
+<li><p><strong>context</strong> – optional context to connect the agent to a meeting/project —
+prior takeaways, project notes, etc. Prepended to the prompt.</p></li>
+<li><p><strong>system_prompt</strong> – override the default meeting-assistant instructions.</p></li>
+<li><p><strong>max_tokens</strong> – output cap.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.agents.ClaudeAgent.on_segment">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">on_segment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">segment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="types.html#hearing.types.TranscriptSegment" title="hearing.types.TranscriptSegment"><span class="pre">TranscriptSegment</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/hearing/agents.html#ClaudeAgent.on_segment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.agents.ClaudeAgent.on_segment" title="Link to this definition"></a></dt>
+<dd><p>Live per-segment hook (milestone 2). No-op in the batch milestone.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.agents.ClaudeAgent.on_window">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">on_window</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="types.html#hearing.types.TranscriptSegment" title="hearing.types.TranscriptSegment"><span class="pre">TranscriptSegment</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/hearing/agents.html#ClaudeAgent.on_window"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.agents.ClaudeAgent.on_window" title="Link to this definition"></a></dt>
+<dd><p>Analyze a whole transcript (batch) and return structured notes.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="hearing.agents.DEFAULT_CLAUDE_MODEL">
+<span class="sig-prename descclassname"><span class="pre">hearing.agents.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_CLAUDE_MODEL</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'claude-sonnet-4-6'</span></span><a class="headerlink" href="#hearing.agents.DEFAULT_CLAUDE_MODEL" title="Link to this definition"></a></dt>
+<dd><p>A sensible, current default Claude model for meeting analysis. Override via
+<code class="docutils literal notranslate"><span class="pre">model=</span></code> (e.g. “claude-opus-4-8” for max capability). See claude-api skill.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hearing.agents.ExtractiveAgent">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.agents.</span></span><span class="sig-name descname"><span class="pre">ExtractiveAgent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_key_points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action_cues</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(&quot;let's&quot;,</span> <span class="pre">'we</span> <span class="pre">should',</span> <span class="pre">&quot;i'll&quot;,</span> <span class="pre">&quot;we'll&quot;,</span> <span class="pre">'need</span> <span class="pre">to',</span> <span class="pre">'action',</span> <span class="pre">'todo',</span> <span class="pre">'to</span> <span class="pre">do',</span> <span class="pre">'follow</span> <span class="pre">up',</span> <span class="pre">'next</span> <span class="pre">step',</span> <span class="pre">'assign',</span> <span class="pre">'by</span> <span class="pre">friday',</span> <span class="pre">'by</span> <span class="pre">monday',</span> <span class="pre">'deadline')</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/hearing/agents.html#ExtractiveAgent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.agents.ExtractiveAgent" title="Link to this definition"></a></dt>
+<dd><p>Deterministic, dependency-free fallback agent (no API, no network).</p>
+<p>Produces a usable summary by extraction/heuristics so the app always does
+<em>something</em> offline and tests stay deterministic. Detects naive action
+items (imperative / commitment cues) and open questions (<code class="docutils literal notranslate"><span class="pre">?</span></code>).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hearing.agents.ExtractiveAgent.action_cues">
+<span class="sig-name descname"><span class="pre">action_cues</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(&quot;let's&quot;,</span> <span class="pre">'we</span> <span class="pre">should',</span> <span class="pre">&quot;i'll&quot;,</span> <span class="pre">&quot;we'll&quot;,</span> <span class="pre">'need</span> <span class="pre">to',</span> <span class="pre">'action',</span> <span class="pre">'todo',</span> <span class="pre">'to</span> <span class="pre">do',</span> <span class="pre">'follow</span> <span class="pre">up',</span> <span class="pre">'next</span> <span class="pre">step',</span> <span class="pre">'assign',</span> <span class="pre">'by</span> <span class="pre">friday',</span> <span class="pre">'by</span> <span class="pre">monday',</span> <span class="pre">'deadline')</span></span><a class="headerlink" href="#hearing.agents.ExtractiveAgent.action_cues" title="Link to this definition"></a></dt>
+<dd><p>cues that hint a segment is an action item / commitment</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.agents.ExtractiveAgent.on_segment">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">on_segment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">segment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="types.html#hearing.types.TranscriptSegment" title="hearing.types.TranscriptSegment"><span class="pre">TranscriptSegment</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/hearing/agents.html#ExtractiveAgent.on_segment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.agents.ExtractiveAgent.on_segment" title="Link to this definition"></a></dt>
+<dd><p>Live per-segment hook: surface action-item cues immediately.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.agents.ExtractiveAgent.on_window">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">on_window</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="types.html#hearing.types.TranscriptSegment" title="hearing.types.TranscriptSegment"><span class="pre">TranscriptSegment</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/hearing/agents.html#ExtractiveAgent.on_window"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.agents.ExtractiveAgent.on_window" title="Link to this definition"></a></dt>
+<dd><p>Return a deterministic extractive summary of the window.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hearing.agents.build_default_agent">
+<span class="sig-prename descclassname"><span class="pre">hearing.agents.</span></span><span class="sig-name descname"><span class="pre">build_default_agent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'auto'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/hearing/agents.html#build_default_agent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.agents.build_default_agent" title="Link to this definition"></a></dt>
+<dd><p>Pick the best available agent.</p>
+<p><code class="docutils literal notranslate"><span class="pre">prefer=&quot;claude&quot;</span></code> forces Claude; <code class="docutils literal notranslate"><span class="pre">&quot;extractive&quot;</span></code> forces the offline
+fallback; <code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code> (default) uses Claude when the anthropic SDK and an API
+key are available, otherwise the dependency-free <a class="reference internal" href="#hearing.agents.ExtractiveAgent" title="hearing.agents.ExtractiveAgent"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExtractiveAgent</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hearing.agents.summarize_transcript">
+<span class="sig-prename descclassname"><span class="pre">hearing.agents.</span></span><span class="sig-name descname"><span class="pre">summarize_transcript</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transcript</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="types.html#hearing.types.Transcript" title="hearing.types.Transcript"><span class="pre">Transcript</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="types.html#hearing.types.TranscriptSegment" title="hearing.types.TranscriptSegment"><span class="pre">TranscriptSegment</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">agent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/hearing/agents.html#summarize_transcript"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.agents.summarize_transcript" title="Link to this definition"></a></dt>
+<dd><p>Synchronous facade: run a (batch) agent over a transcript, return notes.</p>
+<p>Builds the default agent when none is injected. Usable on a transcript with
+no audio at all.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../hearing.html" class="btn btn-neutral float-left" title="hearing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="capture.html" class="btn btn-neutral float-right" title="hearing.capture" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

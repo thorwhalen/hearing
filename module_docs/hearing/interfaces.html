@@ -1,0 +1,232 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hearing.interfaces &mdash; hearing 0.0.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=e3a6060d"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="hearing.pipeline" href="pipeline.html" />
+    <link rel="prev" title="hearing.diarize" href="diarize.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            hearing
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../hearing.html">hearing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="agents.html">hearing.agents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="capture.html">hearing.capture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">hearing.cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diarize.html">hearing.diarize</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">hearing.interfaces</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.interfaces.AgentConsumer"><code class="docutils literal notranslate"><span class="pre">AgentConsumer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.interfaces.AgentConsumer.on_segment"><code class="docutils literal notranslate"><span class="pre">AgentConsumer.on_segment()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.interfaces.AgentConsumer.on_window"><code class="docutils literal notranslate"><span class="pre">AgentConsumer.on_window()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.interfaces.CaptureSource"><code class="docutils literal notranslate"><span class="pre">CaptureSource</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.interfaces.CaptureSource.astream"><code class="docutils literal notranslate"><span class="pre">CaptureSource.astream()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.interfaces.CaptureSource.frames"><code class="docutils literal notranslate"><span class="pre">CaptureSource.frames()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.interfaces.Diarizer"><code class="docutils literal notranslate"><span class="pre">Diarizer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.interfaces.Diarizer.assign_speakers"><code class="docutils literal notranslate"><span class="pre">Diarizer.assign_speakers()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hearing.interfaces.STTEngine"><code class="docutils literal notranslate"><span class="pre">STTEngine</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.interfaces.STTEngine.stream_transcribe"><code class="docutils literal notranslate"><span class="pre">STTEngine.stream_transcribe()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hearing.interfaces.STTEngine.transcribe"><code class="docutils literal notranslate"><span class="pre">STTEngine.transcribe()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">hearing.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="stt.html">hearing.stt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">hearing.types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vad.html">hearing.vad</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hearing</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">hearing.interfaces</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/module_docs/hearing/interfaces.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-hearing.interfaces">
+<span id="hearing-interfaces"></span><h1>hearing.interfaces<a class="headerlink" href="#module-hearing.interfaces" title="Link to this heading"></a></h1>
+<p>Facade Protocols for the four pipeline concerns.</p>
+<p>Every engine/component is dependency-injected as one of these; the pipeline
+depends only on these interfaces, never on a concrete engine. Implementers
+satisfy them <em>structurally</em> (<code class="docutils literal notranslate"><span class="pre">typing.Protocol</span></code>) — they do not subclass.</p>
+<p>This is the contract the <code class="docutils literal notranslate"><span class="pre">hearing-architecture</span></code> skill defines and that every
+other <code class="docutils literal notranslate"><span class="pre">hearing-*</span></code> concern implements against.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="hearing.interfaces.AgentConsumer">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.interfaces.</span></span><span class="sig-name descname"><span class="pre">AgentConsumer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/hearing/interfaces.html#AgentConsumer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.interfaces.AgentConsumer" title="Link to this definition"></a></dt>
+<dd><p>Consumes the (labeled) transcript stream and does things.</p>
+<p>Running notes, suggested questions, RAG over related docs, post-meeting
+summaries. Defaults to Claude but stays pluggable (see the <code class="docutils literal notranslate"><span class="pre">claude-api</span></code>
+skill for model ids / pricing / tool use).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.interfaces.AgentConsumer.on_segment">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">on_segment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">segment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="types.html#hearing.types.TranscriptSegment" title="hearing.types.TranscriptSegment"><span class="pre">TranscriptSegment</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/hearing/interfaces.html#AgentConsumer.on_segment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.interfaces.AgentConsumer.on_segment" title="Link to this definition"></a></dt>
+<dd><p>Called per finalized segment (live). Return an optional insight.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.interfaces.AgentConsumer.on_window">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">on_window</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="types.html#hearing.types.TranscriptSegment" title="hearing.types.TranscriptSegment"><span class="pre">TranscriptSegment</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/hearing/interfaces.html#AgentConsumer.on_window"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.interfaces.AgentConsumer.on_window" title="Link to this definition"></a></dt>
+<dd><p>Called on a window/turn or the whole transcript (batch).</p>
+<p>Return an optional insight (summary, action items, a suggested
+question, a surfaced document, …).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hearing.interfaces.CaptureSource">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.interfaces.</span></span><span class="sig-name descname"><span class="pre">CaptureSource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/hearing/interfaces.html#CaptureSource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.interfaces.CaptureSource" title="Link to this definition"></a></dt>
+<dd><p>Audio source — the ONLY thing that differs between batch and live.</p>
+<p>Yields <code class="docutils literal notranslate"><span class="pre">(channel,</span> <span class="pre">frames)</span></code> so mic and system audio stay on separate
+channels all the way down. A batch implementation reads a file; a live
+implementation reads a device/tap.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.interfaces.CaptureSource.astream">
+<span class="sig-name descname"><span class="pre">astream</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">AsyncIterator</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="types.html#hearing.types.Channel" title="hearing.types.Channel"><span class="pre">Channel</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/hearing/interfaces.html#CaptureSource.astream"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.interfaces.CaptureSource.astream" title="Link to this definition"></a></dt>
+<dd><p>Live / async: yield <code class="docutils literal notranslate"><span class="pre">(channel,</span> <span class="pre">frames)</span></code> blocks until stopped.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.interfaces.CaptureSource.frames">
+<span class="sig-name descname"><span class="pre">frames</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="types.html#hearing.types.Channel" title="hearing.types.Channel"><span class="pre">Channel</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/hearing/interfaces.html#CaptureSource.frames"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.interfaces.CaptureSource.frames" title="Link to this definition"></a></dt>
+<dd><p>Batch / sync: yield <code class="docutils literal notranslate"><span class="pre">(channel,</span> <span class="pre">frames[n_samples])</span></code> blocks to EOF.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hearing.interfaces.Diarizer">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.interfaces.</span></span><span class="sig-name descname"><span class="pre">Diarizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/hearing/interfaces.html#Diarizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.interfaces.Diarizer" title="Link to this definition"></a></dt>
+<dd><p>Labels who spoke — enriches segments with <code class="docutils literal notranslate"><span class="pre">.speaker</span></code>.</p>
+<p>May use the audio (pyannote) or just the channel (the channel trick).
+Identity resolution (<code class="docutils literal notranslate"><span class="pre">spk_0</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">&quot;Alice&quot;</span></code>) is an optional further step
+behind the same interface.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.interfaces.Diarizer.assign_speakers">
+<span class="sig-name descname"><span class="pre">assign_speakers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">segments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="types.html#hearing.types.TranscriptSegment" title="hearing.types.TranscriptSegment"><span class="pre">TranscriptSegment</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">audio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="types.html#hearing.types.TranscriptSegment" title="hearing.types.TranscriptSegment"><span class="pre">TranscriptSegment</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/hearing/interfaces.html#Diarizer.assign_speakers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.interfaces.Diarizer.assign_speakers" title="Link to this definition"></a></dt>
+<dd><p>Yield segments with <code class="docutils literal notranslate"><span class="pre">.speaker</span></code> populated (enrich-by-copy).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hearing.interfaces.STTEngine">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.interfaces.</span></span><span class="sig-name descname"><span class="pre">STTEngine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/hearing/interfaces.html#STTEngine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.interfaces.STTEngine" title="Link to this definition"></a></dt>
+<dd><p>Speech-to-text.</p>
+<p><code class="docutils literal notranslate"><span class="pre">transcribe</span></code> is the batch one-liner; <code class="docutils literal notranslate"><span class="pre">stream_transcribe</span></code> is the live
+variant. Both yield <a class="reference internal" href="types.html#hearing.types.TranscriptSegment" title="hearing.types.TranscriptSegment"><code class="xref py py-class docutils literal notranslate"><span class="pre">TranscriptSegment</span></code></a> — same shape,
+same spine. The rest of the architecture never names a concrete engine.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.interfaces.STTEngine.stream_transcribe">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">stream_transcribe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AsyncIterator</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">AsyncIterator</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="types.html#hearing.types.TranscriptSegment" title="hearing.types.TranscriptSegment"><span class="pre">TranscriptSegment</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/hearing/interfaces.html#STTEngine.stream_transcribe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.interfaces.STTEngine.stream_transcribe" title="Link to this definition"></a></dt>
+<dd><p>Live: yield interim then finalized segments as audio arrives.</p>
+<p>Mark interim vs final via <code class="docutils literal notranslate"><span class="pre">meta</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">meta['final']</span></code>). See the
+<code class="docutils literal notranslate"><span class="pre">hearing-live-pipeline</span></code> skill — this is the milestone-2 entry point.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.interfaces.STTEngine.transcribe">
+<span class="sig-name descname"><span class="pre">transcribe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">audio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">language</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="types.html#hearing.types.TranscriptSegment" title="hearing.types.TranscriptSegment"><span class="pre">TranscriptSegment</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/hearing/interfaces.html#STTEngine.transcribe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.interfaces.STTEngine.transcribe" title="Link to this definition"></a></dt>
+<dd><p>Batch: whole clip in (float32 mono ndarray), segments out.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="diarize.html" class="btn btn-neutral float-left" title="hearing.diarize" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="pipeline.html" class="btn btn-neutral float-right" title="hearing.pipeline" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,4 @@
+hearing.vad
+===========
+.. automodule:: hearing.vad
+   :members:

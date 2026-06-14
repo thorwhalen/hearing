@@ -1,0 +1,360 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hearing.types &mdash; hearing 0.0.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=e3a6060d"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            hearing
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing.html">hearing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/agents.html">hearing.agents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/capture.html">hearing.capture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/cli.html">hearing.cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/diarize.html">hearing.diarize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/interfaces.html">hearing.interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/pipeline.html">hearing.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/stt.html">hearing.stt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/types.html">hearing.types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/hearing/vad.html">hearing.vad</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hearing</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">hearing.types</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hearing.types</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Shared data model for the hearing pipeline.</span>
+
+<span class="sd">This is the SSOT data spine that every concern (capture, STT, diarization,</span>
+<span class="sd">agents) speaks. A transcript is *standoff interval annotation* over the audio:</span>
+<span class="sd">segments reference the audio by time (a :class:`TimeSpan`) and never carry the</span>
+<span class="sd">samples themselves. Time is integer milliseconds — never bare float seconds —</span>
+<span class="sd">so it is accumulation-safe, hashable, and round-trippable.</span>
+
+<span class="sd">See the ``hearing-architecture`` skill for the rationale behind every choice</span>
+<span class="sd">here, and the ``annotation-systems`` skill for the standoff-annotation theory.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">replace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+
+
+<div class="viewcode-block" id="Channel">
+<a class="viewcode-back" href="../../module_docs/hearing/types.html#hearing.Channel">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Channel</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Which capture channel a segment came from.</span>
+
+<span class="sd">    The channel *is* the &quot;me vs them&quot; signal, for free: ``MIC`` is the local</span>
+<span class="sd">    user, ``SYSTEM`` is everyone else (audio that came out of the speakers).</span>
+<span class="sd">    ``MIXED`` is a single-channel / unknown source.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">MIC</span> <span class="o">=</span> <span class="s2">&quot;mic&quot;</span>  <span class="c1"># the local user (&quot;me&quot;)</span>
+    <span class="n">SYSTEM</span> <span class="o">=</span> <span class="s2">&quot;system&quot;</span>  <span class="c1"># remote participants (came out of the speakers)</span>
+    <span class="n">MIXED</span> <span class="o">=</span> <span class="s2">&quot;mixed&quot;</span>  <span class="c1"># single-channel / unknown source</span></div>
+
+
+
+<span class="c1"># Speaker labels are open strings, not an enum: diarization invents &quot;spk_0&quot;,</span>
+<span class="c1"># &quot;spk_1&quot;; identification may later resolve them to &quot;me&quot;, &quot;Alice&quot;, ...</span>
+<span class="n">SpeakerLabel</span> <span class="o">=</span> <span class="nb">str</span>
+<span class="n">ME</span><span class="p">:</span> <span class="n">SpeakerLabel</span> <span class="o">=</span> <span class="s2">&quot;me&quot;</span>  <span class="c1"># canonical label for the local user</span>
+<span class="n">THEM</span><span class="p">:</span> <span class="n">SpeakerLabel</span> <span class="o">=</span> <span class="s2">&quot;them&quot;</span>  <span class="c1"># canonical label for &quot;a remote participant&quot;</span>
+
+
+<div class="viewcode-block" id="TimeSpan">
+<a class="viewcode-back" href="../../module_docs/hearing/types.html#hearing.TimeSpan">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TimeSpan</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A half-open interval ``[start_ms, end_ms)`` in integer milliseconds.</span>
+
+<span class="sd">    Integer time, never float seconds — accumulation-safe and hashable.</span>
+
+<span class="sd">    &gt;&gt;&gt; TimeSpan(0, 1500).duration_ms</span>
+<span class="sd">    1500</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">start_ms</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">end_ms</span><span class="p">:</span> <span class="nb">int</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">duration_ms</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Length of the interval in milliseconds.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_ms</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_ms</span>
+
+<div class="viewcode-block" id="TimeSpan.from_seconds">
+<a class="viewcode-back" href="../../module_docs/hearing/types.html#hearing.TimeSpan.from_seconds">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_seconds</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TimeSpan&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build a span from float seconds (e.g. from an STT engine).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">start</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)),</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">end</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)))</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Word">
+<a class="viewcode-back" href="../../module_docs/hearing/types.html#hearing.Word">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Word</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Optional word-level timing (WhisperX / ``word_timestamps=True``).</span>
+
+<span class="sd">    Lets an agent trigger on a keyword mid-utterance instead of waiting for the</span>
+<span class="sd">    end of a turn. Purely optional metadata on a :class:`TranscriptSegment`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">span</span><span class="p">:</span> <span class="n">TimeSpan</span>
+    <span class="n">confidence</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="TranscriptSegment">
+<a class="viewcode-back" href="../../module_docs/hearing/types.html#hearing.TranscriptSegment">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TranscriptSegment</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The data spine — a standoff interval annotation over the audio.</span>
+
+<span class="sd">    Required fields are ``text`` and ``span``. Everything else is optional</span>
+<span class="sd">    metadata that a concern *enriches*: STT sets ``text``/``span``/</span>
+<span class="sd">    ``confidence``; capture sets ``channel``; diarization sets ``speaker``.</span>
+<span class="sd">    Segments are frozen — enrich by copying (``with_speaker``/``with_channel``),</span>
+<span class="sd">    never mutate.</span>
+
+<span class="sd">    &gt;&gt;&gt; seg = TranscriptSegment(&quot;hello&quot;, TimeSpan(0, 500))</span>
+<span class="sd">    &gt;&gt;&gt; seg.with_speaker(ME).speaker</span>
+<span class="sd">    &#39;me&#39;</span>
+<span class="sd">    &gt;&gt;&gt; seg.text</span>
+<span class="sd">    &#39;hello&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">span</span><span class="p">:</span> <span class="n">TimeSpan</span>
+    <span class="n">channel</span><span class="p">:</span> <span class="n">Channel</span> <span class="o">=</span> <span class="n">Channel</span><span class="o">.</span><span class="n">MIXED</span>
+    <span class="n">speaker</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SpeakerLabel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">confidence</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">words</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Word</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>  <span class="c1"># optional word-level timing</span>
+    <span class="n">meta</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>  <span class="c1"># provenance, engine id</span>
+
+<div class="viewcode-block" id="TranscriptSegment.with_speaker">
+<a class="viewcode-back" href="../../module_docs/hearing/types.html#hearing.TranscriptSegment.with_speaker">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_speaker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">speaker</span><span class="p">:</span> <span class="n">SpeakerLabel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TranscriptSegment&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a copy carrying a speaker label (frozen -&gt; copy, don&#39;t mutate).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">replace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">speaker</span><span class="o">=</span><span class="n">speaker</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TranscriptSegment.with_channel">
+<a class="viewcode-back" href="../../module_docs/hearing/types.html#hearing.TranscriptSegment.with_channel">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="n">Channel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TranscriptSegment&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a copy carrying a channel label (frozen -&gt; copy, don&#39;t mutate).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">replace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="n">channel</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Transcript">
+<a class="viewcode-back" href="../../module_docs/hearing/types.html#hearing.Transcript">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Transcript</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A finished transcript: an ordered collection of segments plus metadata.</span>
+
+<span class="sd">    Iterable and ``len``-able, so it stands in for a ``Sequence`` of segments</span>
+<span class="sd">    wherever the architecture&#39;s facades return &quot;segments&quot;. Adds convenience</span>
+<span class="sd">    accessors the CLI/agents need.</span>
+
+<span class="sd">    &gt;&gt;&gt; t = Transcript((TranscriptSegment(&quot;a&quot;, TimeSpan(0, 1000), speaker=ME),</span>
+<span class="sd">    ...                  TranscriptSegment(&quot;b&quot;, TimeSpan(1000, 2000), speaker=THEM)))</span>
+<span class="sd">    &gt;&gt;&gt; t.text</span>
+<span class="sd">    &#39;a b&#39;</span>
+<span class="sd">    &gt;&gt;&gt; len(t)</span>
+<span class="sd">    2</span>
+<span class="sd">    &gt;&gt;&gt; sorted(t.speakers)</span>
+<span class="sd">    [&#39;me&#39;, &#39;them&#39;]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">segments</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">sample_rate</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">meta</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Accept any sequence; normalize to a tuple (frozen -&gt; object.__setattr__).</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segments</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;segments&quot;</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segments</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segments</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segments</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">segments</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">text</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;All segment texts joined by a single space.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">segments</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">duration_ms</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;End of the last segment, or 0 if empty.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">((</span><span class="n">s</span><span class="o">.</span><span class="n">span</span><span class="o">.</span><span class="n">end_ms</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">segments</span><span class="p">),</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">speakers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">SpeakerLabel</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The distinct speaker labels present (ignoring ``None``).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">s</span><span class="o">.</span><span class="n">speaker</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">segments</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">speaker</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">}</span>
+
+<div class="viewcode-block" id="Transcript.with_meta">
+<a class="viewcode-back" href="../../module_docs/hearing/types.html#hearing.Transcript.with_meta">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Transcript&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a copy with extra metadata merged in.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">replace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">})</span></div>
+
+
+<div class="viewcode-block" id="Transcript.formatted">
+<a class="viewcode-back" href="../../module_docs/hearing/types.html#hearing.Transcript.formatted">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">formatted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">speakers</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">timestamps</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Render as a human-readable transcript, one line per segment.&quot;&quot;&quot;</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">segments</span><span class="p">:</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="k">if</span> <span class="n">timestamps</span><span class="p">:</span>
+                <span class="n">prefix</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">_ms_to_clock</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">span</span><span class="o">.</span><span class="n">start_ms</span><span class="p">)</span><span class="si">}</span><span class="s2">] &quot;</span>
+            <span class="k">if</span> <span class="n">speakers</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">speaker</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">prefix</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">speaker</span><span class="si">}</span><span class="s2">: &quot;</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">s</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Transcript.to_jsonable">
+<a class="viewcode-back" href="../../module_docs/hearing/types.html#hearing.Transcript.to_jsonable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_jsonable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;A plain ``list[dict]`` ready for ``json.dumps`` (segments only).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">text</span><span class="p">,</span>
+                <span class="s2">&quot;start_ms&quot;</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">span</span><span class="o">.</span><span class="n">start_ms</span><span class="p">,</span>
+                <span class="s2">&quot;end_ms&quot;</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">span</span><span class="o">.</span><span class="n">end_ms</span><span class="p">,</span>
+                <span class="s2">&quot;channel&quot;</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="s2">&quot;speaker&quot;</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">speaker</span><span class="p">,</span>
+                <span class="s2">&quot;confidence&quot;</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">segments</span>
+        <span class="p">]</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_ms_to_clock</span><span class="p">(</span><span class="n">ms</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format milliseconds as ``HH:MM:SS`` (helper for ``Transcript.formatted``).&quot;&quot;&quot;</span>
+    <span class="n">total_s</span> <span class="o">=</span> <span class="n">ms</span> <span class="o">//</span> <span class="mi">1000</span>
+    <span class="n">h</span><span class="p">,</span> <span class="n">rem</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">total_s</span><span class="p">,</span> <span class="mi">3600</span><span class="p">)</span>
+    <span class="n">m</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">rem</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">h</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">m</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">s</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">&quot;</span>
+
+
+<div class="viewcode-block" id="merge_segments">
+<a class="viewcode-back" href="../../module_docs/hearing/types.html#hearing.merge_segments">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">merge_segments</span><span class="p">(</span><span class="o">*</span><span class="n">segment_groups</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge several segment sequences into one list ordered by start time.</span>
+
+<span class="sd">    Used when transcribing the mic and system channels separately and then</span>
+<span class="sd">    interleaving them back into a single chronological transcript.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">merged</span> <span class="o">=</span> <span class="p">[</span><span class="n">seg</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">segment_groups</span> <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">group</span><span class="p">]</span>
+    <span class="n">merged</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">span</span><span class="o">.</span><span class="n">start_ms</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">span</span><span class="o">.</span><span class="n">end_ms</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">merged</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
