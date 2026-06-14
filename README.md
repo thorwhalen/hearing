@@ -130,6 +130,23 @@ Live device capture is the next milestone; today you bring a recording.
 
 Full status in [`misc/docs/ROADMAP.md`](misc/docs/ROADMAP.md).
 
+## Web UI (HTTP API + React frontend)
+
+A FastAPI layer wraps the same facades, and a schema-driven React frontend
+(zodal + Zod) renders the diarized transcript (me/them lanes) and the AI notes.
+
+```bash
+pip install 'hearing[http,whisper,agents]'
+hearing serve                      # API on http://127.0.0.1:8000 (docs at /docs)
+
+cd frontend && npm install && npm run dev   # UI on http://localhost:5173 (proxies /api)
+```
+
+Then drop an audio file on the page → diarized transcript + AI meeting notes. The
+TypeScript data shapes live in `frontend/src/schema.ts` as zodal collections
+(one Zod schema per surface) and double as the API response validator, so the
+Python backend and the UI share one contract. See the `hearing-frontend` skill.
+
 ## Architecture & development
 
 This project is developed with a suite of agent **skills** under

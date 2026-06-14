@@ -48,17 +48,24 @@ its own development skill under `.claude/skills/`.
 
 See the `hearing-live-pipeline` skill.
 
-## Milestone 3 — Frontend  ·  *not started (designed)*
+## Milestone 3 — Frontend  ·  *static view working*
 
-> Schema-driven TypeScript/React UI: a transcript viewer and a live copilot
-> overlay (agent feedback panel: notes, suggested questions, surfaced docs,
-> fact-checks).
+> Schema-driven TypeScript/React UI: a transcript viewer and (later) a live
+> copilot overlay (agent feedback panel: notes, suggested questions, surfaced
+> docs, fact-checks).
 
-- zodal (Zod-schema-driven collections; content/metadata bifurcation routes
-  transcript metadata to a DB and audio to object storage).
-- acture (command-dispatch).
-- An HTTP layer over the same Python facades (`python-dispatching`).
-- See the `hearing-frontend` skill.
+| Piece | Status | Notes |
+|---|---|---|
+| HTTP layer over the facades (FastAPI) | ✅ done | `hearing/http_app.py`; `GET /api/health`, `POST /api/transcribe`; `hearing serve`; tested with TestClient |
+| zodal schema-driven collections (Segment/Meeting/Feedback) | ✅ done | `frontend/src/schema.ts` — the SSOT; UI reads searchable/visible fields off the collection |
+| Static transcript viewer (me/them lanes, search) + AI-notes panel | ✅ done | `frontend/` (Vite+React+TS); builds clean; verified in-browser end-to-end |
+| Schema-as-contract API client (Zod-validated responses) | ✅ done | `frontend/src/api.ts` |
+| `zodal-ui-shadcn` renderer registry | 📋 todo | not yet published to npm; current renderer is a thin custom view (swap in when available) |
+| acture command layer (palette / hotkeys / AI+MCP tools) | 📋 todo | export transcript, jump-to-speaker, ask-the-agent, pin-doc |
+| Live copilot overlay (append-only stream via SSE/WS) | 📋 todo | build on the static view once the live HTTP stream exists |
+
+See the `hearing-frontend` skill. (The HTTP layer also advances Milestone 1's
+"interfaces to the outside".)
 
 ## Tracking
 

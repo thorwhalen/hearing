@@ -143,6 +143,23 @@ def live(
         print("\nstopped.", file=sys.stderr)
 
 
+def serve(*, host: str = "127.0.0.1", port: int = 8000, reload: bool = False) -> None:
+    """Serve the HTTP API (FastAPI) the frontend talks to.
+
+    Args:
+        host: bind address.
+        port: bind port.
+        reload: auto-reload on code changes (dev).
+    """
+    try:
+        import uvicorn
+    except ImportError:  # pragma: no cover - guidance path
+        print("`hearing serve` needs the http extra: pip install 'hearing[http]'", file=sys.stderr)
+        raise SystemExit(1)
+    print(f"hearing API on http://{host}:{port}  (docs at /docs)", file=sys.stderr)
+    uvicorn.run("hearing.http_app:app", host=host, port=port, reload=reload)
+
+
 def info() -> str:
     """Report which optional components are installed and what's missing."""
     lines = ["hearing — component availability:"]
@@ -187,7 +204,7 @@ def main(argv=None) -> None:
     # a default, e.g. `hearing live [FILE]`); keyword-only params become --options.
     argh.add_commands(
         parser,
-        [transcribe, summarize, live, info],
+        [transcribe, summarize, live, serve, info],
         name_mapping_policy=NameMappingPolicy.BY_NAME_IF_KWONLY,
     )
     parser.dispatch(argv)

@@ -61,6 +61,12 @@ capture = [
 vad = [
     "silero-vad>=5.0",
 ]
+# HTTP API layer (the TypeScript frontend talks to this).
+http = [
+    "fastapi>=0.110",
+    "uvicorn>=0.27",
+    "python-multipart>=0.0.9",
+]
 # Everything needed for the full app (batch + live).
 all = [
     "faster-whisper>=1.0",
