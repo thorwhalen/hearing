@@ -112,6 +112,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">transcribe</span><span class="p">(</span>
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
+    <span class="n">engine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;whisper&quot;</span><span class="p">,</span>
     <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;base&quot;</span><span class="p">,</span>
     <span class="n">language</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">split</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -124,7 +125,8 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        path: audio file (wav/flac/aiff/...; convert mp3/m4a with ffmpeg first).</span>
-<span class="sd">        model: whisper model size (tiny/base/small/medium/large-v3/...).</span>
+<span class="sd">        engine: STT engine — &quot;whisper&quot; (local faster-whisper) or &quot;openai&quot; (cloud).</span>
+<span class="sd">        model: whisper model size (tiny/base/small/medium/large-v3/...); local only.</span>
 <span class="sd">        language: force a language code (e.g. &quot;en&quot;); omit to auto-detect.</span>
 <span class="sd">        split: split mic/system channels for multi-channel files (me vs them).</span>
 <span class="sd">        diarize: apply the channel-trick &quot;me vs them&quot; labelling.</span>
@@ -135,11 +137,12 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hearing</span><span class="w"> </span><span class="kn">import</span> <span class="n">transcribe</span> <span class="k">as</span> <span class="n">_transcribe</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.diarize</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChannelTrickDiarizer</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.stt</span><span class="w"> </span><span class="kn">import</span> <span class="n">FasterWhisperSTT</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.stt</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_engine</span>
 
+    <span class="n">stt</span> <span class="o">=</span> <span class="n">get_engine</span><span class="p">(</span><span class="s2">&quot;openai&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">engine</span> <span class="o">==</span> <span class="s2">&quot;openai&quot;</span> <span class="k">else</span> <span class="n">get_engine</span><span class="p">(</span><span class="s2">&quot;whisper&quot;</span><span class="p">,</span> <span class="n">model_size</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
     <span class="n">transcript</span> <span class="o">=</span> <span class="n">_transcribe</span><span class="p">(</span>
         <span class="n">path</span><span class="p">,</span>
-        <span class="n">engine</span><span class="o">=</span><span class="n">FasterWhisperSTT</span><span class="p">(</span><span class="n">model_size</span><span class="o">=</span><span class="n">model</span><span class="p">),</span>
+        <span class="n">engine</span><span class="o">=</span><span class="n">stt</span><span class="p">,</span>
         <span class="n">diarizer</span><span class="o">=</span><span class="n">ChannelTrickDiarizer</span><span class="p">()</span> <span class="k">if</span> <span class="n">diarize</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">language</span><span class="o">=</span><span class="n">language</span><span class="p">,</span>
         <span class="n">split</span><span class="o">=</span><span class="n">split</span><span class="p">,</span>

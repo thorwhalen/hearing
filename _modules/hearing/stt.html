@@ -104,6 +104,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">replace</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">AsyncIterator</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
@@ -220,27 +221,166 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Stream finalized segments as utterances complete (the live path).</span>
 
-<span class="sd">        VAD (``self.vad``, default :class:`~hearing.vad.EnergyVAD`) groups the</span>
-<span class="sd">        incoming frame blocks into utterances; each utterance is transcribed with</span>
-<span class="sd">        the same batch ``transcribe`` and emitted as a FINALIZED segment</span>
-<span class="sd">        (``meta[&#39;final&#39;] = True``) with its span offset to absolute stream time.</span>
-
-<span class="sd">        Same Protocol method, same ``TranscriptSegment`` spine as batch — the</span>
-<span class="sd">        live milestone adds no new interface (see hearing-live-pipeline).</span>
+<span class="sd">        Delegates to :func:`vad_stream_transcribe`: VAD groups frames into</span>
+<span class="sd">        utterances; each is transcribed with the batch ``transcribe`` and emitted</span>
+<span class="sd">        as a FINALIZED segment. Same Protocol method, same ``TranscriptSegment``</span>
+<span class="sd">        spine as batch — the live milestone adds no new interface.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.vad</span><span class="w"> </span><span class="kn">import</span> <span class="n">segment_utterances</span>
-
-        <span class="k">async</span> <span class="k">for</span> <span class="n">utterance</span><span class="p">,</span> <span class="n">start_ms</span> <span class="ow">in</span> <span class="n">segment_utterances</span><span class="p">(</span>
-            <span class="n">frames</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span> <span class="n">vad</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">vad</span>
-        <span class="p">):</span>
-            <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">transcribe</span><span class="p">(</span><span class="n">utterance</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">):</span>
-                <span class="k">yield</span> <span class="n">replace</span><span class="p">(</span>
-                    <span class="n">seg</span><span class="p">,</span>
-                    <span class="n">span</span><span class="o">=</span><span class="n">TimeSpan</span><span class="p">(</span><span class="n">seg</span><span class="o">.</span><span class="n">span</span><span class="o">.</span><span class="n">start_ms</span> <span class="o">+</span> <span class="n">start_ms</span><span class="p">,</span> <span class="n">seg</span><span class="o">.</span><span class="n">span</span><span class="o">.</span><span class="n">end_ms</span> <span class="o">+</span> <span class="n">start_ms</span><span class="p">),</span>
-                    <span class="n">meta</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">seg</span><span class="o">.</span><span class="n">meta</span><span class="p">),</span> <span class="s2">&quot;final&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
-                <span class="p">)</span></div>
+        <span class="k">async</span> <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">vad_stream_transcribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frames</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span> <span class="n">vad</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">vad</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">seg</span></div>
 </div>
 
+
+
+<div class="viewcode-block" id="OpenAISTT">
+<a class="viewcode-back" href="../../module_docs/hearing/stt.html#hearing.stt.OpenAISTT">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OpenAISTT</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Cloud STT via the OpenAI transcription API — a drop-in ``STTEngine``.</span>
+
+<span class="sd">    Demonstrates the facade&#39;s payoff: swap the local engine for a cloud one by</span>
+<span class="sd">    changing the injected ``engine=`` — nothing downstream changes. Defaults to</span>
+<span class="sd">    ``whisper-1`` (returns segment timestamps via ``verbose_json``); ``gpt-4o-</span>
+<span class="sd">    transcribe`` returns higher-quality text but as a single segment.</span>
+
+<span class="sd">    Needs ``pip install &#39;hearing[openai]&#39;`` and ``OPENAI_API_KEY`` (or pass</span>
+<span class="sd">    ``api_key=`` / inject a ``client=`` for tests). See the hearing-stt skill for</span>
+<span class="sd">    the per-minute pricing and the local-vs-cloud decision.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;whisper-1&quot;</span>
+    <span class="n">api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">language</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">vad</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;VAD&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">client</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># inject a client (tests); else built lazily</span>
+    <span class="n">_engine_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;openai&quot;</span><span class="p">)</span>
+    <span class="n">_built</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_built</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="kn">import</span><span class="w"> </span><span class="nn">openai</span>
+            <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pragma: no cover - guidance path</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                    <span class="s2">&quot;OpenAISTT needs the openai SDK. Install with:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    pip install &#39;hearing[openai]&#39;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;or inject a different STTEngine. See the hearing-stt skill.&quot;</span>
+                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_key</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;OPENAI_API_KEY&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;OPENAI_API_KEY is not set. Set it, pass api_key=, or use the &quot;</span>
+                    <span class="s2">&quot;local FasterWhisperSTT engine.&quot;</span>
+                <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_built</span> <span class="o">=</span> <span class="n">openai</span><span class="o">.</span><span class="n">OpenAI</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_built</span>
+
+<div class="viewcode-block" id="OpenAISTT.transcribe">
+<a class="viewcode-back" href="../../module_docs/hearing/stt.html#hearing.stt.OpenAISTT.transcribe">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transcribe</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">language</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transcribe a mono clip via the OpenAI API; return ordered segments.&quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+
+        <span class="kn">import</span><span class="w"> </span><span class="nn">soundfile</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sf</span>
+
+        <span class="n">mono16</span> <span class="o">=</span> <span class="n">resample</span><span class="p">(</span><span class="n">_as_mono</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span> <span class="n">sample_rate</span><span class="p">,</span> <span class="n">STT_SAMPLE_RATE</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mono16</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.wav&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tmp</span><span class="p">:</span>
+            <span class="n">sf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">tmp</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">mono16</span><span class="p">,</span> <span class="n">STT_SAMPLE_RATE</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;WAV&quot;</span><span class="p">)</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">tmp</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_client</span><span class="p">()</span><span class="o">.</span><span class="n">audio</span><span class="o">.</span><span class="n">transcriptions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                    <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+                    <span class="n">file</span><span class="o">=</span><span class="n">f</span><span class="p">,</span>
+                    <span class="n">language</span><span class="o">=</span><span class="n">language</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">language</span><span class="p">,</span>
+                    <span class="n">response_format</span><span class="o">=</span><span class="s2">&quot;verbose_json&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_segments_from_response</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="n">total_ms</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">mono16</span><span class="p">)</span> <span class="o">/</span> <span class="n">STT_SAMPLE_RATE</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">))</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_segments_from_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resp</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">total_ms</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Map an OpenAI verbose_json response to TranscriptSegments.&quot;&quot;&quot;</span>
+        <span class="n">raw_segments</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="s2">&quot;segments&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">raw_segments</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">raw_segments</span><span class="p">:</span>
+                <span class="n">text</span> <span class="o">=</span> <span class="p">(</span><span class="n">_attr</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s2">&quot;text&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">TranscriptSegment</span><span class="p">(</span>
+                        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
+                        <span class="n">span</span><span class="o">=</span><span class="n">TimeSpan</span><span class="o">.</span><span class="n">from_seconds</span><span class="p">(</span><span class="n">_attr</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">_attr</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s2">&quot;end&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)),</span>
+                        <span class="n">meta</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;engine&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_id</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">},</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="n">out</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="p">(</span><span class="n">_attr</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="s2">&quot;text&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>  <span class="c1"># gpt-4o-transcribe: single text</span>
+        <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">TranscriptSegment</span><span class="p">(</span>
+                    <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
+                    <span class="n">span</span><span class="o">=</span><span class="n">TimeSpan</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">total_ms</span><span class="p">),</span>
+                    <span class="n">meta</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;engine&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine_id</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">},</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+<div class="viewcode-block" id="OpenAISTT.stream_transcribe">
+<a class="viewcode-back" href="../../module_docs/hearing/stt.html#hearing.stt.OpenAISTT.stream_transcribe">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stream_transcribe</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">frames</span><span class="p">:</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Live path: VAD utterance finalization, same as the local engine.&quot;&quot;&quot;</span>
+        <span class="k">async</span> <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">vad_stream_transcribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frames</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span> <span class="n">vad</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">vad</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">seg</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="vad_stream_transcribe">
+<a class="viewcode-back" href="../../module_docs/hearing/stt.html#hearing.stt.vad_stream_transcribe">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">vad_stream_transcribe</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">frames</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">vad</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Shared live wrapper: VAD -&gt; utterance -&gt; ``engine.transcribe`` -&gt; FINAL segment.</span>
+
+<span class="sd">    Both :class:`FasterWhisperSTT` and :class:`OpenAISTT` stream through this, so</span>
+<span class="sd">    the VAD/finalization logic lives in one place. Spans are offset to absolute</span>
+<span class="sd">    stream time and marked ``meta[&#39;final&#39;] = True``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.vad</span><span class="w"> </span><span class="kn">import</span> <span class="n">segment_utterances</span>
+
+    <span class="k">async</span> <span class="k">for</span> <span class="n">utterance</span><span class="p">,</span> <span class="n">start_ms</span> <span class="ow">in</span> <span class="n">segment_utterances</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span> <span class="n">vad</span><span class="o">=</span><span class="n">vad</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">engine</span><span class="o">.</span><span class="n">transcribe</span><span class="p">(</span><span class="n">utterance</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">replace</span><span class="p">(</span>
+                <span class="n">seg</span><span class="p">,</span>
+                <span class="n">span</span><span class="o">=</span><span class="n">TimeSpan</span><span class="p">(</span><span class="n">seg</span><span class="o">.</span><span class="n">span</span><span class="o">.</span><span class="n">start_ms</span> <span class="o">+</span> <span class="n">start_ms</span><span class="p">,</span> <span class="n">seg</span><span class="o">.</span><span class="n">span</span><span class="o">.</span><span class="n">end_ms</span> <span class="o">+</span> <span class="n">start_ms</span><span class="p">),</span>
+                <span class="n">meta</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">seg</span><span class="o">.</span><span class="n">meta</span><span class="p">),</span> <span class="s2">&quot;final&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+            <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_engine">
+<a class="viewcode-back" href="../../module_docs/hearing/stt.html#hearing.stt.get_engine">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_engine</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;whisper&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an STT engine by name: ``&quot;whisper&quot;``/``&quot;faster-whisper&quot;`` or ``&quot;openai&quot;``.&quot;&quot;&quot;</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;whisper&quot;</span><span class="p">,</span> <span class="s2">&quot;faster-whisper&quot;</span><span class="p">,</span> <span class="s2">&quot;local&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">FasterWhisperSTT</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;openai&quot;</span><span class="p">,</span> <span class="s2">&quot;cloud&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">OpenAISTT</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown STT engine </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">; use &#39;whisper&#39; or &#39;openai&#39;.&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_attr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read ``name`` from an object attribute or a mapping key.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="default_engine">
