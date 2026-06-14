@@ -28,6 +28,7 @@ def transcribe(
     diarize: bool = True,
     out: Optional[str] = None,
     fmt: str = "text",
+    save: Optional[str] = None,
 ) -> Optional[str]:
     """Transcribe an audio file to text or JSON.
 
@@ -39,6 +40,8 @@ def transcribe(
         diarize: apply the channel-trick "me vs them" labelling.
         out: write to this path (.json -> JSON, else formatted text); else stdout.
         fmt: stdout/text format — "text" or "json".
+        save: persist the transcript to this store/folder (keyed by the file stem),
+            so post-meeting agents can load the full transcript later.
     """
     from hearing import transcribe as _transcribe
     from hearing.diarize import ChannelTrickDiarizer
@@ -51,6 +54,12 @@ def transcribe(
         language=language,
         split=split,
     )
+
+    if save:
+        from hearing.storage import MeetingStore
+
+        key = MeetingStore(save).save(Path(path).stem, transcript)
+        print(f"saved transcript as {key} in {save}", file=sys.stderr)
 
     if out:
         out_path = Path(out)
@@ -72,6 +81,7 @@ def summarize(
     agent: str = "auto",
     model: Optional[str] = None,
     context: Optional[str] = None,
+    context_dir: Optional[str] = None,
     transcribe_model: str = "base",
     split: bool = True,
 ) -> Optional[str]:
@@ -82,7 +92,9 @@ def summarize(
         agent: "auto" (Claude if available, else offline extractive), "claude",
             or "extractive" (deterministic, no API key needed).
         model: Claude model id (only used by the claude/auto agent).
-        context: optional context to connect the agent to a project/meeting.
+        context: optional literal context string to connect the agent.
+        context_dir: a folder/file of .txt/.md context docs (prior takeaways,
+            project notes); the agent does RAG over it (context-connected).
         transcribe_model: whisper model size used for transcription.
         split: split mic/system channels (me vs them).
     """
@@ -90,13 +102,34 @@ def summarize(
     from hearing.pipeline import summarize as _summarize
     from hearing.stt import FasterWhisperSTT
 
-    chosen = build_default_agent(context=context, model=model, prefer=agent)
+    retriever = None
+    if context_dir:
+        from hearing.context import build_retriever
+
+        retriever = build_retriever(context_dir)
+    chosen = build_default_agent(context=context, model=model, prefer=agent, retriever=retriever)
     return _summarize(
         path,
         agent=chosen,
         engine=FasterWhisperSTT(model_size=transcribe_model),
         split=split,
     )
+
+
+def meetings(store: str, *, show: Optional[str] = None) -> str:
+    """List transcripts saved in a store (or print one with --show ID).
+
+    Args:
+        store: the store/folder a transcript was saved to (`transcribe --save`).
+        show: a meeting id to print (formatted transcript) instead of listing.
+    """
+    from hearing.storage import MeetingStore
+
+    ms = MeetingStore(store)
+    if show:
+        return ms.load(show).formatted()
+    ids = list(ms)
+    return "\n".join(ids) if ids else "(no meetings stored)"
 
 
 def live(
@@ -204,7 +237,7 @@ def main(argv=None) -> None:
     # a default, e.g. `hearing live [FILE]`); keyword-only params become --options.
     argh.add_commands(
         parser,
-        [transcribe, summarize, live, serve, info],
+        [transcribe, summarize, live, serve, meetings, info],
         name_mapping_policy=NameMappingPolicy.BY_NAME_IF_KWONLY,
     )
     parser.dispatch(argv)

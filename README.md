@@ -40,11 +40,21 @@ who is local.
 ```bash
 hearing transcribe meeting.wav                      # diarized transcript to stdout
 hearing transcribe meeting.wav --model small --out notes.json
+hearing transcribe meeting.wav --save ./meetings    # persist the transcript (then `hearing meetings ./meetings`)
 hearing summarize  meeting.wav                      # transcribe + AI notes (Claude)
 hearing summarize  meeting.wav --agent extractive   # offline, no API key needed
+hearing summarize  meeting.wav --context-dir ./project_notes   # context-connected: RAG over your docs
 hearing live       meeting.wav                      # STREAM it: finalized segments as utterances complete
+hearing meetings   ./meetings                       # list saved transcripts (--show ID to print one)
 hearing info                                        # what's installed / available
 ```
+
+**Context-connected agents.** Point `--context-dir` at a folder of `.md`/`.txt`
+notes (prior meetings' takeaways, project docs); the agent does RAG over them and
+brings in facts that aren't in the transcript (who owns what, prior decisions,
+budgets, deadlines). The retriever and a web-search hook are pluggable
+Protocols (`hearing/context.py`) — the default `KeywordRetriever` is
+dependency-free; swap in a vector backend behind the same `Retriever` interface.
 
 ### Live / streaming (milestone 2 — core working)
 

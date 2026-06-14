@@ -25,9 +25,12 @@ import asyncio
 import os
 import re
 from dataclasses import dataclass, field
-from typing import Optional, Sequence
+from typing import TYPE_CHECKING, Optional, Sequence
 
 from hearing.types import Transcript, TranscriptSegment
+
+if TYPE_CHECKING:  # retrieval backends are injected; avoid importing at module load
+    from hearing.context import Retriever, WebSearch
 
 #: A sensible, current default Claude model for meeting analysis. Override via
 #: ``model=`` (e.g. "claude-opus-4-8" for max capability). See claude-api skill.
@@ -83,6 +86,10 @@ class ClaudeAgent:
     system_prompt: str = _DEFAULT_SYSTEM_PROMPT
     max_tokens: int = 1024
     api_key: Optional[str] = None
+    retriever: Optional["Retriever"] = None  # RAG over project/meeting context
+    web_search: Optional["WebSearch"] = None  # bring outside info in
+    retrieve_k: int = 4
+    web_k: int = 3
 
     def _client(self):
         try:
@@ -102,11 +109,32 @@ class ClaudeAgent:
             )
         return anthropic.Anthropic(api_key=key)
 
-    def _analyze_sync(self, transcript_text: str) -> str:
+    async def _assemble_context(self, query: str) -> str:
+        """Gather the agent's context: static context + RAG + web search.
+
+        Retrieval is async and offloaded so it never blocks the stream; results
+        for the meeting transcript become part of the prompt's context block.
+        """
+        parts: list[str] = []
+        if self.context:
+            parts.append(self.context.strip())
+        if self.retriever is not None:
+            chunks = await self.retriever.search(query, k=self.retrieve_k)
+            for c in chunks:
+                label = c.title or c.source or "context"
+                parts.append(f"[{label}] {c.text.strip()}")
+        if self.web_search is not None:
+            results = await self.web_search.search(query, k=self.web_k)
+            for c in results:
+                src = f" ({c.source})" if c.source else ""
+                parts.append(f"[web: {c.title or 'result'}{src}] {c.text.strip()}")
+        return "\n\n".join(parts)
+
+    def _analyze_sync(self, transcript_text: str, context_text: str = "") -> str:
         """Blocking Claude call; ``on_window`` runs this off the event loop."""
         user_parts = []
-        if self.context:
-            user_parts.append(f"Relevant context:\n{self.context}\n")
+        if context_text:
+            user_parts.append(f"Relevant context:\n{context_text}\n")
         user_parts.append(f"Transcript:\n{transcript_text}")
         message = self._client().messages.create(
             model=self.model,
@@ -123,8 +151,9 @@ class ClaudeAgent:
         text = _transcript_text(window)
         if not text:
             return None
+        context_text = await self._assemble_context(text)
         # The SDK call is blocking; keep the event loop free (batch & live).
-        return await asyncio.to_thread(self._analyze_sync, text)
+        return await asyncio.to_thread(self._analyze_sync, text, context_text)
 
     async def on_segment(self, segment: TranscriptSegment) -> Optional[str]:
         """Live per-segment hook (milestone 2). No-op in the batch milestone."""
@@ -207,19 +236,30 @@ class ExtractiveAgent:
 
 
 def build_default_agent(
-    *, context: Optional[str] = None, model: Optional[str] = None, prefer: str = "auto"
+    *,
+    context: Optional[str] = None,
+    model: Optional[str] = None,
+    prefer: str = "auto",
+    retriever: Optional["Retriever"] = None,
+    web_search: Optional["WebSearch"] = None,
 ):
     """Pick the best available agent.
 
     ``prefer="claude"`` forces Claude; ``"extractive"`` forces the offline
     fallback; ``"auto"`` (default) uses Claude when the anthropic SDK and an API
     key are available, otherwise the dependency-free :class:`ExtractiveAgent`.
+    A ``retriever``/``web_search`` make the Claude agent context-connected.
     """
     if prefer == "extractive":
         return ExtractiveAgent()
     has_claude = _anthropic_available() and bool(os.getenv("ANTHROPIC_API_KEY"))
     if prefer == "claude" or (prefer == "auto" and has_claude):
-        return ClaudeAgent(model=model or DEFAULT_CLAUDE_MODEL, context=context)
+        return ClaudeAgent(
+            model=model or DEFAULT_CLAUDE_MODEL,
+            context=context,
+            retriever=retriever,
+            web_search=web_search,
+        )
     return ExtractiveAgent()
 
 
@@ -229,14 +269,19 @@ def summarize_transcript(
     agent=None,
     context: Optional[str] = None,
     model: Optional[str] = None,
+    retriever: Optional["Retriever"] = None,
+    web_search: Optional["WebSearch"] = None,
 ) -> Optional[str]:
     """Synchronous facade: run a (batch) agent over a transcript, return notes.
 
-    Builds the default agent when none is injected. Usable on a transcript with
-    no audio at all.
+    Builds the default agent when none is injected (context-connected when a
+    ``retriever``/``web_search`` is supplied). Usable on a transcript with no
+    audio at all.
     """
     window = tuple(transcript)
-    agent = agent or build_default_agent(context=context, model=model)
+    agent = agent or build_default_agent(
+        context=context, model=model, retriever=retriever, web_search=web_search
+    )
     return asyncio.run(agent.on_window(window))
 
 
