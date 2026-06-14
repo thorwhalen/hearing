@@ -40,6 +40,7 @@ who is local.
 ```bash
 hearing transcribe meeting.wav                      # diarized transcript to stdout
 hearing transcribe meeting.wav --model small --out notes.json
+hearing transcribe meeting.wav --engine openai      # cloud STT (OpenAI); needs OPENAI_API_KEY + hearing[openai]
 hearing transcribe meeting.wav --save ./meetings    # persist the transcript (then `hearing meetings ./meetings`)
 hearing summarize  meeting.wav                      # transcribe + AI notes (Claude)
 hearing summarize  meeting.wav --agent extractive   # offline, no API key needed
@@ -112,9 +113,11 @@ from hearing.stt import FasterWhisperSTT
 from hearing.diarize import ChannelTrickDiarizer, PyannoteDiarizer
 from hearing.agents import ClaudeAgent, ExtractiveAgent
 
+from hearing.stt import OpenAISTT
+
 transcribe(
     "meeting.wav",
-    engine=FasterWhisperSTT(model_size="small"),  # or a cloud engine you write
+    engine=OpenAISTT(),                            # cloud STT — one line vs FasterWhisperSTT()
     diarizer=PyannoteDiarizer(),                   # upgrade from the channel trick
     agent=ClaudeAgent(context="prior meeting takeaways..."),  # or ExtractiveAgent()
 )

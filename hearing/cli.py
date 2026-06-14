@@ -22,6 +22,7 @@ from typing import Optional
 def transcribe(
     path: str,
     *,
+    engine: str = "whisper",
     model: str = "base",
     language: Optional[str] = None,
     split: bool = True,
@@ -34,7 +35,8 @@ def transcribe(
 
     Args:
         path: audio file (wav/flac/aiff/...; convert mp3/m4a with ffmpeg first).
-        model: whisper model size (tiny/base/small/medium/large-v3/...).
+        engine: STT engine — "whisper" (local faster-whisper) or "openai" (cloud).
+        model: whisper model size (tiny/base/small/medium/large-v3/...); local only.
         language: force a language code (e.g. "en"); omit to auto-detect.
         split: split mic/system channels for multi-channel files (me vs them).
         diarize: apply the channel-trick "me vs them" labelling.
@@ -45,11 +47,12 @@ def transcribe(
     """
     from hearing import transcribe as _transcribe
     from hearing.diarize import ChannelTrickDiarizer
-    from hearing.stt import FasterWhisperSTT
+    from hearing.stt import get_engine
 
+    stt = get_engine("openai") if engine == "openai" else get_engine("whisper", model_size=model)
     transcript = _transcribe(
         path,
-        engine=FasterWhisperSTT(model_size=model),
+        engine=stt,
         diarizer=ChannelTrickDiarizer() if diarize else None,
         language=language,
         split=split,
