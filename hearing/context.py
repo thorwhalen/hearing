@@ -15,12 +15,19 @@ Protocol when you need semantic recall.
 
 from __future__ import annotations
 
+import asyncio
 import math
+import os
 import re
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Mapping, Protocol, Sequence, Union, runtime_checkable
+from typing import Callable, Mapping, Optional, Protocol, Sequence, Union, runtime_checkable
+
+import numpy as np
+
+#: A batch embedder: maps texts to equal-length float vectors.
+EmbedFn = Callable[[Sequence[str]], Sequence[Sequence[float]]]
 
 _DOC_EXTENSIONS = (".txt", ".md", ".markdown")
 
@@ -113,6 +120,92 @@ class KeywordRetriever:
             Chunk(text=c.text, title=c.title, source=c.source, score=round(s, 4))
             for s, c in scored[:k]
         ]
+
+
+def _normalize_rows(matrix: np.ndarray) -> np.ndarray:
+    """L2-normalize each row so a dot product equals cosine similarity."""
+    if matrix.size == 0:
+        return matrix
+    norms = np.linalg.norm(matrix, axis=1, keepdims=True)
+    norms[norms == 0] = 1.0
+    return matrix / norms
+
+
+class EmbeddingRetriever:
+    """Semantic retriever: ranks chunks by cosine similarity of embeddings.
+
+    The corpus is embedded once at construction; ``search`` embeds the query and
+    returns the nearest chunks. The embedder is injected (``embed=``) so it is
+    backend-agnostic and testable with a deterministic fake — use
+    :func:`openai_embedder` for real semantic recall.
+
+    >>> import asyncio
+    >>> fake = lambda texts: [[t.lower().count("db"), t.lower().count("ui")] for t in texts]
+    >>> r = EmbeddingRetriever({"a": "db db", "b": "ui ui"}, embed=fake)
+    >>> asyncio.run(r.search("db"))[0].title
+    'a'
+    """
+
+    def __init__(self, docs: Union[Mapping[str, str], Sequence], *, embed: EmbedFn):
+        self._chunks = _coerce_chunks(docs)
+        self._embed = embed
+        texts = [f"{c.title}\n{c.text}" for c in self._chunks]
+        self._matrix = (
+            _normalize_rows(np.asarray(embed(texts), dtype="float64"))
+            if texts
+            else np.zeros((0, 0))
+        )
+
+    async def search(self, query: str, *, k: int = 4) -> list[Chunk]:
+        """Return the top-``k`` chunks by cosine similarity to ``query``."""
+        if not self._chunks:
+            return []
+        # embedding may hit the network — keep the event loop free
+        q = await asyncio.to_thread(self._embed, [query])
+        qv = _normalize_rows(np.asarray(q, dtype="float64"))[0]
+        sims = self._matrix @ qv
+        order = np.argsort(-sims)[:k]
+        return [
+            Chunk(
+                text=self._chunks[i].text,
+                title=self._chunks[i].title,
+                source=self._chunks[i].source,
+                score=round(float(sims[i]), 4),
+            )
+            for i in order
+            if sims[i] > 0
+        ]
+
+
+def openai_embedder(
+    *, model: str = "text-embedding-3-small", api_key: Optional[str] = None, client=None
+) -> EmbedFn:
+    """Return an :data:`EmbedFn` backed by the OpenAI embeddings API.
+
+    Needs ``pip install 'hearing[openai]'`` and ``OPENAI_API_KEY`` (or pass
+    ``api_key=`` / inject ``client=`` for tests).
+    """
+
+    def embed(texts: Sequence[str]) -> list[list[float]]:
+        c = client
+        if c is None:
+            import openai
+
+            c = openai.OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
+        resp = c.embeddings.create(model=model, input=list(texts))
+        return [d.embedding for d in resp.data]
+
+    return embed
+
+
+def build_embedding_retriever(
+    source: Union[str, Path, Mapping, Sequence], *, embed: Optional[EmbedFn] = None
+) -> EmbeddingRetriever:
+    """Build an :class:`EmbeddingRetriever` (default embedder: OpenAI) from a
+    dict, a list, or a folder of ``.md``/``.txt`` docs (same source forms as
+    :func:`build_retriever`)."""
+    kw = build_retriever(source)  # reuse the source -> chunks logic
+    return EmbeddingRetriever(kw._chunks, embed=embed or openai_embedder())
 
 
 def build_retriever(source: Union[str, Path, Mapping, Sequence]) -> KeywordRetriever:

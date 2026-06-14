@@ -54,8 +54,10 @@ hearing info                                        # what's installed / availab
 notes (prior meetings' takeaways, project docs); the agent does RAG over them and
 brings in facts that aren't in the transcript (who owns what, prior decisions,
 budgets, deadlines). The retriever and a web-search hook are pluggable
-Protocols (`hearing/context.py`) — the default `KeywordRetriever` is
-dependency-free; swap in a vector backend behind the same `Retriever` interface.
+Protocols (`hearing/context.py`): `KeywordRetriever` (TF-IDF, dependency-free,
+the default) or `EmbeddingRetriever` (OpenAI semantic recall) — choose with
+`--retriever keyword|embedding`. Swap in any vector backend behind the same
+`Retriever` interface.
 
 ### Live / streaming (milestone 2 — core working)
 
