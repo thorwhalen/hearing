@@ -1,6 +1,7 @@
 """Tests for the HTTP layer (FastAPI TestClient + an injected fake STT engine)."""
 
 import io
+import json
 
 import numpy as np
 import pytest
@@ -24,6 +25,21 @@ class FakeSTT:
     async def stream_transcribe(self, frames, *, sample_rate):  # pragma: no cover
         raise NotImplementedError
         yield
+
+
+class FakeStreamingSTT:
+    """Streaming engine: one finalized segment per VAD utterance."""
+
+    def transcribe(self, audio, *, sample_rate, language=None):
+        return [TranscriptSegment("x", TimeSpan(0, 500))]
+
+    async def stream_transcribe(self, frames, *, sample_rate):
+        from hearing.vad import segment_utterances
+
+        async for utt, start_ms in segment_utterances(frames, sample_rate=sample_rate):
+            yield TranscriptSegment(
+                f"utt@{start_ms}", TimeSpan(start_ms, start_ms + len(utt) * 1000 // sample_rate), meta={"final": True}
+            )
 
 
 def _stereo_wav_bytes() -> bytes:
@@ -67,6 +83,20 @@ def test_transcribe_with_summary_uses_injected_agent():
     assert r.status_code == 200, r.text
     body = r.json()
     assert "summary" in body and "Summary" in body["summary"]
+
+
+def test_transcribe_stream_emits_ndjson_segments():
+    client = TestClient(create_app(engine=FakeStreamingSTT()))
+    files = {"file": ("meeting.wav", _stereo_wav_bytes(), "audio/wav")}
+    with client.stream("POST", "/api/transcribe/stream", files=files) as r:
+        assert r.status_code == 200
+        msgs = [json.loads(line) for line in r.iter_lines() if line.strip()]
+    types = [m["type"] for m in msgs]
+    assert types[0] == "meeting" and types[-1] == "done"
+    segs = [m["segment"] for m in msgs if m["type"] == "segment"]
+    assert len(segs) >= 2  # mic + system channels each finalize an utterance
+    assert {s["side"] for s in segs} == {"me", "them"}
+    assert all(s["isFinal"] for s in segs)
 
 
 def test_transcript_to_payload_unit():

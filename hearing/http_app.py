@@ -29,6 +29,7 @@ from hearing.types import ME, Channel, Transcript
 try:
     from fastapi import FastAPI, File, Form, UploadFile
     from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.responses import StreamingResponse
 except ImportError as e:  # pragma: no cover - guidance path
     raise ImportError(
         "The HTTP layer needs FastAPI. Install with: pip install 'hearing[http]'"
@@ -50,24 +51,28 @@ def _side(speaker: Optional[str], channel: Channel) -> str:
     return "them"
 
 
+def segment_to_dict(seg, *, meeting_id: str, index: int) -> dict:
+    """Serialize one :class:`~hearing.types.TranscriptSegment` to the UI shape."""
+    return {
+        "id": str(uuid.uuid5(_SEGMENT_NS, f"{meeting_id}:{index}")),
+        "meetingId": meeting_id,
+        "speaker": seg.speaker or seg.channel.value,
+        "side": _side(seg.speaker, seg.channel),
+        "channel": seg.channel.value,
+        "startMs": seg.span.start_ms,
+        "endMs": seg.span.end_ms,
+        "text": seg.text.strip(),
+        "confidence": seg.confidence,
+        "isFinal": bool(seg.meta.get("final", True)),
+    }
+
+
 def transcript_to_payload(transcript: Transcript, *, meeting_id: str, title: str) -> dict:
     """Serialize a :class:`Transcript` to the frontend's meeting+segments shape."""
-    segments = []
-    for i, s in enumerate(transcript.segments):
-        segments.append(
-            {
-                "id": str(uuid.uuid5(_SEGMENT_NS, f"{meeting_id}:{i}")),
-                "meetingId": meeting_id,
-                "speaker": s.speaker or s.channel.value,
-                "side": _side(s.speaker, s.channel),
-                "channel": s.channel.value,
-                "startMs": s.span.start_ms,
-                "endMs": s.span.end_ms,
-                "text": s.text.strip(),
-                "confidence": s.confidence,
-                "isFinal": bool(s.meta.get("final", True)),
-            }
-        )
+    segments = [
+        segment_to_dict(s, meeting_id=meeting_id, index=i)
+        for i, s in enumerate(transcript.segments)
+    ]
     participants = sorted({seg["speaker"] for seg in segments})
     return {
         "meeting": {
@@ -147,6 +152,50 @@ def create_app(*, engine=None, agent=None, cors_origins: Optional[list] = None) 
             agent = app.state.agent or build_default_agent()
             payload["summary"] = await agent.on_window(transcript.segments)
         return payload
+
+    @app.post("/api/transcribe/stream")
+    async def transcribe_stream(
+        file: UploadFile = File(...),
+        title: str = Form("Untitled meeting"),
+    ):
+        """Stream finalized segments as NDJSON as the live pipeline produces them.
+
+        Each line is a JSON object: ``{"type":"meeting",...}`` first, then one
+        ``{"type":"segment","segment":{...}}`` per finalized utterance, then
+        ``{"type":"done","count":N}``. The browser reads the response body
+        incrementally (fetch + ReadableStream) and appends rows live — the
+        server→client push the frontend skill calls for.
+        """
+        import json
+        import os
+
+        data = await file.read()
+        suffix = Path(file.filename or "audio.wav").suffix or ".wav"
+        meeting_id = str(uuid.uuid4())
+
+        async def gen():
+            from hearing.capture import StreamingFileCapture
+            from hearing.pipeline import live_transcribe
+
+            tmp = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
+            try:
+                tmp.write(data)
+                tmp.flush()
+                tmp.close()
+                yield json.dumps(
+                    {"type": "meeting", "meeting": {"id": meeting_id, "title": title}}
+                ) + "\n"
+                source = StreamingFileCapture(tmp.name, block_ms=200)
+                i = 0
+                async for seg in live_transcribe(source=source, engine=_engine()):
+                    line = {"type": "segment", "segment": segment_to_dict(seg, meeting_id=meeting_id, index=i)}
+                    yield json.dumps(line) + "\n"
+                    i += 1
+                yield json.dumps({"type": "done", "count": i}) + "\n"
+            finally:
+                os.unlink(tmp.name)
+
+        return StreamingResponse(gen(), media_type="application/x-ndjson")
 
     return app
 

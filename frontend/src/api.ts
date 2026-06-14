@@ -35,6 +35,46 @@ export async function transcribeFile(
   return TranscribeResponseSchema.parse(await res.json());
 }
 
+export interface StreamHandlers {
+  onMeeting?: (m: { id: string; title: string }) => void;
+  onSegment: (s: Segment) => void;
+}
+
+// Live mode: read the NDJSON stream from POST /api/transcribe/stream and invoke
+// the handlers as each finalized segment arrives (server→client push). Uses the
+// fetch ReadableStream reader (a plain, dependency-free way to consume a stream).
+export async function transcribeStream(
+  file: File,
+  handlers: StreamHandlers,
+  opts: { title?: string } = {},
+): Promise<void> {
+  const form = new FormData();
+  form.append('file', file);
+  form.append('title', opts.title ?? file.name);
+
+  const res = await fetch('/api/transcribe/stream', { method: 'POST', body: form });
+  if (!res.ok || !res.body) {
+    throw new Error(`Live transcription failed (HTTP ${res.status})`);
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let nl: number;
+    while ((nl = buffer.indexOf('\n')) >= 0) {
+      const line = buffer.slice(0, nl).trim();
+      buffer = buffer.slice(nl + 1);
+      if (!line) continue;
+      const msg = JSON.parse(line) as { type: string; meeting?: { id: string; title: string }; segment?: unknown };
+      if (msg.type === 'meeting' && msg.meeting) handlers.onMeeting?.(msg.meeting);
+      else if (msg.type === 'segment') handlers.onSegment(SegmentSchema.parse(msg.segment));
+    }
+  }
+}
+
 export async function getHealth(): Promise<{ status: string; version: string }> {
   const res = await fetch('/api/health');
   if (!res.ok) throw new Error(`Health check failed (HTTP ${res.status})`);
