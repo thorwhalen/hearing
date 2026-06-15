@@ -86,6 +86,7 @@ def summarize(
     context: Optional[str] = None,
     context_dir: Optional[str] = None,
     retriever: str = "keyword",
+    web_search: bool = False,
     transcribe_model: str = "base",
     split: bool = True,
 ) -> Optional[str]:
@@ -101,6 +102,7 @@ def summarize(
             project notes); the agent does RAG over it (context-connected).
         retriever: "keyword" (TF-IDF, offline) or "embedding" (OpenAI semantic;
             needs hearing[openai] + OPENAI_API_KEY). Only used with context_dir.
+        web_search: also bring in Wikipedia fact context (key-free) for the agent.
         transcribe_model: whisper model size used for transcription.
         split: split mic/system channels (me vs them).
     """
@@ -118,7 +120,14 @@ def summarize(
             from hearing.context import build_retriever
 
             retr = build_retriever(context_dir)
-    chosen = build_default_agent(context=context, model=model, prefer=agent, retriever=retr)
+    web = None
+    if web_search:
+        from hearing.context import WikipediaSearch
+
+        web = WikipediaSearch()
+    chosen = build_default_agent(
+        context=context, model=model, prefer=agent, retriever=retr, web_search=web
+    )
     return _summarize(
         path,
         agent=chosen,

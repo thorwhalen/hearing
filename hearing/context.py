@@ -225,3 +225,79 @@ def build_retriever(source: Union[str, Path, Mapping, Sequence]) -> KeywordRetri
             docs[root.stem] = root.read_text(encoding="utf-8", errors="ignore")
         return KeywordRetriever(docs)
     return KeywordRetriever(source)
+
+
+@dataclass
+class CallableWebSearch:
+    """Adapt any callable into a :class:`WebSearch` (for custom backends/tests).
+
+    ``fn(query, k)`` may return Chunks, strings, or dicts (coerced), and may be
+    sync or async.
+    """
+
+    fn: Callable
+
+    async def search(self, query: str, *, k: int = 3) -> list[Chunk]:
+        result = self.fn(query, k)
+        if asyncio.iscoroutine(result):
+            result = await result
+        return _coerce_chunks(result)[:k]
+
+
+@dataclass
+class WikipediaSearch:
+    """Key-free, dependency-free :class:`WebSearch` over Wikipedia (stdlib urllib).
+
+    Ideal for the live fact-check / "who is X / what is Y" use: one targeted
+    query, a few result snippets with source URLs. The HTTP ``fetch`` is
+    injectable so tests need no network.
+    """
+
+    lang: str = "en"
+    timeout: float = 8.0
+    fetch: Optional[Callable[[str], bytes]] = None
+
+    def _default_fetch(self, url: str) -> bytes:  # pragma: no cover - network
+        import urllib.request
+
+        req = urllib.request.Request(url, headers={"User-Agent": "hearing/0.0 (meeting assistant)"})
+        with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+            return resp.read()
+
+    def _query_url(self, query: str, k: int) -> str:
+        import urllib.parse
+
+        params = urllib.parse.urlencode(
+            {
+                "action": "query",
+                "list": "search",
+                "srsearch": query[:300],
+                "srlimit": k,
+                "format": "json",
+                "utf8": 1,
+            }
+        )
+        return f"https://{self.lang}.wikipedia.org/w/api.php?{params}"
+
+    def _parse(self, raw: bytes, k: int) -> list[Chunk]:
+        import html
+        import json
+        import urllib.parse
+
+        data = json.loads(raw)
+        hits = data.get("query", {}).get("search", [])[:k]
+        out: list[Chunk] = []
+        for h in hits:
+            title = h.get("title", "")
+            snippet = html.unescape(re.sub(r"<[^>]+>", "", h.get("snippet", ""))).strip()
+            url = f"https://{self.lang}.wikipedia.org/wiki/" + urllib.parse.quote(title.replace(" ", "_"))
+            out.append(Chunk(text=snippet, title=title, source=url))
+        return out
+
+    async def search(self, query: str, *, k: int = 3) -> list[Chunk]:
+        """Return up to ``k`` Wikipedia search hits as chunks (title/snippet/url)."""
+        if not query.strip():
+            return []
+        fetch = self.fetch or self._default_fetch
+        raw = await asyncio.to_thread(fetch, self._query_url(query, k))
+        return self._parse(raw, k)

@@ -45,6 +45,7 @@ hearing transcribe meeting.wav --save ./meetings    # persist the transcript (th
 hearing summarize  meeting.wav                      # transcribe + AI notes (Claude)
 hearing summarize  meeting.wav --agent extractive   # offline, no API key needed
 hearing summarize  meeting.wav --context-dir ./project_notes   # context-connected: RAG over your docs
+hearing summarize  meeting.wav --web-search         # also pull Wikipedia fact context (key-free)
 hearing live       meeting.wav                      # STREAM it: finalized segments as utterances complete
 hearing meetings   ./meetings                       # list saved transcripts (--show ID to print one)
 hearing info                                        # what's installed / available
