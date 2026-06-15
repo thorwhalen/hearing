@@ -70,25 +70,32 @@ HTTP, so they don't have to be on the same machine.
 ### A. All local (simplest)
 ```bash
 pip install 'hearing[whisper,agents,http]'
-hearing serve                 # backend API on http://127.0.0.1:8000
-cd frontend && npm install && npm run dev   # UI on http://localhost:5173
+cd frontend && npm install && npm run build   # build the UI once
+hearing serve                                  # serves UI + API on http://localhost:8000
 ```
-Open the UI; leave **API base URL** blank (the dev server proxies `/api` to the
-backend). Everything runs on your Mac.
+Open **http://localhost:8000** — `hearing serve` serves both the UI and the API
+on one origin, so there's nothing to configure (API base URL stays blank).
+Everything runs on your Mac. (For UI development with hot-reload, run
+`cd frontend && npm run dev` instead and open http://localhost:5173.)
 
 ### B. UI on the server, compute on your Mac  ← the recommended setup
 The web UI is hosted at **thorwhalen.com/hearing** (so you can open it from any
 browser, and only you can see it). But the **heavy processing runs on your own
 machine** — the server stores and runs *nothing* expensive.
 
-How it works: the server only serves the static UI. In **⚙ Settings**, set
-**API base URL = `http://localhost:8000`**. Then run the backend locally:
+How it works: the server only serves the static UI. The page **auto-targets your
+local backend** when it's served from a non-localhost host — so just run the
+backend locally:
 ```bash
 hearing serve --port 8000
 ```
 Now the page (served from the server) sends its `/api` calls to **your laptop's**
-`hearing serve`. STT, models, your audio, and any API keys stay on your Mac;
-the server is just delivering the page. (Browsers permit an HTTPS page to call
+`hearing serve` (you can override the target in **⚙ Settings → API base URL**).
+STT, models, your audio, and any API keys stay on your Mac; the server is just
+delivering the page. (Chrome may need its "Insecure private network" / mixed
+behavior allowed for the HTTPS page to reach `http://localhost`; if that's
+fiddly, the all-local mode in §4A — open `http://localhost:8000` directly — has
+none of that friction.) (Browsers permit an HTTPS page to call
 `http://localhost`, and the local backend allows the cross-origin call.)
 
 This is exactly "I get the code when I click it, and it runs on my local
@@ -131,8 +138,11 @@ hearing info                         # what's installed / available
 
 ## 7. Troubleshooting
 
-- **"start `hearing serve`" in the header / requests fail** → the backend isn't
-  reachable. Run `hearing serve`, and check the **API base URL** in Settings.
+- **"start `hearing serve`" in the header, or HTTP 404 on record/transcribe** →
+  the page is talking to a server with no backend (e.g. the deploy host serves
+  only the UI). Easiest fix: run `hearing serve` and open **http://localhost:8000**
+  directly. Or, on the hosted page, run `hearing serve` locally (the page
+  auto-targets `http://localhost:8000`; override in Settings if needed).
 - **No transcription / engine error** → install the local engine:
   `pip install 'hearing[whisper]'`. For the cloud engine: `hearing[openai]` +
   `OPENAI_API_KEY`.

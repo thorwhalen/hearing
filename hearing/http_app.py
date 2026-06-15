@@ -228,6 +228,24 @@ def create_app(*, engine=None, agent=None, cors_origins: Optional[list] = None) 
 
         return StreamingResponse(gen(), media_type="application/x-ndjson")
 
+    # Private Network Access: let an HTTPS page (e.g. thorwhalen.com/hearing) call
+    # this local backend without Chrome's PNA preflight blocking the request.
+    @app.middleware("http")
+    async def _allow_private_network(request, call_next):
+        response = await call_next(request)
+        if request.method == "OPTIONS":
+            response.headers["Access-Control-Allow-Private-Network"] = "true"
+        return response
+
+    # Serve the built SPA if present, so `hearing serve` IS the whole app locally:
+    # open http://localhost:8000 — UI + API on one origin (no CORS, no 404 traps).
+    # Mounted last so the explicit /api/* routes still match first.
+    dist = Path(__file__).resolve().parents[1] / "frontend" / "dist"
+    if dist.is_dir():
+        from fastapi.staticfiles import StaticFiles
+
+        app.mount("/", StaticFiles(directory=str(dist), html=True), name="ui")
+
     return app
 
 

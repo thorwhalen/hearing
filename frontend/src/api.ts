@@ -26,10 +26,43 @@ export interface TranscribeResponse {
   summary?: string;
 }
 
-// API base URL ('' = same origin). Lets a server-hosted UI call YOUR local
-// backend (set apiBase to http://localhost:8000) — compute stays on your machine.
-function apiUrl(apiBase: string | undefined, path: string): string {
-  return (apiBase || '') + path;
+// Resolve the API base URL. An explicit setting always wins. Otherwise: served
+// from localhost (dev / `hearing serve`) → same origin; served from a remote host
+// (e.g. thorwhalen.com/hearing) → your LOCAL backend, since compute runs locally.
+export function resolveApiBase(apiBase?: string): string {
+  if (apiBase) return apiBase;
+  if (typeof location !== 'undefined') {
+    const h = location.hostname;
+    if (h && h !== 'localhost' && h !== '127.0.0.1' && h !== '[::1]') {
+      return 'http://localhost:8000';
+    }
+  }
+  return '';
+}
+
+// One fetch wrapper with actionable errors (network failure / 404 = no backend).
+async function backendFetch(apiBase: string | undefined, path: string, init?: RequestInit): Promise<Response> {
+  const base = resolveApiBase(apiBase);
+  const shown = base || (typeof location !== 'undefined' ? location.origin : '');
+  let res: Response;
+  try {
+    res = await fetch(base + path, init);
+  } catch {
+    throw new Error(
+      `Can't reach the backend at ${shown}. Run \`hearing serve\` on your machine, ` +
+        `and check the API base URL in Settings (usually http://localhost:8000).`,
+    );
+  }
+  if (!res.ok) {
+    if (res.status === 404) {
+      throw new Error(
+        `No hearing backend at ${shown} (HTTP 404). The server only hosts the UI — ` +
+          `run \`hearing serve\` locally and set the API base URL to http://localhost:8000 in Settings.`,
+      );
+    }
+    throw new Error(`Backend error (HTTP ${res.status}): ${await res.text().catch(() => '')}`);
+  }
+  return res;
 }
 
 export interface TranscribeOpts {
@@ -48,10 +81,7 @@ export async function transcribeFile(file: File, opts: TranscribeOpts = {}): Pro
   form.append('engine', opts.engine ?? 'whisper');
   form.append('model', opts.model ?? 'base');
 
-  const res = await fetch(apiUrl(opts.apiBase, '/api/transcribe'), { method: 'POST', body: form });
-  if (!res.ok) {
-    throw new Error(`Transcription failed (HTTP ${res.status}): ${await res.text()}`);
-  }
+  const res = await backendFetch(opts.apiBase, '/api/transcribe', { method: 'POST', body: form });
   return TranscribeResponseSchema.parse(await res.json());
 }
 
@@ -75,10 +105,8 @@ export async function transcribeStream(
   form.append('engine', opts.engine ?? 'whisper');
   form.append('model', opts.model ?? 'base');
 
-  const res = await fetch(apiUrl(opts.apiBase, '/api/transcribe/stream'), { method: 'POST', body: form });
-  if (!res.ok || !res.body) {
-    throw new Error(`Live transcription failed (HTTP ${res.status})`);
-  }
+  const res = await backendFetch(opts.apiBase, '/api/transcribe/stream', { method: 'POST', body: form });
+  if (!res.body) throw new Error('The backend returned no stream body.');
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -105,8 +133,7 @@ export async function transcribeStream(
 }
 
 export async function getHealth(apiBase = ''): Promise<{ status: string; version: string }> {
-  const res = await fetch(apiUrl(apiBase, '/api/health'));
-  if (!res.ok) throw new Error(`Health check failed (HTTP ${res.status})`);
+  const res = await backendFetch(apiBase, '/api/health');
   return res.json();
 }
 
