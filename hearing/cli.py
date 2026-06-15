@@ -209,7 +209,20 @@ def serve(*, host: str = "127.0.0.1", port: int = 8000, reload: bool = False) ->
     except ImportError:  # pragma: no cover - guidance path
         print("`hearing serve` needs the http extra: pip install 'hearing[http]'", file=sys.stderr)
         raise SystemExit(1)
-    print(f"hearing API on http://{host}:{port}  (docs at /docs)", file=sys.stderr)
+    import importlib.util
+    from pathlib import Path
+
+    spec = importlib.util.find_spec("hearing.http_app")
+    dist = Path(spec.origin).resolve().parents[1] / "frontend" / "dist" if spec and spec.origin else None
+    if dist and dist.is_dir():
+        print(f"hearing — open the app at http://{host}:{port}  (API + UI; docs at /docs)", file=sys.stderr)
+    else:
+        print(
+            f"hearing API on http://{host}:{port}  (docs at /docs). UI not built — run "
+            "`cd frontend && npm install && npm run build`, or use the dev server "
+            "(`npm run dev`).",
+            file=sys.stderr,
+        )
     uvicorn.run("hearing.http_app:app", host=host, port=port, reload=reload)
 
 
