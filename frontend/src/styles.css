@@ -166,6 +166,43 @@ header h1 {
   color: var(--muted);
 }
 
+/* backend-not-found banner */
+.banner {
+  background: #7f1d1d;
+  color: #fee2e2;
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  margin: 0.75rem 0;
+  line-height: 1.4;
+}
+
+.banner-title {
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+.banner-how {
+  margin-top: 0.45rem;
+  font-size: 0.9rem;
+}
+
+.banner code {
+  background: rgba(0, 0, 0, 0.35);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+.banner button {
+  margin: 0 0.15rem;
+  background: #fee2e2;
+  color: #7f1d1d;
+  border: none;
+  border-radius: 5px;
+  padding: 0.15rem 0.55rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
 /* live copilot feedback panel */
 .summary .count {
   color: var(--muted);
