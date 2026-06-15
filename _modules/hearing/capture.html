@@ -103,6 +103,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncIterator</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
@@ -135,9 +136,45 @@
             <span class="s2">&quot;Reading audio needs `soundfile`. Install with: pip install soundfile</span><span class="se">\n</span><span class="s2">&quot;</span>
             <span class="s2">&quot;(it bundles libsndfile). See the hearing-audio-capture skill.&quot;</span>
         <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-    <span class="n">data</span><span class="p">,</span> <span class="n">sr</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">,</span> <span class="n">always_2d</span><span class="o">=</span><span class="n">always_2d</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">sr</span><span class="p">)</span></div>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">sr</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">,</span> <span class="n">always_2d</span><span class="o">=</span><span class="n">always_2d</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">sr</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="c1"># libsndfile can&#39;t read it (e.g. mp3/m4a/webm/opus from a browser</span>
+        <span class="c1"># recording). Fall back to ffmpeg, which decodes virtually anything.</span>
+        <span class="n">wav</span> <span class="o">=</span> <span class="n">_ffmpeg_decode_to_wav</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">,</span> <span class="n">sr</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">wav</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">,</span> <span class="n">always_2d</span><span class="o">=</span><span class="n">always_2d</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">sr</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">wav</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                <span class="k">pass</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_ffmpeg_decode_to_wav</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decode any audio file to a temp 16-bit PCM WAV via ffmpeg (channels kept).&quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+
+    <span class="n">ffmpeg</span> <span class="o">=</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">&quot;ffmpeg&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ffmpeg</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Could not read </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2"> with libsndfile, and ffmpeg is not on PATH to &quot;</span>
+            <span class="s2">&quot;convert it. Install ffmpeg (e.g. `brew install ffmpeg`) to transcribe &quot;</span>
+            <span class="s2">&quot;mp3/m4a/webm/opus (incl. browser recordings).&quot;</span>
+        <span class="p">)</span>
+    <span class="n">fd</span><span class="p">,</span> <span class="n">out</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.wav&quot;</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">ffmpeg</span><span class="p">,</span> <span class="s2">&quot;-y&quot;</span><span class="p">,</span> <span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="s2">&quot;-c:a&quot;</span><span class="p">,</span> <span class="s2">&quot;pcm_s16le&quot;</span><span class="p">,</span> <span class="n">out</span><span class="p">],</span>
+        <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
 
 
 <div class="viewcode-block" id="to_mono">
