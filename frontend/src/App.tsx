@@ -1,38 +1,44 @@
-// The app shell: upload an audio file, transcribe it via the Python API, and
-// render the diarized transcript (me/them lanes) plus optional AI notes.
+// The app shell: record your mic or drop a file, transcribe via the backend,
+// and render the diarized transcript plus AI notes (batch) or a live copilot.
 //
-// State is deliberately minimal and local (useState) — for a frontend novice,
-// that's the simplest correct tool. The transcript shape comes straight from the
-// shared Zod schema, so there's no hand-mapping of API fields to UI fields.
+// Settings (engine, model, AI notes, live, API base URL) persist in the browser
+// and default to the cheapest options. The manual (Help) explains everything.
 import { useEffect, useMemo, useRef, useState } from 'react';
+// The manual markdown is the single source of truth (repo: misc/docs/MANUAL.md),
+// imported raw at build time and rendered in-app.
+import manualMarkdown from '../../misc/docs/MANUAL.md?raw';
 import { getHealth, transcribeFile, transcribeStream, type TranscribeResponse } from './api';
 import { buildCommands, type CommandContext } from './commands';
 import { type Feedback } from './schema';
+import { DEFAULT_SETTINGS, loadSettings, saveSettings, type Settings } from './settings';
+import { useRecorder } from './useRecorder';
 import { CommandPalette } from './components/CommandPalette';
 import { FeedbackPanel } from './components/FeedbackPanel';
+import { ManualView } from './components/ManualView';
+import { SettingsPanel } from './components/SettingsPanel';
 import { SummaryPanel } from './components/SummaryPanel';
 import { TranscriptView } from './components/TranscriptView';
 
 export function App() {
+  const [settings, setSettings] = useState<Settings>(() => loadSettings() ?? DEFAULT_SETTINGS);
   const [result, setResult] = useState<TranscribeResponse | null>(null);
   const [liveFeedback, setLiveFeedback] = useState<Feedback[]>([]);
   const [query, setQuery] = useState('');
-  const [summarize, setSummarize] = useState(true);
-  const [live, setLive] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+  const { recording, error: recError, start, stop } = useRecorder();
 
   useEffect(() => {
-    getHealth()
+    getHealth(settings.apiBase)
       .then((h) => setVersion(h.version))
-      .catch(() => setVersion(null)); // backend not running yet — that's fine
-  }, []);
+      .catch(() => setVersion(null));
+  }, [settings.apiBase]);
 
-  // ⌘K / Ctrl+K toggles the command palette.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -54,12 +60,18 @@ export function App() {
     },
   };
 
-  async function onUpload(file: File) {
+  function patch(p: Partial<Settings>) {
+    const next = { ...settings, ...p };
+    setSettings(next);
+    saveSettings(next);
+  }
+
+  async function runTranscription(file: File) {
     setLoading(true);
     setError(null);
+    const common = { engine: settings.engine, model: settings.model, apiBase: settings.apiBase, title: file.name };
     try {
-      if (live) {
-        // Live mode: start with an empty meeting and append segments as they stream in.
+      if (settings.live) {
         setLiveFeedback([]);
         setResult({
           meeting: { id: '', title: file.name, startedAt: '', durationMs: 0, participants: [], segmentCount: 0 },
@@ -68,34 +80,42 @@ export function App() {
         await transcribeStream(
           file,
           {
-            onMeeting: (m) =>
-              setResult((prev) => (prev ? { ...prev, meeting: { ...prev.meeting, ...m } } : prev)),
-            onFeedback: (f) => setLiveFeedback((prev) => [...prev, f]),
+            onMeeting: (m) => setResult((p) => (p ? { ...p, meeting: { ...p.meeting, ...m } } : p)),
+            onFeedback: (f) => setLiveFeedback((p) => [...p, f]),
             onSegment: (s) =>
-              setResult((prev) => {
-                if (!prev) return prev;
-                const segments = [...prev.segments, s];
+              setResult((p) => {
+                if (!p) return p;
+                const segments = [...p.segments, s];
                 return {
-                  ...prev,
+                  ...p,
                   segments,
                   meeting: {
-                    ...prev.meeting,
+                    ...p.meeting,
                     segmentCount: segments.length,
-                    durationMs: Math.max(prev.meeting.durationMs, s.endMs),
+                    durationMs: Math.max(p.meeting.durationMs, s.endMs),
                     participants: Array.from(new Set(segments.map((x) => x.speaker))),
                   },
                 };
               }),
           },
-          { title: file.name },
+          common,
         );
       } else {
-        setResult(await transcribeFile(file, { summarize }));
+        setResult(await transcribeFile(file, { ...common, summarize: settings.aiNotes }));
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function onRecordToggle() {
+    if (recording) {
+      const file = await stop();
+      if (file) await runTranscription(file);
+    } else {
+      await start();
     }
   }
 
@@ -106,28 +126,27 @@ export function App() {
         <span className="tagline">
           meeting transcript {version ? `· API v${version}` : '· start `hearing serve`'}
         </span>
+        <button className="link-btn" onClick={() => setManualOpen(true)}>Help</button>
+        <button className="link-btn" onClick={() => setSettingsOpen(true)}>⚙ Settings</button>
       </header>
 
       <section className="controls">
+        <button className={`record-btn${recording ? ' on' : ''}`} onClick={onRecordToggle} disabled={loading}>
+          {recording ? '■ Stop' : '● Record'}
+        </button>
         <input
-          ref={fileRef}
           type="file"
-          accept="audio/*,.wav,.aiff,.flac"
-          onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])}
-          disabled={loading}
+          accept="audio/*,.wav,.aiff,.flac,.mp3,.m4a,.webm"
+          onChange={(e) => e.target.files?.[0] && runTranscription(e.target.files[0])}
+          disabled={loading || recording}
         />
         <label className="check">
-          <input
-            type="checkbox"
-            checked={summarize}
-            disabled={live}
-            onChange={(e) => setSummarize(e.target.checked)}
-          />
+          <input type="checkbox" checked={settings.aiNotes} disabled={settings.live} onChange={(e) => patch({ aiNotes: e.target.checked })} />
           AI notes
         </label>
         <label className="check">
-          <input type="checkbox" checked={live} onChange={(e) => setLive(e.target.checked)} />
-          Live stream
+          <input type="checkbox" checked={settings.live} onChange={(e) => patch({ live: e.target.checked })} />
+          Live
         </label>
         <input
           ref={searchRef}
@@ -138,13 +157,17 @@ export function App() {
           onChange={(e) => setQuery(e.target.value)}
           disabled={!result}
         />
-        <button className="kbd-hint" onClick={() => setPaletteOpen(true)} title="Command palette">
-          ⌘K
-        </button>
+        <button className="kbd-hint" onClick={() => setPaletteOpen(true)} title="Command palette">⌘K</button>
       </section>
 
-      {loading && <p className="status">Transcribing… (first run downloads the model)</p>}
-      {error && <p className="error">{error}</p>}
+      {recording && (
+        <p className="status recording">
+          ● recording your microphone… press <b>■ Stop</b> to transcribe ·
+          {' '}engine: {settings.engine}{settings.aiNotes ? ' · AI notes' : ''}{settings.live ? ' · live' : ''}
+        </p>
+      )}
+      {loading && <p className="status">Transcribing… (first local run downloads the model)</p>}
+      {(error || recError) && <p className="error">{error || recError}</p>}
 
       {result && (
         <>
@@ -154,17 +177,16 @@ export function App() {
           </div>
           <div className="layout">
             <TranscriptView segments={result.segments} query={query} />
-            {live ? <FeedbackPanel items={liveFeedback} /> : <SummaryPanel summary={result.summary} />}
+            {settings.live ? <FeedbackPanel items={liveFeedback} /> : <SummaryPanel summary={result.summary} />}
           </div>
         </>
       )}
 
-      <CommandPalette
-        commands={commands}
-        ctx={commandCtx}
-        open={paletteOpen}
-        onClose={() => setPaletteOpen(false)}
-      />
+      <CommandPalette commands={commands} ctx={commandCtx} open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      {settingsOpen && (
+        <SettingsPanel settings={settings} onChange={setSettings} onClose={() => setSettingsOpen(false)} />
+      )}
+      {manualOpen && <ManualView markdown={manualMarkdown} onClose={() => setManualOpen(false)} />}
     </div>
   );
 }

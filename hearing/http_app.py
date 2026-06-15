@@ -108,13 +108,21 @@ def create_app(*, engine=None, agent=None, cors_origins: Optional[list] = None) 
     )
     app.state.engine = engine
     app.state.agent = agent
+    app.state.engine_cache = {}
 
-    def _engine():
-        if app.state.engine is None:
-            from hearing.stt import default_engine
+    def _engine(name: str = "whisper", model: str = "base"):
+        # An explicitly-injected engine (tests / a pinned local engine) always wins;
+        # otherwise build the requested engine, caching by (name, model) so the
+        # local whisper model isn't reloaded on every request.
+        if app.state.engine is not None:
+            return app.state.engine
+        key = (name, model)
+        if key not in app.state.engine_cache:
+            from hearing.stt import get_engine
 
-            app.state.engine = default_engine()
-        return app.state.engine
+            kwargs = {"model_size": model} if name in ("whisper", "faster-whisper", "local") else {}
+            app.state.engine_cache[key] = get_engine(name, **kwargs)
+        return app.state.engine_cache[key]
 
     @app.get("/api/health")
     def health() -> dict:
@@ -129,6 +137,8 @@ def create_app(*, engine=None, agent=None, cors_origins: Optional[list] = None) 
         language: Optional[str] = Form(None),
         split: bool = Form(True),
         summarize: bool = Form(False),
+        engine: str = Form("whisper"),
+        model: str = Form("base"),
     ) -> dict:
         """Transcribe an uploaded audio file; optionally attach an AI summary."""
         from hearing.pipeline import transcribe
@@ -141,7 +151,7 @@ def create_app(*, engine=None, agent=None, cors_origins: Optional[list] = None) 
             # server stays responsive. Don't pass agent= here (its sync path uses
             # asyncio.run, which can't run inside this loop); await the agent below.
             transcript = await asyncio.to_thread(
-                transcribe, tmp.name, engine=_engine(), language=language, split=split
+                transcribe, tmp.name, engine=_engine(engine, model), language=language, split=split
             )
 
         meeting_id = str(uuid.uuid4())
@@ -157,6 +167,8 @@ def create_app(*, engine=None, agent=None, cors_origins: Optional[list] = None) 
     async def transcribe_stream(
         file: UploadFile = File(...),
         title: str = Form("Untitled meeting"),
+        engine: str = Form("whisper"),
+        model: str = Form("base"),
     ):
         """Stream finalized segments as NDJSON as the live pipeline produces them.
 
@@ -193,7 +205,7 @@ def create_app(*, engine=None, agent=None, cors_origins: Optional[list] = None) 
                 ) + "\n"
                 source = StreamingFileCapture(tmp.name, block_ms=200)
                 i = 0
-                async for seg in live_transcribe(source=source, engine=_engine()):
+                async for seg in live_transcribe(source=source, engine=_engine(engine, model)):
                     seg_dict = segment_to_dict(seg, meeting_id=meeting_id, index=i)
                     yield json.dumps({"type": "segment", "segment": seg_dict}) + "\n"
                     note = await live_agent.on_segment(seg)

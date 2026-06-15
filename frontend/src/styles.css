@@ -293,3 +293,168 @@ header h1 {
   color: var(--muted);
   cursor: default;
 }
+
+/* record button + header buttons */
+.record-btn {
+  background: var(--me);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.45rem 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.record-btn.on {
+  background: #dc2626;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.65;
+  }
+}
+
+.link-btn {
+  margin-left: 0.5rem;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.link-btn:hover {
+  color: var(--text);
+}
+
+.status.recording {
+  color: #f87171;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 0.78rem;
+}
+
+/* settings + manual modals (reuse .palette-backdrop) */
+.settings,
+.manual {
+  width: min(620px, 94vw);
+  background: var(--panel);
+  border-radius: 12px;
+  padding: 1.2rem 1.4rem;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.settings h2 {
+  margin-top: 0;
+}
+
+.settings label {
+  display: block;
+  margin: 0.8rem 0;
+  font-size: 0.9rem;
+}
+
+.settings label.row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.settings select,
+.settings input[type='text'] {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.4rem 0.5rem;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--bg);
+  border-radius: 6px;
+}
+
+.settings .small {
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.settings-actions {
+  margin-top: 1rem;
+  text-align: right;
+}
+
+.settings-actions button,
+.manual-bar button {
+  background: var(--me);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 1rem;
+  cursor: pointer;
+}
+
+.manual-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.manual-bar button {
+  padding: 0.2rem 0.6rem;
+}
+
+.manual-body {
+  line-height: 1.5;
+  font-size: 0.92rem;
+}
+
+.manual-body h1 {
+  font-size: 1.4rem;
+}
+
+.manual-body h2 {
+  font-size: 1.1rem;
+  margin-top: 1.2rem;
+  border-top: 1px solid var(--bg);
+  padding-top: 0.8rem;
+}
+
+.manual-body code {
+  background: var(--bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+.manual-body pre {
+  background: var(--bg);
+  padding: 0.7rem;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.manual-body table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.85rem;
+}
+
+.manual-body th,
+.manual-body td {
+  border: 1px solid var(--bg);
+  padding: 0.3rem 0.5rem;
+  text-align: left;
+}
+
+.manual-body a {
+  color: var(--me);
+}
