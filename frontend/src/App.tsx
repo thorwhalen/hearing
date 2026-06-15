@@ -7,11 +7,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 // The manual markdown is the single source of truth (repo: misc/docs/MANUAL.md),
 // imported raw at build time and rendered in-app.
 import manualMarkdown from '../../misc/docs/MANUAL.md?raw';
-import { getHealth, transcribeFile, transcribeStream, type TranscribeResponse } from './api';
+import { getHealth, resolveApiBase, transcribeFile, transcribeStream, type TranscribeResponse } from './api';
 import { buildCommands, type CommandContext } from './commands';
 import { type Feedback } from './schema';
 import { DEFAULT_SETTINGS, loadSettings, saveSettings, type Settings } from './settings';
 import { useRecorder } from './useRecorder';
+import { BackendBanner } from './components/BackendBanner';
 import { CommandPalette } from './components/CommandPalette';
 import { FeedbackPanel } from './components/FeedbackPanel';
 import { ManualView } from './components/ManualView';
@@ -27,16 +28,35 @@ export function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState<string | null>(null);
+  const [backendOk, setBackendOk] = useState<boolean | null>(null); // null = checking
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const { recording, error: recError, start, stop } = useRecorder();
 
+  const backendUrl = resolveApiBase(settings.apiBase) || (typeof location !== 'undefined' ? location.origin : '');
+
+  // Probe the backend. Returns true if reachable; updates the banner state.
+  async function probeBackend(): Promise<boolean> {
+    try {
+      const h = await getHealth(settings.apiBase);
+      setVersion(h.version);
+      setBackendOk(true);
+      return true;
+    } catch {
+      setVersion(null);
+      setBackendOk(false);
+      return false;
+    }
+  }
+
+  // Check on landing (and whenever the target backend changes), so the user is
+  // told immediately if it's missing — not after a wasted recording.
   useEffect(() => {
-    getHealth(settings.apiBase)
-      .then((h) => setVersion(h.version))
-      .catch(() => setVersion(null));
+    setBackendOk(null);
+    probeBackend();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.apiBase]);
 
   useEffect(() => {
@@ -114,9 +134,19 @@ export function App() {
     if (recording) {
       const file = await stop();
       if (file) await runTranscription(file);
-    } else {
-      await start();
+      return;
     }
+    // About to record — confirm the backend is up FIRST, so we never record into
+    // the void and only find out on Stop.
+    if (!(await probeBackend())) {
+      setError(
+        `Can't reach the hearing backend at ${backendUrl}. Start it first: run ` +
+          '`hearing serve` in a terminal, then click Record again. (Nothing was recorded.)',
+      );
+      return;
+    }
+    setError(null);
+    await start();
   }
 
   return (
@@ -129,6 +159,10 @@ export function App() {
         <button className="link-btn" onClick={() => setManualOpen(true)}>Help</button>
         <button className="link-btn" onClick={() => setSettingsOpen(true)}>⚙ Settings</button>
       </header>
+
+      {backendOk === false && (
+        <BackendBanner url={backendUrl} onRecheck={probeBackend} onHelp={() => setManualOpen(true)} />
+      )}
 
       <section className="controls">
         <button className={`record-btn${recording ? ' on' : ''}`} onClick={onRecordToggle} disabled={loading}>

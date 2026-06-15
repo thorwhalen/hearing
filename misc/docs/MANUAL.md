@@ -67,6 +67,13 @@ Open **⚙ Settings**. Everything persists in your browser. Defaults are the
 agents) and a **frontend** (this web UI). The frontend talks to the backend over
 HTTP, so they don't have to be on the same machine.
 
+> **The thing you run is `hearing serve` — NOT the enlace platform.** enlace
+> hosts the shared apps site (apps.thorwhalen.com); your laptop doesn't need it.
+> If you start enlace locally it will (a) sit on port 8000 and collide with
+> `hearing serve`, and (b) reject your apps.thorwhalen.com login, because that
+> user account lives on the **server**, not your machine. Skip it: just run
+> `hearing serve`.
+
 ### A. All local (simplest)
 ```bash
 pip install 'hearing[whisper,agents,http]'
