@@ -1,0 +1,25 @@
+# enlace app config for hearing — a FRONTEND-ONLY app on thorwhalen.com.
+#
+# The server hosts only this static UI; all heavy compute (STT, agents) runs on
+# the user's OWN machine via a local `hearing serve` (set the API base URL in the
+# app's Settings to http://localhost:8000). So the server needs NO API keys and
+# runs no Python backend for hearing. See misc/docs/DEPLOYMENT.md.
+display_name = "hearing"
+description = "Meeting transcription & AI copilot — UI on the server, compute on your machine."
+
+# Owner-only access: enlace_auth allows the app only for an authenticated user
+# whose email is in allowed_users (access=protected:user; see enlace base.py).
+access = "protected:user"
+allowed_users = ["thorwhalen@gmail.com"]
+
+# Vite build output (relative to this app dir). enlace serves it; mounts at /hearing/.
+frontend_dir = "frontend/dist"
+
+# Build step honored by tw_platform/deploy.py: it runs install+build in `cwd`
+# and injects VITE_PUBLIC_BASE=/hearing/ so asset URLs use the right prefix
+# (frontend/vite.config.ts reads it). enlace itself doesn't build yet.
+[build]
+cwd = "frontend"
+install = ["npm", "ci", "--no-audit", "--no-fund", "--no-progress"]
+build = ["npm", "run", "build"]
+env_vars = ["VITE_PUBLIC_BASE"]
