@@ -26,16 +26,29 @@ export interface TranscribeResponse {
   summary?: string;
 }
 
-export async function transcribeFile(
-  file: File,
-  opts: { title?: string; summarize?: boolean } = {},
-): Promise<TranscribeResponse> {
+// API base URL ('' = same origin). Lets a server-hosted UI call YOUR local
+// backend (set apiBase to http://localhost:8000) — compute stays on your machine.
+function apiUrl(apiBase: string | undefined, path: string): string {
+  return (apiBase || '') + path;
+}
+
+export interface TranscribeOpts {
+  title?: string;
+  summarize?: boolean;
+  engine?: string;
+  model?: string;
+  apiBase?: string;
+}
+
+export async function transcribeFile(file: File, opts: TranscribeOpts = {}): Promise<TranscribeResponse> {
   const form = new FormData();
   form.append('file', file);
   form.append('title', opts.title ?? file.name);
   form.append('summarize', String(opts.summarize ?? false));
+  form.append('engine', opts.engine ?? 'whisper');
+  form.append('model', opts.model ?? 'base');
 
-  const res = await fetch('/api/transcribe', { method: 'POST', body: form });
+  const res = await fetch(apiUrl(opts.apiBase, '/api/transcribe'), { method: 'POST', body: form });
   if (!res.ok) {
     throw new Error(`Transcription failed (HTTP ${res.status}): ${await res.text()}`);
   }
@@ -54,13 +67,15 @@ export interface StreamHandlers {
 export async function transcribeStream(
   file: File,
   handlers: StreamHandlers,
-  opts: { title?: string } = {},
+  opts: { title?: string; engine?: string; model?: string; apiBase?: string } = {},
 ): Promise<void> {
   const form = new FormData();
   form.append('file', file);
   form.append('title', opts.title ?? file.name);
+  form.append('engine', opts.engine ?? 'whisper');
+  form.append('model', opts.model ?? 'base');
 
-  const res = await fetch('/api/transcribe/stream', { method: 'POST', body: form });
+  const res = await fetch(apiUrl(opts.apiBase, '/api/transcribe/stream'), { method: 'POST', body: form });
   if (!res.ok || !res.body) {
     throw new Error(`Live transcription failed (HTTP ${res.status})`);
   }
@@ -89,8 +104,8 @@ export async function transcribeStream(
   }
 }
 
-export async function getHealth(): Promise<{ status: string; version: string }> {
-  const res = await fetch('/api/health');
+export async function getHealth(apiBase = ''): Promise<{ status: string; version: string }> {
+  const res = await fetch(apiUrl(apiBase, '/api/health'));
   if (!res.ok) throw new Error(`Health check failed (HTTP ${res.status})`);
   return res.json();
 }
