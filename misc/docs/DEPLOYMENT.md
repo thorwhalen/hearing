@@ -55,7 +55,7 @@ sends permissive CORS. **The server runs no compute and needs no API keys.**
    ```toml
    app_dirs = [
        "../reelee-web",
-       "../../t/thoremin",
+       "../../tt/thoremin",
        "../../t/hearing",   # ← add this
    ]
    ```
