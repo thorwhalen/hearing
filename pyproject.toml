@@ -23,6 +23,7 @@ authors = [
     { name = "Thor Whalen" },
 ]
 dependencies = [
+    "scribed",  # transcription façade: STT engines, VAD, audio conditioning, live streaming
     "numpy>=1.24",
     "soundfile>=0.12",
     "soxr>=0.3",
@@ -41,17 +42,17 @@ Documentation = "https://thorwhalen.github.io/hearing"
 hearing = "hearing.cli:main"
 
 [project.optional-dependencies]
-# Default local STT engine (faster-whisper / CTranslate2; no PyTorch).
+# Default local STT engine — now provided by scribed's faster-whisper backend.
 whisper = [
-    "faster-whisper>=1.0",
+    "scribed[faster-whisper]",
 ]
 # Claude-backed agent layer (the offline ExtractiveAgent needs none of this).
 agents = [
     "anthropic>=0.40",
 ]
-# Cloud STT via the OpenAI transcription API (a drop-in STTEngine).
+# Cloud STT via the OpenAI transcription API — provided by scribed's openai backend.
 openai = [
-    "openai>=1.0",
+    "scribed[openai]",
 ]
 # Acoustic speaker diarization (separate individual remote speakers).
 diarize = [
