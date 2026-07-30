@@ -63,19 +63,13 @@
 <li class="toctree-l3"><a class="reference internal" href="#hearing.capture.DeviceCapture.list_devices"><code class="docutils literal notranslate"><span class="pre">DeviceCapture.list_devices()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#hearing.capture.STT_SAMPLE_RATE"><code class="docutils literal notranslate"><span class="pre">STT_SAMPLE_RATE</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#hearing.capture.StreamingFileCapture"><code class="docutils literal notranslate"><span class="pre">StreamingFileCapture</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#hearing.capture.StreamingFileCapture.astream"><code class="docutils literal notranslate"><span class="pre">StreamingFileCapture.astream()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#hearing.capture.StreamingFileCapture.channels"><code class="docutils literal notranslate"><span class="pre">StreamingFileCapture.channels()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#hearing.capture.StreamingFileCapture.frames"><code class="docutils literal notranslate"><span class="pre">StreamingFileCapture.frames()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#hearing.capture.load_audio"><code class="docutils literal notranslate"><span class="pre">load_audio()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#hearing.capture.resample"><code class="docutils literal notranslate"><span class="pre">resample()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#hearing.capture.rms_energy"><code class="docutils literal notranslate"><span class="pre">rms_energy()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#hearing.capture.split_channels"><code class="docutils literal notranslate"><span class="pre">split_channels()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#hearing.capture.to_mono"><code class="docutils literal notranslate"><span class="pre">to_mono()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#hearing.capture.to_mono_16k"><code class="docutils literal notranslate"><span class="pre">to_mono_16k()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cli.html">hearing.cli</a></li>
@@ -117,15 +111,14 @@
   <section id="module-hearing.capture">
 <span id="hearing-capture"></span><h1>hearing.capture<a class="headerlink" href="#module-hearing.capture" title="Link to this heading"></a></h1>
 <p>Audio capture and channel handling for the hearing pipeline.</p>
-<p>This module owns turning an audio <em>source</em> into per-channel float arrays, and
-the all-important <strong>channel split</strong>: mic and system audio are kept on separate
-channels so that “who is local” is known for free (see the <code class="docutils literal notranslate"><span class="pre">hearing-diarization</span></code>
-skill for what we do with that, and <code class="docutils literal notranslate"><span class="pre">hearing-audio-capture</span></code> for the macOS
-mechanics of producing such a multi-channel stream — BlackHole + Aggregate
-Device, or Core Audio taps).</p>
-<p>For the batch milestone this reads a (possibly multi-channel) file. The live
-milestone swaps in a streaming <a class="reference internal" href="interfaces.html#hearing.interfaces.CaptureSource" title="hearing.interfaces.CaptureSource"><code class="xref py py-class docutils literal notranslate"><span class="pre">CaptureSource</span></code></a>
-without changing anything downstream.</p>
+<p>This module owns turning an audio <em>source</em> into per-channel float arrays, and the
+all-important <strong>channel split</strong>: mic and system audio are kept on separate channels
+so that “who is local” is known for free (see the <code class="docutils literal notranslate"><span class="pre">hearing-diarization</span></code> skill for
+what we do with that, and <code class="docutils literal notranslate"><span class="pre">hearing-audio-capture</span></code> for the macOS mechanics —
+BlackHole + Aggregate Device, or Core Audio taps).</p>
+<p>The generic, channel-agnostic conditioning (decode, down-mix, resample, energy) now
+lives in <code class="xref py py-mod docutils literal notranslate"><span class="pre">scribed.audio</span></code> and is re-exported here for backward compatibility —
+hearing owns only the multi-channel / “me vs them” concerns.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="hearing.capture.ChannelSplitFileCapture">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.capture.</span></span><span class="sig-name descname"><span class="pre">ChannelSplitFileCapture</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mic_channels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(0,)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_channels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(1,)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/hearing/capture.html#ChannelSplitFileCapture"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.capture.ChannelSplitFileCapture" title="Link to this definition"></a></dt>
@@ -185,12 +178,6 @@ hardware to exercise; constructing it is cheap (the device opens in
 
 </dd></dl>
 
-<dl class="py data">
-<dt class="sig sig-object py" id="hearing.capture.STT_SAMPLE_RATE">
-<span class="sig-prename descclassname"><span class="pre">hearing.capture.</span></span><span class="sig-name descname"><span class="pre">STT_SAMPLE_RATE</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">16000</span></span><a class="headerlink" href="#hearing.capture.STT_SAMPLE_RATE" title="Link to this definition"></a></dt>
-<dd><p>STT engines expect 16 kHz mono float32; this is the canonical target rate.</p>
-</dd></dl>
-
 <dl class="py class">
 <dt class="sig sig-object py" id="hearing.capture.StreamingFileCapture">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.capture.</span></span><span class="sig-name descname"><span class="pre">StreamingFileCapture</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">block_ms</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">realtime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mic_channels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(0,)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_channels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(1,)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/hearing/capture.html#StreamingFileCapture"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.capture.StreamingFileCapture" title="Link to this definition"></a></dt>
@@ -220,38 +207,6 @@ the default streams as fast as possible (for tests).</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="hearing.capture.load_audio">
-<span class="sig-prename descclassname"><span class="pre">hearing.capture.</span></span><span class="sig-name descname"><span class="pre">load_audio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">always_2d</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/hearing/capture.html#load_audio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.capture.load_audio" title="Link to this definition"></a></dt>
-<dd><p>Load an audio file as float32 samples plus its native sample rate.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>path</strong> – Path to any libsndfile-readable file (wav, flac, aiff, ogg, …).
-For mp3/m4a, convert first (ffmpeg) — see <code class="docutils literal notranslate"><span class="pre">hearing-audio-capture</span></code>.</p></li>
-<li><p><strong>always_2d</strong> – If True, always return shape <code class="docutils literal notranslate"><span class="pre">(n_samples,</span> <span class="pre">n_channels)</span></code>.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(data,</span> <span class="pre">sample_rate)</span></code> where <code class="docutils literal notranslate"><span class="pre">data</span></code> is float32 in roughly [-1, 1].</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="hearing.capture.resample">
-<span class="sig-prename descclassname"><span class="pre">hearing.capture.</span></span><span class="sig-name descname"><span class="pre">resample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mono</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">16000</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/hearing/capture.html#resample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.capture.resample" title="Link to this definition"></a></dt>
-<dd><p>Resample a mono float array to <code class="docutils literal notranslate"><span class="pre">target</span></code> Hz.</p>
-<p>Prefers <cite>soxr</cite> (fast, high quality); falls back to linear interpolation so
-the package still works without it (good enough for tiny/base STT models).</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="hearing.capture.rms_energy">
-<span class="sig-prename descclassname"><span class="pre">hearing.capture.</span></span><span class="sig-name descname"><span class="pre">rms_energy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/hearing/capture.html#rms_energy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.capture.rms_energy" title="Link to this definition"></a></dt>
-<dd><p>Root-mean-square energy of a sample buffer (0.0 for empty).</p>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="hearing.capture.split_channels">
 <span class="sig-prename descclassname"><span class="pre">hearing.capture.</span></span><span class="sig-name descname"><span class="pre">split_channels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">mic_channels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(0,)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_channels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(1,)</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="types.html#hearing.types.Channel" title="hearing.types.Channel"><span class="pre">Channel</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/hearing/capture.html#split_channels"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.capture.split_channels" title="Link to this definition"></a></dt>
 <dd><p>Split a multi-channel array into per-<code class="xref py py-class docutils literal notranslate"><span class="pre">Channel</span></code> mono arrays.</p>
@@ -271,18 +226,6 @@ system audio on another — so we can slice the columns apart. A mono file
 indices are out of range are silently omitted.</p>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="hearing.capture.to_mono">
-<span class="sig-prename descclassname"><span class="pre">hearing.capture.</span></span><span class="sig-name descname"><span class="pre">to_mono</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/hearing/capture.html#to_mono"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.capture.to_mono" title="Link to this definition"></a></dt>
-<dd><p>Down-mix to mono by averaging channels. 1-D input is returned as-is.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="hearing.capture.to_mono_16k">
-<span class="sig-prename descclassname"><span class="pre">hearing.capture.</span></span><span class="sig-name descname"><span class="pre">to_mono_16k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">16000</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../_modules/hearing/capture.html#to_mono_16k"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.capture.to_mono_16k" title="Link to this definition"></a></dt>
-<dd><p>Convenience: down-mix to mono and resample to the STT target rate.</p>
 </dd></dl>
 
 </section>

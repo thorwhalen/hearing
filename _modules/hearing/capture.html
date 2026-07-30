@@ -88,135 +88,38 @@
   <h1>Source code for hearing.capture</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Audio capture and channel handling for the hearing pipeline.</span>
 
-<span class="sd">This module owns turning an audio *source* into per-channel float arrays, and</span>
-<span class="sd">the all-important **channel split**: mic and system audio are kept on separate</span>
-<span class="sd">channels so that &quot;who is local&quot; is known for free (see the ``hearing-diarization``</span>
-<span class="sd">skill for what we do with that, and ``hearing-audio-capture`` for the macOS</span>
-<span class="sd">mechanics of producing such a multi-channel stream — BlackHole + Aggregate</span>
-<span class="sd">Device, or Core Audio taps).</span>
+<span class="sd">This module owns turning an audio *source* into per-channel float arrays, and the</span>
+<span class="sd">all-important **channel split**: mic and system audio are kept on separate channels</span>
+<span class="sd">so that &quot;who is local&quot; is known for free (see the ``hearing-diarization`` skill for</span>
+<span class="sd">what we do with that, and ``hearing-audio-capture`` for the macOS mechanics —</span>
+<span class="sd">BlackHole + Aggregate Device, or Core Audio taps).</span>
 
-<span class="sd">For the batch milestone this reads a (possibly multi-channel) file. The live</span>
-<span class="sd">milestone swaps in a streaming :class:`~hearing.interfaces.CaptureSource`</span>
-<span class="sd">without changing anything downstream.</span>
+<span class="sd">The generic, channel-agnostic conditioning (decode, down-mix, resample, energy) now</span>
+<span class="sd">lives in :mod:`scribed.audio` and is re-exported here for backward compatibility —</span>
+<span class="sd">hearing owns only the multi-channel / &quot;me vs them&quot; concerns.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncIterator</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
+<span class="c1"># Generic audio conditioning is centralized in scribed; re-exported for callers</span>
+<span class="c1"># that still import these names from hearing.capture.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scribed.audio</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: F401</span>
+    <span class="n">STT_SAMPLE_RATE</span><span class="p">,</span>
+    <span class="n">load_audio</span><span class="p">,</span>
+    <span class="n">resample</span><span class="p">,</span>
+    <span class="n">rms_energy</span><span class="p">,</span>
+    <span class="n">to_mono</span><span class="p">,</span>
+    <span class="n">to_mono_16k</span><span class="p">,</span>
+<span class="p">)</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Channel</span>
-
-<span class="c1">#: STT engines expect 16 kHz mono float32; this is the canonical target rate.</span>
-<span class="n">STT_SAMPLE_RATE</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16_000</span>
-
-
-<div class="viewcode-block" id="load_audio">
-<a class="viewcode-back" href="../../module_docs/hearing/capture.html#hearing.capture.load_audio">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">load_audio</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">always_2d</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load an audio file as float32 samples plus its native sample rate.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        path: Path to any libsndfile-readable file (wav, flac, aiff, ogg, ...).</span>
-<span class="sd">            For mp3/m4a, convert first (ffmpeg) — see ``hearing-audio-capture``.</span>
-<span class="sd">        always_2d: If True, always return shape ``(n_samples, n_channels)``.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        ``(data, sample_rate)`` where ``data`` is float32 in roughly [-1, 1].</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="kn">import</span><span class="w"> </span><span class="nn">soundfile</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sf</span>
-    <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pragma: no cover - guidance path</span>
-        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-            <span class="s2">&quot;Reading audio needs `soundfile`. Install with: pip install soundfile</span><span class="se">\n</span><span class="s2">&quot;</span>
-            <span class="s2">&quot;(it bundles libsndfile). See the hearing-audio-capture skill.&quot;</span>
-        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">data</span><span class="p">,</span> <span class="n">sr</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">,</span> <span class="n">always_2d</span><span class="o">=</span><span class="n">always_2d</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">sr</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="c1"># libsndfile can&#39;t read it (e.g. mp3/m4a/webm/opus from a browser</span>
-        <span class="c1"># recording). Fall back to ffmpeg, which decodes virtually anything.</span>
-        <span class="n">wav</span> <span class="o">=</span> <span class="n">_ffmpeg_decode_to_wav</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">data</span><span class="p">,</span> <span class="n">sr</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">wav</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">,</span> <span class="n">always_2d</span><span class="o">=</span><span class="n">always_2d</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">sr</span><span class="p">)</span>
-        <span class="k">finally</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">wav</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-                <span class="k">pass</span></div>
-
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_ffmpeg_decode_to_wav</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decode any audio file to a temp 16-bit PCM WAV via ffmpeg (channels kept).&quot;&quot;&quot;</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
-
-    <span class="n">ffmpeg</span> <span class="o">=</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">&quot;ffmpeg&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">ffmpeg</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Could not read </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2"> with libsndfile, and ffmpeg is not on PATH to &quot;</span>
-            <span class="s2">&quot;convert it. Install ffmpeg (e.g. `brew install ffmpeg`) to transcribe &quot;</span>
-            <span class="s2">&quot;mp3/m4a/webm/opus (incl. browser recordings).&quot;</span>
-        <span class="p">)</span>
-    <span class="n">fd</span><span class="p">,</span> <span class="n">out</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.wav&quot;</span><span class="p">)</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>
-    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-        <span class="p">[</span><span class="n">ffmpeg</span><span class="p">,</span> <span class="s2">&quot;-y&quot;</span><span class="p">,</span> <span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="s2">&quot;-c:a&quot;</span><span class="p">,</span> <span class="s2">&quot;pcm_s16le&quot;</span><span class="p">,</span> <span class="n">out</span><span class="p">],</span>
-        <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">out</span>
-
-
-<div class="viewcode-block" id="to_mono">
-<a class="viewcode-back" href="../../module_docs/hearing/capture.html#hearing.capture.to_mono">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">to_mono</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Down-mix to mono by averaging channels. 1-D input is returned as-is.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="resample">
-<a class="viewcode-back" href="../../module_docs/hearing/capture.html#hearing.capture.resample">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">resample</span><span class="p">(</span><span class="n">mono</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sr</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">STT_SAMPLE_RATE</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resample a mono float array to ``target`` Hz.</span>
-
-<span class="sd">    Prefers `soxr` (fast, high quality); falls back to linear interpolation so</span>
-<span class="sd">    the package still works without it (good enough for tiny/base STT models).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">sr</span> <span class="o">==</span> <span class="n">target</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">mono</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="kn">import</span><span class="w"> </span><span class="nn">soxr</span>
-
-        <span class="k">return</span> <span class="n">soxr</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">mono</span><span class="p">,</span> <span class="n">sr</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-        <span class="n">n_out</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">mono</span><span class="p">)</span> <span class="o">*</span> <span class="n">target</span> <span class="o">/</span> <span class="n">sr</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">n_out</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
-        <span class="n">x_old</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">mono</span><span class="p">))</span>
-        <span class="n">x_new</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">mono</span><span class="p">),</span> <span class="n">n_out</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">x_new</span><span class="p">,</span> <span class="n">x_old</span><span class="p">,</span> <span class="n">mono</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="to_mono_16k">
-<a class="viewcode-back" href="../../module_docs/hearing/capture.html#hearing.capture.to_mono_16k">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">to_mono_16k</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sr</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">STT_SAMPLE_RATE</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convenience: down-mix to mono and resample to the STT target rate.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">resample</span><span class="p">(</span><span class="n">to_mono</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">sr</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span></div>
-
 
 
 <div class="viewcode-block" id="split_channels">
@@ -252,21 +155,13 @@
     <span class="k">if</span> <span class="n">mic_idx</span><span class="p">:</span>
         <span class="n">out</span><span class="p">[</span><span class="n">Channel</span><span class="o">.</span><span class="n">MIC</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">mic_idx</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">sys_idx</span><span class="p">:</span>
-        <span class="n">out</span><span class="p">[</span><span class="n">Channel</span><span class="o">.</span><span class="n">SYSTEM</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">sys_idx</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">Channel</span><span class="o">.</span><span class="n">SYSTEM</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">data</span><span class="p">[:,</span> <span class="n">sys_idx</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="p">)</span>
     <span class="c1"># If neither mapping matched (unexpected channel layout), fall back to mixed.</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">out</span><span class="p">:</span>
         <span class="n">out</span><span class="p">[</span><span class="n">Channel</span><span class="o">.</span><span class="n">MIXED</span><span class="p">]</span> <span class="o">=</span> <span class="n">to_mono</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">out</span></div>
-
-
-
-<div class="viewcode-block" id="rms_energy">
-<a class="viewcode-back" href="../../module_docs/hearing/capture.html#hearing.capture.rms_energy">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">rms_energy</span><span class="p">(</span><span class="n">samples</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Root-mean-square energy of a sample buffer (0.0 for empty).&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">samples</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">return</span> <span class="mf">0.0</span>
-    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">))))</span></div>
 
 
 
@@ -419,7 +314,9 @@
 
 <div class="viewcode-block" id="DeviceCapture.astream">
 <a class="viewcode-back" href="../../module_docs/hearing/capture.html#hearing.capture.DeviceCapture.astream">[docs]</a>
-    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">astream</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Channel</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>  <span class="c1"># pragma: no cover</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">astream</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Channel</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>  <span class="c1"># pragma: no cover</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Open the device and yield ``(channel, block)`` blocks until cancelled.&quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="kn">import</span><span class="w"> </span><span class="nn">sounddevice</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sd</span>
