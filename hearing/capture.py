@@ -1,122 +1,37 @@
 """Audio capture and channel handling for the hearing pipeline.
 
-This module owns turning an audio *source* into per-channel float arrays, and
-the all-important **channel split**: mic and system audio are kept on separate
-channels so that "who is local" is known for free (see the ``hearing-diarization``
-skill for what we do with that, and ``hearing-audio-capture`` for the macOS
-mechanics of producing such a multi-channel stream — BlackHole + Aggregate
-Device, or Core Audio taps).
+This module owns turning an audio *source* into per-channel float arrays, and the
+all-important **channel split**: mic and system audio are kept on separate channels
+so that "who is local" is known for free (see the ``hearing-diarization`` skill for
+what we do with that, and ``hearing-audio-capture`` for the macOS mechanics —
+BlackHole + Aggregate Device, or Core Audio taps).
 
-For the batch milestone this reads a (possibly multi-channel) file. The live
-milestone swaps in a streaming :class:`~hearing.interfaces.CaptureSource`
-without changing anything downstream.
+The generic, channel-agnostic conditioning (decode, down-mix, resample, energy) now
+lives in :mod:`scribed.audio` and is re-exported here for backward compatibility —
+hearing owns only the multi-channel / "me vs them" concerns.
 """
 
 from __future__ import annotations
 
 import asyncio
-import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import AsyncIterator, Iterator, Optional, Sequence
 
 import numpy as np
 
+# Generic audio conditioning is centralized in scribed; re-exported for callers
+# that still import these names from hearing.capture.
+from scribed.audio import (  # noqa: F401
+    STT_SAMPLE_RATE,
+    load_audio,
+    resample,
+    rms_energy,
+    to_mono,
+    to_mono_16k,
+)
+
 from hearing.types import Channel
-
-#: STT engines expect 16 kHz mono float32; this is the canonical target rate.
-STT_SAMPLE_RATE: int = 16_000
-
-
-def load_audio(path: str | Path, *, always_2d: bool = True) -> tuple[np.ndarray, int]:
-    """Load an audio file as float32 samples plus its native sample rate.
-
-    Args:
-        path: Path to any libsndfile-readable file (wav, flac, aiff, ogg, ...).
-            For mp3/m4a, convert first (ffmpeg) — see ``hearing-audio-capture``.
-        always_2d: If True, always return shape ``(n_samples, n_channels)``.
-
-    Returns:
-        ``(data, sample_rate)`` where ``data`` is float32 in roughly [-1, 1].
-    """
-    try:
-        import soundfile as sf
-    except ImportError as e:  # pragma: no cover - guidance path
-        raise ImportError(
-            "Reading audio needs `soundfile`. Install with: pip install soundfile\n"
-            "(it bundles libsndfile). See the hearing-audio-capture skill."
-        ) from e
-    try:
-        data, sr = sf.read(str(path), dtype="float32", always_2d=always_2d)
-        return data, int(sr)
-    except Exception:
-        # libsndfile can't read it (e.g. mp3/m4a/webm/opus from a browser
-        # recording). Fall back to ffmpeg, which decodes virtually anything.
-        wav = _ffmpeg_decode_to_wav(path)
-        try:
-            data, sr = sf.read(wav, dtype="float32", always_2d=always_2d)
-            return data, int(sr)
-        finally:
-            try:
-                os.unlink(wav)
-            except OSError:
-                pass
-
-
-def _ffmpeg_decode_to_wav(path: str | Path) -> str:
-    """Decode any audio file to a temp 16-bit PCM WAV via ffmpeg (channels kept)."""
-    import shutil
-    import subprocess
-    import tempfile
-
-    ffmpeg = shutil.which("ffmpeg")
-    if not ffmpeg:
-        raise RuntimeError(
-            f"Could not read {path} with libsndfile, and ffmpeg is not on PATH to "
-            "convert it. Install ffmpeg (e.g. `brew install ffmpeg`) to transcribe "
-            "mp3/m4a/webm/opus (incl. browser recordings)."
-        )
-    fd, out = tempfile.mkstemp(suffix=".wav")
-    os.close(fd)
-    subprocess.run(
-        [ffmpeg, "-y", "-i", str(path), "-c:a", "pcm_s16le", out],
-        check=True,
-        capture_output=True,
-    )
-    return out
-
-
-def to_mono(data: np.ndarray) -> np.ndarray:
-    """Down-mix to mono by averaging channels. 1-D input is returned as-is."""
-    if data.ndim == 2:
-        return data.mean(axis=1).astype("float32", copy=False)
-    return data.astype("float32", copy=False)
-
-
-def resample(mono: np.ndarray, sr: int, target: int = STT_SAMPLE_RATE) -> np.ndarray:
-    """Resample a mono float array to ``target`` Hz.
-
-    Prefers `soxr` (fast, high quality); falls back to linear interpolation so
-    the package still works without it (good enough for tiny/base STT models).
-    """
-    if sr == target:
-        return mono.astype("float32", copy=False)
-    try:
-        import soxr
-
-        return soxr.resample(mono, sr, target).astype("float32", copy=False)
-    except ImportError:
-        n_out = int(round(len(mono) * target / sr))
-        if n_out <= 0:
-            return np.zeros(0, dtype="float32")
-        x_old = np.arange(len(mono))
-        x_new = np.linspace(0, len(mono), n_out, endpoint=False)
-        return np.interp(x_new, x_old, mono).astype("float32")
-
-
-def to_mono_16k(data: np.ndarray, sr: int, *, target: int = STT_SAMPLE_RATE) -> np.ndarray:
-    """Convenience: down-mix to mono and resample to the STT target rate."""
-    return resample(to_mono(data), sr, target)
 
 
 def split_channels(
@@ -150,18 +65,13 @@ def split_channels(
     if mic_idx:
         out[Channel.MIC] = data[:, mic_idx].mean(axis=1).astype("float32", copy=False)
     if sys_idx:
-        out[Channel.SYSTEM] = data[:, sys_idx].mean(axis=1).astype("float32", copy=False)
+        out[Channel.SYSTEM] = (
+            data[:, sys_idx].mean(axis=1).astype("float32", copy=False)
+        )
     # If neither mapping matched (unexpected channel layout), fall back to mixed.
     if not out:
         out[Channel.MIXED] = to_mono(data)
     return out
-
-
-def rms_energy(samples: np.ndarray) -> float:
-    """Root-mean-square energy of a sample buffer (0.0 for empty)."""
-    if samples.size == 0:
-        return 0.0
-    return float(np.sqrt(np.mean(np.square(samples, dtype="float64"))))
 
 
 @dataclass
@@ -282,7 +192,9 @@ class DeviceCapture:
 
         return sd.query_devices()
 
-    async def astream(self) -> AsyncIterator[tuple[Channel, np.ndarray]]:  # pragma: no cover
+    async def astream(
+        self,
+    ) -> AsyncIterator[tuple[Channel, np.ndarray]]:  # pragma: no cover
         """Open the device and yield ``(channel, block)`` blocks until cancelled."""
         try:
             import sounddevice as sd
