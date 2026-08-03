@@ -165,6 +165,14 @@ doctest_optionflags = [
 [tool.wads.ci]
 project_name = ""
 
+[tool.wads.ci.install]
+# By default CI installs core deps only, which is not enough here: collection is
+# `pytest --doctest-modules` over the package, and `hearing/http_app.py` imports
+# FastAPI at import time (deliberately — FastAPI needs real annotation objects).
+# `dev` pulls `hearing[http]` + httpx, which also un-skips tests/test_http_app.py.
+# Consumed by the reusable workflow via read-ci-config -> install-deps-uv (.[dev]).
+extras = "dev"
+
 [tool.wads.ci.commands]
 pre_test = []
 test = []
