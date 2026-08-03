@@ -82,10 +82,15 @@ all = [
     "anthropic>=0.40",
     "sounddevice>=0.4",
 ]
+# CI installs `.[dev]` only, and it runs `pytest --doctest-modules` over the
+# package — so `dev` must carry everything needed to *import* every module and
+# to un-skip the HTTP tests (`httpx` is what `fastapi.testclient` needs).
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
     "ruff>=0.1.0",
+    "hearing[http]",
+    "httpx>=0.27",
 ]
 docs = [
     "sphinx>=6.0",
@@ -132,7 +137,11 @@ convention = "google"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
+# wads CI runs `pytest --doctest-modules` with NO path argument, so collection is
+# driven entirely by `testpaths`. Listing the package dir here is what makes the
+# package's own doctests actually run (with only "tests" they never did).
 testpaths = [
+    "hearing",
     "tests",
 ]
 doctest_optionflags = [

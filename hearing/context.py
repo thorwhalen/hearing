@@ -87,9 +87,15 @@ class KeywordRetriever:
 
     >>> import asyncio
     >>> r = KeywordRetriever({"db": "We will use PostgreSQL.", "ui": "React frontend."})
-    >>> hits = asyncio.run(r.search("which database?"))
+    >>> hits = asyncio.run(r.search("postgresql migration"))
     >>> hits[0].title
     'db'
+
+    Matching is purely lexical, so a query sharing no token with the corpus
+    retrieves nothing — use :class:`EmbeddingRetriever` for semantic recall.
+
+    >>> asyncio.run(r.search("which database?"))
+    []
     """
 
     def __init__(self, docs: Union[Mapping[str, str], Sequence]):
