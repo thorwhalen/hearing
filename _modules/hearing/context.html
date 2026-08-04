@@ -192,9 +192,15 @@
 
 <span class="sd">    &gt;&gt;&gt; import asyncio</span>
 <span class="sd">    &gt;&gt;&gt; r = KeywordRetriever({&quot;db&quot;: &quot;We will use PostgreSQL.&quot;, &quot;ui&quot;: &quot;React frontend.&quot;})</span>
-<span class="sd">    &gt;&gt;&gt; hits = asyncio.run(r.search(&quot;which database?&quot;))</span>
+<span class="sd">    &gt;&gt;&gt; hits = asyncio.run(r.search(&quot;postgresql migration&quot;))</span>
 <span class="sd">    &gt;&gt;&gt; hits[0].title</span>
 <span class="sd">    &#39;db&#39;</span>
+
+<span class="sd">    Matching is purely lexical, so a query sharing no token with the corpus</span>
+<span class="sd">    retrieves nothing — use :class:`EmbeddingRetriever` for semantic recall.</span>
+
+<span class="sd">    &gt;&gt;&gt; asyncio.run(r.search(&quot;which database?&quot;))</span>
+<span class="sd">    []</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">docs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">]):</span>

@@ -184,9 +184,15 @@ backend-agnostic and testable with a deterministic fake — use
 <dd><p>Dependency-free TF-IDF retriever over a small in-memory corpus.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">r</span> <span class="o">=</span> <span class="n">KeywordRetriever</span><span class="p">({</span><span class="s2">&quot;db&quot;</span><span class="p">:</span> <span class="s2">&quot;We will use PostgreSQL.&quot;</span><span class="p">,</span> <span class="s2">&quot;ui&quot;</span><span class="p">:</span> <span class="s2">&quot;React frontend.&quot;</span><span class="p">})</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">hits</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;which database?&quot;</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">hits</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;postgresql migration&quot;</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">hits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">title</span>
 <span class="go">&#39;db&#39;</span>
+</pre></div>
+</div>
+<p>Matching is purely lexical, so a query sharing no token with the corpus
+retrieves nothing — use <a class="reference internal" href="#hearing.context.EmbeddingRetriever" title="hearing.context.EmbeddingRetriever"><code class="xref py py-class docutils literal notranslate"><span class="pre">EmbeddingRetriever</span></code></a> for semantic recall.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;which database?&quot;</span><span class="p">))</span>
+<span class="go">[]</span>
 </pre></div>
 </div>
 <dl class="py method">
