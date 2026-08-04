@@ -83,7 +83,9 @@ class ChannelSplitFileCapture:
     swapping it in is the *only* change needed to go live — see the
     ``hearing-live-pipeline`` skill.
 
-    >>> # ChannelSplitFileCapture("meeting.wav").frames()  # doctest: +SKIP
+    Typical use (needs a real audio file, so it is not run as a doctest)::
+
+        ChannelSplitFileCapture("meeting.wav").frames()
     """
 
     path: str | Path

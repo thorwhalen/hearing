@@ -18,8 +18,10 @@ real annotation objects, not stringized forward refs, to build its request model
 """
 
 import asyncio
+import os
 import tempfile
 import uuid
+from contextlib import contextmanager, suppress
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -38,6 +40,28 @@ except ImportError as e:  # pragma: no cover - guidance path
 # Stable IDs derived deterministically from (meeting_id, index) so re-fetching the
 # same transcript yields stable segment ids (handy as React list keys).
 _SEGMENT_NS = uuid.UUID("e9b1c0de-0000-4000-8000-000000000000")
+
+
+@contextmanager
+def _uploaded_to_disk(data: bytes, *, suffix: str):
+    """Write ``data`` to a temp file and yield its path, deleting it afterwards.
+
+    The decoders downstream (soundfile, ffmpeg) open the file *by name*, so the
+    handle must be closed first: on Windows a ``NamedTemporaryFile`` is opened
+    with ``O_TEMPORARY`` and a second open of the same path fails with
+    ``LibsndfileError: System error``. Hence ``delete=False`` + explicit close,
+    with the unlink moved into a ``finally``.
+    """
+    tmp = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
+    try:
+        tmp.write(data)
+        tmp.flush()
+        tmp.close()
+        yield tmp.name
+    finally:
+        tmp.close()
+        with suppress(FileNotFoundError):
+            os.unlink(tmp.name)
 
 
 def _side(speaker: Optional[str], channel: Channel) -> str:
@@ -144,14 +168,12 @@ def create_app(*, engine=None, agent=None, cors_origins: Optional[list] = None) 
         from hearing.pipeline import transcribe
 
         suffix = Path(file.filename or "audio.wav").suffix or ".wav"
-        with tempfile.NamedTemporaryFile(suffix=suffix, delete=True) as tmp:
-            tmp.write(await file.read())
-            tmp.flush()
+        with _uploaded_to_disk(await file.read(), suffix=suffix) as audio_path:
             # transcribe() is blocking (STT) — run it off the event loop so the
             # server stays responsive. Don't pass agent= here (its sync path uses
             # asyncio.run, which can't run inside this loop); await the agent below.
             transcript = await asyncio.to_thread(
-                transcribe, tmp.name, engine=_engine(engine, model), language=language, split=split
+                transcribe, audio_path, engine=_engine(engine, model), language=language, split=split
             )
 
         meeting_id = str(uuid.uuid4())
@@ -179,7 +201,6 @@ def create_app(*, engine=None, agent=None, cors_origins: Optional[list] = None) 
         server→client push the frontend skill calls for.
         """
         import json
-        import os
 
         data = await file.read()
         suffix = Path(file.filename or "audio.wav").suffix or ".wav"
@@ -195,15 +216,11 @@ def create_app(*, engine=None, agent=None, cors_origins: Optional[list] = None) 
             # without a per-segment LLM call; inject a richer agent via create_app.
             live_agent = app.state.agent or ExtractiveAgent()
 
-            tmp = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
-            try:
-                tmp.write(data)
-                tmp.flush()
-                tmp.close()
+            with _uploaded_to_disk(data, suffix=suffix) as audio_path:
                 yield json.dumps(
                     {"type": "meeting", "meeting": {"id": meeting_id, "title": title}}
                 ) + "\n"
-                source = StreamingFileCapture(tmp.name, block_ms=200)
+                source = StreamingFileCapture(audio_path, block_ms=200)
                 i = 0
                 async for seg in live_transcribe(source=source, engine=_engine(engine, model)):
                     seg_dict = segment_to_dict(seg, meeting_id=meeting_id, index=i)
@@ -223,8 +240,6 @@ def create_app(*, engine=None, agent=None, cors_origins: Optional[list] = None) 
                         yield json.dumps({"type": "feedback", "feedback": feedback}) + "\n"
                     i += 1
                 yield json.dumps({"type": "done", "count": i}) + "\n"
-            finally:
-                os.unlink(tmp.name)
 
         return StreamingResponse(gen(), media_type="application/x-ndjson")
 

@@ -10,6 +10,22 @@ version = "0.0.2"
 description = "Pluggable meeting transcription & context-aware AI agents, batch or live"
 readme = "README.md"
 requires-python = ">=3.10"
+license = "MIT"
+license-files = [
+    "LICENSE",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 keywords = [
     "transcription",
     "speech-to-text",
@@ -29,9 +45,6 @@ dependencies = [
     "soxr>=0.3",
     "argh>=0.30",
 ]
-
-[project.license]
-text = "mit"
 
 [project.urls]
 Homepage = "https://github.com/thorwhalen/hearing"
@@ -82,10 +95,15 @@ all = [
     "anthropic>=0.40",
     "sounddevice>=0.4",
 ]
+# CI installs `.[dev]` only, and it runs `pytest --doctest-modules` over the
+# package — so `dev` must carry everything needed to *import* every module and
+# to un-skip the HTTP tests (`httpx` is what `fastapi.testclient` needs).
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
     "ruff>=0.1.0",
+    "hearing[http]",
+    "httpx>=0.27",
 ]
 docs = [
     "sphinx>=6.0",
@@ -132,7 +150,11 @@ convention = "google"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
+# wads CI runs `pytest --doctest-modules` with NO path argument, so collection is
+# driven entirely by `testpaths`. Listing the package dir here is what makes the
+# package's own doctests actually run (with only "tests" they never did).
 testpaths = [
+    "hearing",
     "tests",
 ]
 doctest_optionflags = [
@@ -142,6 +164,14 @@ doctest_optionflags = [
 
 [tool.wads.ci]
 project_name = ""
+
+[tool.wads.ci.install]
+# By default CI installs core deps only, which is not enough here: collection is
+# `pytest --doctest-modules` over the package, and `hearing/http_app.py` imports
+# FastAPI at import time (deliberately — FastAPI needs real annotation objects).
+# `dev` pulls `hearing[http]` + httpx, which also un-skips tests/test_http_app.py.
+# Consumed by the reusable workflow via read-ci-config -> install-deps-uv (.[dev]).
+extras = "dev"
 
 [tool.wads.ci.commands]
 pre_test = []
