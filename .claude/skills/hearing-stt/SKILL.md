@@ -13,19 +13,25 @@ The pluggable speech-to-text layer for the `hearing` project. The whole point: *
 
 ```python
 """STT engine facade: audio in, time-stamped segments out, engine-agnostic."""
+
 from collections.abc import AsyncIterator, Sequence
 from typing import Any, Optional, Protocol
 
 # The data spine is owned by hearing.types — never redefine it here.
 from hearing.types import TranscriptSegment, TimeSpan, Word
 
+
 class STTEngine(Protocol):
     """Batch + streaming STT. Implement one or both; raise NotImplementedError otherwise."""
-    def transcribe(self, audio: Any, *, sample_rate: int,
-                   language: Optional[str] = None) -> Sequence[TranscriptSegment]:
+
+    def transcribe(
+        self, audio: Any, *, sample_rate: int, language: Optional[str] = None
+    ) -> Sequence[TranscriptSegment]:
         """Whole-clip batch transcription (float32 mono ndarray in) -> segments."""
-    async def stream_transcribe(self, frames: AsyncIterator[Any], *,
-                                sample_rate: int) -> AsyncIterator[TranscriptSegment]:
+
+    async def stream_transcribe(
+        self, frames: AsyncIterator[Any], *, sample_rate: int
+    ) -> AsyncIterator[TranscriptSegment]:
         """Incremental transcription; yields interim then finalized segments as audio arrives."""
 ```
 
@@ -95,34 +101,48 @@ Vendor WER headlines are clean-audio, single-speaker (Nova-3 ~5.26%, Parakeet v2
 **Cloud OpenAI adapter via the `oa` facade** (no new deps):
 
 ```python
-def _openai_segments(audio_path, *, model: str = "gpt-4o-transcribe",
-                     language: str | None = None) -> Iterable[TranscriptSegment]:
+def _openai_segments(
+    audio_path, *, model: str = "gpt-4o-transcribe", language: str | None = None
+) -> Iterable[TranscriptSegment]:
     from oa.audio import transcribe  # lazy import; model is config, not hardcoded
-    resp = transcribe(audio_path, model=model, response_format="verbose_json",
-                      language=language)
+
+    resp = transcribe(
+        audio_path, model=model, response_format="verbose_json", language=language
+    )
     for s in resp.get("segments", []):
         # float seconds -> integer-ms TimeSpan at the adapter boundary
-        yield TranscriptSegment(text=s["text"].strip(),
-                                span=TimeSpan.from_seconds(s["start"], s["end"]))
+        yield TranscriptSegment(
+            text=s["text"].strip(), span=TimeSpan.from_seconds(s["start"], s["end"])
+        )
 ```
 
 **Local faster-whisper adapter** (the default self-host engine — implemented as `FasterWhisperSTT` in `hearing.stt`, with lazy CTranslate2 model load and `compute_type="int8"`):
 
 ```python
-def _faster_whisper_segments(audio_path, *, model: str = "large-v3",
-                             compute_type: str = "int8",
-                             beam_size: int = 5,
-                             language: str | None = None) -> Iterable[TranscriptSegment]:
+def _faster_whisper_segments(
+    audio_path,
+    *,
+    model: str = "large-v3",
+    compute_type: str = "int8",
+    beam_size: int = 5,
+    language: str | None = None,
+) -> Iterable[TranscriptSegment]:
     from faster_whisper import WhisperModel  # lazy import
+
     m = WhisperModel(model, compute_type=compute_type)  # cache the model across calls
-    segs, _info = m.transcribe(audio_path, beam_size=beam_size, language=language,
-                               word_timestamps=True)
+    segs, _info = m.transcribe(
+        audio_path, beam_size=beam_size, language=language, word_timestamps=True
+    )
     for s in segs:
-        words = tuple(Word(w.word, TimeSpan.from_seconds(w.start, w.end))
-                      for w in (s.words or ()))
-        yield TranscriptSegment(text=s.text.strip(),
-                                span=TimeSpan.from_seconds(s.start, s.end),
-                                confidence=getattr(s, "avg_logprob", None), words=words)
+        words = tuple(
+            Word(w.word, TimeSpan.from_seconds(w.start, w.end)) for w in (s.words or ())
+        )
+        yield TranscriptSegment(
+            text=s.text.strip(),
+            span=TimeSpan.from_seconds(s.start, s.end),
+            confidence=getattr(s, "avg_logprob", None),
+            words=words,
+        )
 ```
 
 **Factory (the only place SDKs are named) + capability flags:**
@@ -130,11 +150,12 @@ def _faster_whisper_segments(audio_path, *, model: str = "large-v3",
 ```python
 _ENGINES = {  # name -> (callable, supports_streaming, emits_speaker)
     "faster-whisper": (_faster_whisper_segments, False, False),
-    "whisperx":       (_whisperx_segments,       False, True),   # bundles diarization
-    "openai":         (_openai_segments,         False, False),
+    "whisperx": (_whisperx_segments, False, True),  # bundles diarization
+    "openai": (_openai_segments, False, False),
     "openai-diarize": (_openai_diarize_segments, False, True),
-    "deepgram":       (_deepgram_segments,       True,  False),
+    "deepgram": (_deepgram_segments, True, False),
 }
+
 
 def get_engine(name: str = "faster-whisper", /, **kw):
     """Dependency-injection factory: resolve an engine by config name."""

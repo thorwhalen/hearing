@@ -91,7 +91,9 @@ def segment_to_dict(seg, *, meeting_id: str, index: int) -> dict:
     }
 
 
-def transcript_to_payload(transcript: Transcript, *, meeting_id: str, title: str) -> dict:
+def transcript_to_payload(
+    transcript: Transcript, *, meeting_id: str, title: str
+) -> dict:
     """Serialize a :class:`Transcript` to the frontend's meeting+segments shape."""
     segments = [
         segment_to_dict(s, meeting_id=meeting_id, index=i)
@@ -111,7 +113,9 @@ def transcript_to_payload(transcript: Transcript, *, meeting_id: str, title: str
     }
 
 
-def create_app(*, engine=None, agent=None, cors_origins: Optional[list] = None) -> FastAPI:
+def create_app(
+    *, engine=None, agent=None, cors_origins: Optional[list] = None
+) -> FastAPI:
     """Build the FastAPI app.
 
     Args:
@@ -144,7 +148,11 @@ def create_app(*, engine=None, agent=None, cors_origins: Optional[list] = None) 
         if key not in app.state.engine_cache:
             from hearing.stt import get_engine
 
-            kwargs = {"model_size": model} if name in ("whisper", "faster-whisper", "local") else {}
+            kwargs = (
+                {"model_size": model}
+                if name in ("whisper", "faster-whisper", "local")
+                else {}
+            )
             app.state.engine_cache[key] = get_engine(name, **kwargs)
         return app.state.engine_cache[key]
 
@@ -173,7 +181,11 @@ def create_app(*, engine=None, agent=None, cors_origins: Optional[list] = None) 
             # server stays responsive. Don't pass agent= here (its sync path uses
             # asyncio.run, which can't run inside this loop); await the agent below.
             transcript = await asyncio.to_thread(
-                transcribe, audio_path, engine=_engine(engine, model), language=language, split=split
+                transcribe,
+                audio_path,
+                engine=_engine(engine, model),
+                language=language,
+                split=split,
             )
 
         meeting_id = str(uuid.uuid4())
@@ -217,27 +229,44 @@ def create_app(*, engine=None, agent=None, cors_origins: Optional[list] = None) 
             live_agent = app.state.agent or ExtractiveAgent()
 
             with _uploaded_to_disk(data, suffix=suffix) as audio_path:
-                yield json.dumps(
-                    {"type": "meeting", "meeting": {"id": meeting_id, "title": title}}
-                ) + "\n"
+                yield (
+                    json.dumps(
+                        {
+                            "type": "meeting",
+                            "meeting": {"id": meeting_id, "title": title},
+                        }
+                    )
+                    + "\n"
+                )
                 source = StreamingFileCapture(audio_path, block_ms=200)
                 i = 0
-                async for seg in live_transcribe(source=source, engine=_engine(engine, model)):
+                async for seg in live_transcribe(
+                    source=source, engine=_engine(engine, model)
+                ):
                     seg_dict = segment_to_dict(seg, meeting_id=meeting_id, index=i)
                     yield json.dumps({"type": "segment", "segment": seg_dict}) + "\n"
                     note = await live_agent.on_segment(seg)
                     if note:
-                        kind = "suggested_question" if seg.text.strip().endswith("?") else "note"
+                        kind = (
+                            "suggested_question"
+                            if seg.text.strip().endswith("?")
+                            else "note"
+                        )
                         feedback = {
                             "id": str(uuid.uuid5(_SEGMENT_NS, f"{meeting_id}:fb:{i}")),
                             "meetingId": meeting_id,
                             "kind": kind,
                             "atMs": seg.span.end_ms,
                             "triggeredBy": seg_dict["id"],
-                            "title": "Suggested question" if kind == "suggested_question" else "Note",
+                            "title": "Suggested question"
+                            if kind == "suggested_question"
+                            else "Note",
                             "body": note,
                         }
-                        yield json.dumps({"type": "feedback", "feedback": feedback}) + "\n"
+                        yield (
+                            json.dumps({"type": "feedback", "feedback": feedback})
+                            + "\n"
+                        )
                     i += 1
                 yield json.dumps({"type": "done", "count": i}) + "\n"
 

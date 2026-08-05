@@ -198,7 +198,9 @@ def _ms_to_clock(ms: int) -> str:
     return f"{h:02d}:{m:02d}:{s:02d}"
 
 
-def merge_segments(*segment_groups: Sequence[TranscriptSegment]) -> list[TranscriptSegment]:
+def merge_segments(
+    *segment_groups: Sequence[TranscriptSegment],
+) -> list[TranscriptSegment]:
     """Merge several segment sequences into one list ordered by start time.
 
     Used when transcribing the mic and system channels separately and then

@@ -45,7 +45,9 @@ def transcript_from_json(s: Union[str, bytes]) -> Transcript:
         )
         for x in d.get("segments", [])
     )
-    return Transcript(segments, sample_rate=d.get("sample_rate"), meta=dict(d.get("meta", {})))
+    return Transcript(
+        segments, sample_rate=d.get("sample_rate"), meta=dict(d.get("meta", {}))
+    )
 
 
 class _FileTextStore(MutableMapping):

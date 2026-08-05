@@ -22,7 +22,15 @@ import re
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Mapping, Optional, Protocol, Sequence, Union, runtime_checkable
+from typing import (
+    Callable,
+    Mapping,
+    Optional,
+    Protocol,
+    Sequence,
+    Union,
+    runtime_checkable,
+)
 
 import numpy as np
 
@@ -78,7 +86,13 @@ def _coerce_chunks(docs) -> list[Chunk]:
         elif isinstance(d, str):
             out.append(Chunk(text=d))
         elif isinstance(d, Mapping):
-            out.append(Chunk(text=str(d.get("text", "")), title=str(d.get("title", "")), source=str(d.get("source", ""))))
+            out.append(
+                Chunk(
+                    text=str(d.get("text", "")),
+                    title=str(d.get("title", "")),
+                    source=str(d.get("source", "")),
+                )
+            )
     return out
 
 
@@ -266,7 +280,9 @@ class WikipediaSearch:
     def _default_fetch(self, url: str) -> bytes:  # pragma: no cover - network
         import urllib.request
 
-        req = urllib.request.Request(url, headers={"User-Agent": "hearing/0.0 (meeting assistant)"})
+        req = urllib.request.Request(
+            url, headers={"User-Agent": "hearing/0.0 (meeting assistant)"}
+        )
         with urllib.request.urlopen(req, timeout=self.timeout) as resp:
             return resp.read()
 
@@ -295,8 +311,12 @@ class WikipediaSearch:
         out: list[Chunk] = []
         for h in hits:
             title = h.get("title", "")
-            snippet = html.unescape(re.sub(r"<[^>]+>", "", h.get("snippet", ""))).strip()
-            url = f"https://{self.lang}.wikipedia.org/wiki/" + urllib.parse.quote(title.replace(" ", "_"))
+            snippet = html.unescape(
+                re.sub(r"<[^>]+>", "", h.get("snippet", ""))
+            ).strip()
+            url = f"https://{self.lang}.wikipedia.org/wiki/" + urllib.parse.quote(
+                title.replace(" ", "_")
+            )
             out.append(Chunk(text=snippet, title=title, source=url))
         return out
 

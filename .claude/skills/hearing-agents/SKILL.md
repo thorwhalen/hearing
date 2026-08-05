@@ -16,7 +16,8 @@ The segments these methods consume are `TranscriptSegment`s from the shared data
 ```python
 from typing import Optional, Protocol, Sequence, runtime_checkable
 
-from hearing.types import TranscriptSegment   # the shared spine — never redefine
+from hearing.types import TranscriptSegment  # the shared spine — never redefine
+
 
 @runtime_checkable
 class AgentConsumer(Protocol):
@@ -69,12 +70,13 @@ from typing import Sequence
 from hearing.interfaces import AgentConsumer
 from hearing.types import TranscriptSegment
 
+
 async def live_runner(
     queue: "asyncio.Queue[TranscriptSegment]",
     agents: "Sequence[AgentConsumer]",
     sink: "FeedbackSink",
     *,
-    debounce_s: float = 8.0,          # config, not magic number
+    debounce_s: float = 8.0,  # config, not magic number
     min_new_segments: int = 2,
 ):
     """Consume finalized segments; fire agents on a debounced cadence.
@@ -86,25 +88,31 @@ async def live_runner(
     last_fire = 0.0
     loop = asyncio.get_running_loop()
     while True:
-        seg = await queue.get()                  # blocks on transcript, not on LLM
-        window = (*window, seg)                  # accumulated context grows
+        seg = await queue.get()  # blocks on transcript, not on LLM
+        window = (*window, seg)  # accumulated context grows
         pending += 1
-        for agent in agents:                     # per-segment hook, fire-and-forget
+        for agent in agents:  # per-segment hook, fire-and-forget
             asyncio.create_task(_run_segment(agent, seg, sink))
         now = loop.time()
         if pending >= min_new_segments and (now - last_fire) >= debounce_s:
             last_fire, pending = now, 0
-            for agent in agents:                 # debounced window hook
+            for agent in agents:  # debounced window hook
                 asyncio.create_task(_run_window(agent, window, sink))
 
-async def _run_segment(agent: "AgentConsumer", seg: TranscriptSegment, sink: "FeedbackSink"):
+
+async def _run_segment(
+    agent: "AgentConsumer", seg: TranscriptSegment, sink: "FeedbackSink"
+):
     try:
         if (insight := await agent.on_segment(seg)) is not None:
             await sink.emit(insight)
-    except Exception as e:                        # isolate failure; never crash the stream
+    except Exception as e:  # isolate failure; never crash the stream
         await sink.emit(f"{agent!r}: {e}")
 
-async def _run_window(agent: "AgentConsumer", window: Sequence[TranscriptSegment], sink: "FeedbackSink"):
+
+async def _run_window(
+    agent: "AgentConsumer", window: Sequence[TranscriptSegment], sink: "FeedbackSink"
+):
     try:
         if (insight := await agent.on_window(window)) is not None:
             await sink.emit(insight)
@@ -120,7 +128,7 @@ The **batch runner** is trivially the same shape — one `on_window` call over t
 async def batch_runner(
     transcript: "Sequence[TranscriptSegment]", agents, sink: "FeedbackSink"
 ):
-    for agent in agents:                          # transcript is already complete
+    for agent in agents:  # transcript is already complete
         if (insight := await agent.on_window(transcript)) is not None:
             await sink.emit(insight)
 ```

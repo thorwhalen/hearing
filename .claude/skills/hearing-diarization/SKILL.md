@@ -51,11 +51,13 @@ The shared data model is **not redefined here** — diarization writes into the 
 from hearing.types import TranscriptSegment, TimeSpan, Channel, ME, THEM
 
 # A segment STT produced, tagged with its capture channel but not yet a speaker:
-seg = TranscriptSegment("Can you send the Q3 numbers?", TimeSpan(0, 1500), channel=Channel.MIC)
+seg = TranscriptSegment(
+    "Can you send the Q3 numbers?", TimeSpan(0, 1500), channel=Channel.MIC
+)
 
-labeled = seg.with_speaker(ME)   # -> a new frozen copy; seg is untouched
-labeled.speaker                  # "me"
-labeled.span.start_ms            # 0  (integer ms — TimeSpan, never float seconds)
+labeled = seg.with_speaker(ME)  # -> a new frozen copy; seg is untouched
+labeled.speaker  # "me"
+labeled.span.start_ms  # 0  (integer ms — TimeSpan, never float seconds)
 ```
 
 Provenance (which diarizer + version produced a label, and whether it came from the channel or an acoustic model) rides on the segment's `meta` mapping. Every diarizer satisfies one structural contract — the `Diarizer` Protocol from `hearing.interfaces` — so the pipeline never names a concrete engine:
@@ -64,17 +66,18 @@ Provenance (which diarizer + version produced a label, and whether it came from 
 from typing import Iterable, Optional, Protocol, runtime_checkable
 from hearing.types import TranscriptSegment
 
+
 @runtime_checkable
 class Diarizer(Protocol):
     """Labels who spoke — enriches segments with ``.speaker`` (enrich-by-copy)."""
+
     def assign_speakers(
         self,
         segments: Iterable[TranscriptSegment],
         *,
-        audio: Optional["Any"] = None,        # the channel trick ignores this
+        audio: Optional["Any"] = None,  # the channel trick ignores this
         sample_rate: Optional[int] = None,
-    ) -> Iterable[TranscriptSegment]:
-        ...
+    ) -> Iterable[TranscriptSegment]: ...
 ```
 
 ## Library decision table (June 2026)
@@ -98,29 +101,31 @@ from typing import Iterable, Optional
 import numpy as np
 from hearing.types import ME, THEM, Channel, SpeakerLabel, TranscriptSegment
 
+
 @dataclass
 class ChannelTrickDiarizer:
     """Label speakers from the capture channel — the free, reliable default."""
-    me_label: SpeakerLabel = ME       # "me"
-    them_label: SpeakerLabel = THEM   # "them"
+
+    me_label: SpeakerLabel = ME  # "me"
+    them_label: SpeakerLabel = THEM  # "them"
 
     def assign_speakers(
         self,
         segments: Iterable[TranscriptSegment],
         *,
-        audio: Optional[np.ndarray] = None,   # unused; kept for interface parity
+        audio: Optional[np.ndarray] = None,  # unused; kept for interface parity
         sample_rate: Optional[int] = None,
     ) -> Iterable[TranscriptSegment]:
         """Yield segments with ``.speaker`` set from their ``.channel`` (enrich-by-copy)."""
         for seg in segments:
             if seg.speaker is not None:
-                yield seg                                   # already labeled
+                yield seg  # already labeled
             elif seg.channel is Channel.MIC:
-                yield seg.with_speaker(self.me_label)       # local user
+                yield seg.with_speaker(self.me_label)  # local user
             elif seg.channel is Channel.SYSTEM:
-                yield seg.with_speaker(self.them_label)     # remote participant
+                yield seg.with_speaker(self.them_label)  # remote participant
             else:
-                yield seg                                   # MIXED: leave for a real diarizer
+                yield seg  # MIXED: leave for a real diarizer
 ```
 It is a generator (see `python-iterables`), so live mode consumes labeled segments as they finalize, and `me_label`/`them_label` are keyword-configurable, not magic constants. The channel energy / VAD pass that decides *which* channel is active lives in capture ([[hearing-audio-capture]]); by the time segments reach the diarizer they already carry a `Channel`, so the local/remote split is a pure channel→label mapping here.
 
@@ -131,8 +136,8 @@ from hearing.diarize import PyannoteDiarizer
 
 diarizer = PyannoteDiarizer(
     model="pyannote/speaker-diarization-3.1",  # or "...community-1"; gated weights
-    hf_token=hf_token,                          # inject, never hardcode
-    speaker_prefix="spk_",                      # "SPEAKER_00" -> "spk_SPEAKER_00"
+    hf_token=hf_token,  # inject, never hardcode
+    speaker_prefix="spk_",  # "SPEAKER_00" -> "spk_SPEAKER_00"
 )
 
 # segments: STT output for the SYSTEM channel; audio: that channel's float32 mono ndarray

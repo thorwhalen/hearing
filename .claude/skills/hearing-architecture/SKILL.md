@@ -43,6 +43,7 @@ Define these in `hearing/types.py` (module docstring required). They are the con
 ```python
 """Shared data model for the hearing pipeline: the TranscriptSegment spine,
 channel/speaker labels, and the time representation every concern speaks."""
+
 from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
@@ -52,9 +53,10 @@ from typing import Mapping, Optional
 class Channel(str, Enum):
     """Which capture channel a segment came from. The channel *is* the
     'me vs them' signal: MIC = the local user, SYSTEM = remote participants."""
-    MIC = "mic"        # the local user ("me")
+
+    MIC = "mic"  # the local user ("me")
     SYSTEM = "system"  # everyone else (came out of the speakers)
-    MIXED = "mixed"    # single-channel / unknown source
+    MIXED = "mixed"  # single-channel / unknown source
 
 
 # Speaker labels are open strings, not an enum: diarization invents
@@ -67,6 +69,7 @@ ME: SpeakerLabel = "me"  # canonical label for the local user
 class TimeSpan:
     """A half-open interval [start_ms, end_ms) in integer milliseconds.
     Integer time, never float seconds — accumulation-safe and hashable."""
+
     start_ms: int
     end_ms: int
 
@@ -84,17 +87,19 @@ class TranscriptSegment:
     concern *enriches* — STT sets text/span/confidence; diarization sets
     speaker; capture sets channel. Pass it through the pipeline, don't rebuild it.
     """
+
     text: str
     span: TimeSpan
     channel: Channel = Channel.MIXED
     speaker: Optional[SpeakerLabel] = None
     confidence: Optional[float] = None
-    words: tuple["Word", ...] = ()          # optional word-level timing
+    words: tuple["Word", ...] = ()  # optional word-level timing
     meta: Mapping[str, object] = field(default_factory=dict)  # provenance, engine id
 
     def with_speaker(self, speaker: SpeakerLabel) -> "TranscriptSegment":
         """Return a copy carrying a speaker label (frozen → copy, don't mutate)."""
         from dataclasses import replace
+
         return replace(self, speaker=speaker)
 
 
@@ -102,6 +107,7 @@ class TranscriptSegment:
 class Word:
     """Optional word-level timing (WhisperX / word_timestamps=True). Lets the
     agent trigger on a keyword mid-utterance instead of waiting for turn-end."""
+
     text: str
     span: TimeSpan
     confidence: Optional[float] = None
@@ -116,6 +122,7 @@ Define in `hearing/interfaces.py`. Implementers satisfy these structurally — t
 ```python
 """Facade Protocols for the four pipeline concerns. Every engine/component
 is dependency-injected as one of these; the pipeline depends only on these."""
+
 from __future__ import annotations
 from typing import Protocol, Iterable, Iterator, AsyncIterator, Sequence, Optional
 import numpy as np
@@ -127,6 +134,7 @@ class CaptureSource(Protocol):
     """Audio source. The ONLY thing that differs batch vs live.
     Yields (channel, frames) so mic and system stay on separate channels
     all the way down. Batch impl reads a file; live impl reads a device/tap."""
+
     sample_rate: int
 
     def frames(self) -> Iterator[tuple[Channel, np.ndarray]]:
@@ -184,9 +192,7 @@ class AgentConsumer(Protocol):
         """Called per finalized segment (live). Return optional surfaced insight."""
         ...
 
-    async def on_window(
-        self, window: Sequence[TranscriptSegment]
-    ) -> Optional[str]:
+    async def on_window(self, window: Sequence[TranscriptSegment]) -> Optional[str]:
         """Called on a window/turn or whole transcript (batch). Return insight."""
         ...
 ```
@@ -213,15 +219,18 @@ Progressive disclosure — transcribe(path) just works; everything else is kwarg
 
 # ---- the one-liner (batch, all defaults) -------------------------------
 from hearing import transcribe
-segments = transcribe("meeting.wav")            # -> list[TranscriptSegment]
+
+segments = transcribe("meeting.wav")  # -> list[TranscriptSegment]
 
 # ---- swap the STT engine (one line) ------------------------------------
 from hearing.engines import DeepgramSTT
+
 segments = transcribe("meeting.wav", engine=DeepgramSTT())
 
 # ---- add diarization + an agent, still batch ---------------------------
 from hearing.diarize import PyannoteDiarizer
-from hearing.agents import ClaudeAgent          # defaults to Claude; see claude-api
+from hearing.agents import ClaudeAgent  # defaults to Claude; see claude-api
+
 segments = transcribe(
     "meeting.wav",
     engine=DeepgramSTT(),
@@ -232,12 +241,13 @@ segments = transcribe(
 # ---- go LIVE: same components, only source + trigger change ------------
 from hearing import live_transcribe
 from hearing.capture import ChannelSplitCapture  # mic=ch0, system=ch1
+
 async for segment in live_transcribe(
-    source=ChannelSplitCapture(),                # the source is the only real change
-    engine=DeepgramSTT(),                        # same engine facade
-    diarizer=ChannelTrickDiarizer(),             # cheap: channel == speaker hint
-    agent=ClaudeAgent(),                         # same agent facade
-    trigger="vad",                               # cadence: vad turn-end | "timer"
+    source=ChannelSplitCapture(),  # the source is the only real change
+    engine=DeepgramSTT(),  # same engine facade
+    diarizer=ChannelTrickDiarizer(),  # cheap: channel == speaker hint
+    agent=ClaudeAgent(),  # same agent facade
+    trigger="vad",  # cadence: vad turn-end | "timer"
 ):
     ...  # segment already carries text, span, channel, speaker
 ```
@@ -255,8 +265,10 @@ async def _run_pipeline(source, *, engine, diarizer, agent, trigger):
 
     async def capture_and_stt():
         async for channel, frames in source.astream():
-            async for seg in engine.stream_transcribe(_frames_of(channel), sample_rate=source.sample_rate):
-                if seg.meta.get("final"):                 # act on finalized segments only
+            async for seg in engine.stream_transcribe(
+                _frames_of(channel), sample_rate=source.sample_rate
+            ):
+                if seg.meta.get("final"):  # act on finalized segments only
                     await seg_q.put(seg.with_channel(channel))
 
     async def label_and_consume():
@@ -264,7 +276,9 @@ async def _run_pipeline(source, *, engine, diarizer, agent, trigger):
             seg = await seg_q.get()
             seg = next(iter(diarizer.assign_speakers([seg]))) if diarizer else seg
             if agent:
-                asyncio.create_task(agent.on_segment(seg))  # fire-and-forget; don't block
+                asyncio.create_task(
+                    agent.on_segment(seg)
+                )  # fire-and-forget; don't block
             yield seg
 
     # run capture and consumption as separate tasks (decoupling)

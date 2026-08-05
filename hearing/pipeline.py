@@ -67,7 +67,9 @@ def transcribe(
 
     groups: list[list[TranscriptSegment]] = []
     for channel, samples in channels.items():
-        segs = list(engine.transcribe(samples, sample_rate=native_sr, language=language))
+        segs = list(
+            engine.transcribe(samples, sample_rate=native_sr, language=language)
+        )
         groups.append([s.with_channel(channel) for s in segs])
     segments = merge_segments(*groups)
 
@@ -143,7 +145,9 @@ async def live_transcribe(
                 continue
             seg = seg.with_channel(channel)
             if diarizer is not None:
-                seg = next(iter(diarizer.assign_speakers([seg], sample_rate=sample_rate)))
+                seg = next(
+                    iter(diarizer.assign_speakers([seg], sample_rate=sample_rate))
+                )
             elif channel is not Channel.MIXED:
                 seg = next(iter(default_diar.assign_speakers([seg])))
             if agent is not None:

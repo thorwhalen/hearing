@@ -49,7 +49,11 @@ def transcribe(
     from hearing.diarize import ChannelTrickDiarizer
     from hearing.stt import get_engine
 
-    stt = get_engine("openai") if engine == "openai" else get_engine("whisper", model_size=model)
+    stt = (
+        get_engine("openai")
+        if engine == "openai"
+        else get_engine("whisper", model_size=model)
+    )
     transcript = _transcribe(
         path,
         engine=stt,
@@ -188,7 +192,10 @@ def live(
     async def _run() -> None:
         async for seg in live_transcribe(source=source, engine=engine):
             who = seg.speaker or seg.channel.value
-            print(f"[{_ms_to_clock(seg.span.start_ms)}] {who}: {seg.text.strip()}", flush=True)
+            print(
+                f"[{_ms_to_clock(seg.span.start_ms)}] {who}: {seg.text.strip()}",
+                flush=True,
+            )
 
     try:
         asyncio.run(_run())
@@ -207,15 +214,25 @@ def serve(*, host: str = "127.0.0.1", port: int = 8000, reload: bool = False) ->
     try:
         import uvicorn
     except ImportError:  # pragma: no cover - guidance path
-        print("`hearing serve` needs the http extra: pip install 'hearing[http]'", file=sys.stderr)
+        print(
+            "`hearing serve` needs the http extra: pip install 'hearing[http]'",
+            file=sys.stderr,
+        )
         raise SystemExit(1)
     import importlib.util
     from pathlib import Path
 
     spec = importlib.util.find_spec("hearing.http_app")
-    dist = Path(spec.origin).resolve().parents[1] / "frontend" / "dist" if spec and spec.origin else None
+    dist = (
+        Path(spec.origin).resolve().parents[1] / "frontend" / "dist"
+        if spec and spec.origin
+        else None
+    )
     if dist and dist.is_dir():
-        print(f"hearing — open the app at http://{host}:{port}  (API + UI; docs at /docs)", file=sys.stderr)
+        print(
+            f"hearing — open the app at http://{host}:{port}  (API + UI; docs at /docs)",
+            file=sys.stderr,
+        )
     else:
         print(
             f"hearing API on http://{host}:{port}  (docs at /docs). UI not built — run "
@@ -231,9 +248,13 @@ def info() -> str:
     lines = ["hearing — component availability:"]
     lines.append(_check("soundfile", "audio file reading"))
     lines.append(_check("soxr", "high-quality resampling (optional; linear fallback)"))
-    lines.append(_check("faster_whisper", "default local STT engine  [hearing[whisper]]"))
+    lines.append(
+        _check("faster_whisper", "default local STT engine  [hearing[whisper]]")
+    )
     lines.append(_check("anthropic", "Claude agent backend          [hearing[agents]]"))
-    lines.append(_check("pyannote.audio", "speaker diarization          [hearing[diarize]]"))
+    lines.append(
+        _check("pyannote.audio", "speaker diarization          [hearing[diarize]]")
+    )
     import os
 
     key = "set" if os.getenv("ANTHROPIC_API_KEY") else "NOT set"

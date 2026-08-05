@@ -15,7 +15,8 @@ The one-liner just works; everything else is an optional keyword argument.
 
 ```python
 from hearing import transcribe
-transcript = transcribe("meeting.wav")     # -> Transcript (list of segments)
+
+transcript = transcribe("meeting.wav")  # -> Transcript (list of segments)
 print(transcript.formatted())
 ```
 
@@ -70,11 +71,17 @@ are unchanged from batch.
 ```python
 import asyncio
 from hearing import live_transcribe
-from hearing.capture import StreamingFileCapture   # or DeviceCapture for a live mic+system device
+from hearing.capture import (
+    StreamingFileCapture,
+)  # or DeviceCapture for a live mic+system device
+
 
 async def main():
     async for seg in live_transcribe(source=StreamingFileCapture("meeting.wav")):
-        print(seg.speaker, seg.text)   # finalized (seg.meta['final']) segments, as they land
+        print(
+            seg.speaker, seg.text
+        )  # finalized (seg.meta['final']) segments, as they land
+
 
 asyncio.run(main())
 ```
@@ -120,8 +127,8 @@ from hearing.stt import OpenAISTT
 
 transcribe(
     "meeting.wav",
-    engine=OpenAISTT(),                            # cloud STT — one line vs FasterWhisperSTT()
-    diarizer=PyannoteDiarizer(),                   # upgrade from the channel trick
+    engine=OpenAISTT(),  # cloud STT — one line vs FasterWhisperSTT()
+    diarizer=PyannoteDiarizer(),  # upgrade from the channel trick
     agent=ClaudeAgent(context="prior meeting takeaways..."),  # or ExtractiveAgent()
 )
 ```

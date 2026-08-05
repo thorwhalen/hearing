@@ -68,6 +68,7 @@ fires them at the agent non-blocking:
 class RealTimeAgentPipeline(FrameProcessor):
     """Intercepts completed transcription frames and pipelines them
     asynchronously to a background agent without blocking the audio pipeline."""
+
     def __init__(self, agent_client):
         super().__init__()
         self.agent = agent_client
@@ -75,7 +76,9 @@ class RealTimeAgentPipeline(FrameProcessor):
     async def process_frame(self, frame, direction):
         await super().process_frame(frame, direction)
         if isinstance(frame, TranscriptionFrame):
-            asyncio.create_task(self._route_to_agent(frame.text, frame.timestamp))  # fire-and-forget
+            asyncio.create_task(
+                self._route_to_agent(frame.text, frame.timestamp)
+            )  # fire-and-forget
         elif isinstance(frame, InterimTranscriptionFrame):
             pass  # optional: partial tokens for keyword spotting
         await self.push_frame(frame, direction)  # forward downstream

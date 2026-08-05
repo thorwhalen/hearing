@@ -16,6 +16,7 @@ from typing import Any, Protocol, AsyncIterator, Iterator, runtime_checkable
 
 from hearing.types import Channel  # MIC / SYSTEM / MIXED — defined in hearing/types.py
 
+
 @runtime_checkable
 class CaptureSource(Protocol):
     """A pluggable audio source. Backends: BlackHole+Aggregate, AudioTee, mic-only.
@@ -23,10 +24,11 @@ class CaptureSource(Protocol):
     Yields ``(channel, frames)`` so mic and system audio stay on separate
     channels. `frames` is a mono float32 sample buffer for that channel.
     """
+
     sample_rate: int
 
-    def frames(self) -> Iterator[tuple[Channel, "Any"]]: ...        # batch / sync
-    def astream(self) -> AsyncIterator[tuple[Channel, "Any"]]: ...   # live / async
+    def frames(self) -> Iterator[tuple[Channel, "Any"]]: ...  # batch / sync
+    def astream(self) -> AsyncIterator[tuple[Channel, "Any"]]: ...  # live / async
 ```
 
 The batch implementation is `ChannelSplitFileCapture` (in `hearing/capture.py`), with channel-handling helpers `load_audio`, `to_mono`, `resample`, `to_mono_16k`, `split_channels(data, *, mic_channels=(0,), system_channels=(1,)) -> dict[Channel, ndarray]`, and `rms_energy`.
@@ -67,32 +69,39 @@ Two non-negotiables:
 import sounddevice as sd
 import numpy as np
 
+
 def find_device(name_substr: str) -> int:
     """Return the device index whose name contains `name_substr` (case-insensitive)."""
     for idx, dev in enumerate(sd.query_devices()):
         if name_substr.lower() in dev["name"].lower():
             return idx
-    raise LookupError(f"No audio device matching {name_substr!r}. Run sd.query_devices().")
+    raise LookupError(
+        f"No audio device matching {name_substr!r}. Run sd.query_devices()."
+    )
+
 
 def capture_blocks(
     *,
     device_name: str = "Aggregate",
-    sample_rate: int = 48_000,   # match the Aggregate's rate; no magic constants elsewhere
-    block_frames: int = 4_800,   # 100 ms at 48 kHz
-    mic_channels: tuple[int, ...] = (0, 1),     # ch 1–2 = local mic  -> "Me"
+    sample_rate: int = 48_000,  # match the Aggregate's rate; no magic constants elsewhere
+    block_frames: int = 4_800,  # 100 ms at 48 kHz
+    mic_channels: tuple[int, ...] = (0, 1),  # ch 1–2 = local mic  -> "Me"
     system_channels: tuple[int, ...] = (2, 3),  # ch 3–4 = BlackHole  -> "Them"
 ):
     """Yield (data, mic_slice, system_slice) blocks. data is float32 frames×channels."""
     device = find_device(device_name)
     n_ch = max(*mic_channels, *system_channels) + 1
     with sd.InputStream(
-        device=device, channels=n_ch, samplerate=sample_rate,
-        blocksize=block_frames, dtype="float32",
+        device=device,
+        channels=n_ch,
+        samplerate=sample_rate,
+        blocksize=block_frames,
+        dtype="float32",
     ) as stream:
         while True:
-            data, overflowed = stream.read(block_frames)   # (block_frames, n_ch)
-            mic = data[:, list(mic_channels)]               # the "me vs them" trick:
-            system = data[:, list(system_channels)]         # column slicing splits speakers
+            data, overflowed = stream.read(block_frames)  # (block_frames, n_ch)
+            mic = data[:, list(mic_channels)]  # the "me vs them" trick:
+            system = data[:, list(system_channels)]  # column slicing splits speakers
             yield data, mic, system
 ```
 
@@ -108,18 +117,20 @@ macOS 14.2 introduced **Core Audio taps** (`AudioHardwareCreateProcessTap`): "ca
 # Shell out to the AudioTee Swift binary; read raw PCM blocks from stdout.
 import asyncio, numpy as np
 
+
 async def audiotee_blocks(
     *,
-    binary: str = "audiotee",     # path to the prebuilt Swift CLI (inject, no magic path)
+    binary: str = "audiotee",  # path to the prebuilt Swift CLI (inject, no magic path)
     sample_rate: int = 48_000,
     n_channels: int = 2,
     block_frames: int = 4_800,
-    dtype: np.dtype = np.dtype("<i2"),   # adjust to AudioTee's emitted format
+    dtype: np.dtype = np.dtype("<i2"),  # adjust to AudioTee's emitted format
 ):
     """Async-yield system-audio blocks (frames×channels) from AudioTee stdout."""
     bytes_per_block = block_frames * n_channels * dtype.itemsize
     proc = await asyncio.create_subprocess_exec(
-        binary, stdout=asyncio.subprocess.PIPE,
+        binary,
+        stdout=asyncio.subprocess.PIPE,
     )
     try:
         while True:
@@ -151,8 +162,10 @@ def check_requirements(*, backend: str = "blackhole") -> list[str]:
     """
     problems: list[str] = []
     import shutil
+
     if backend == "blackhole":
         import sounddevice as sd
+
         names = " ".join(d["name"].lower() for d in sd.query_devices())
         if "blackhole" not in names:
             problems.append(

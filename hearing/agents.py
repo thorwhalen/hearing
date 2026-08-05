@@ -143,7 +143,9 @@ class ClaudeAgent:
             messages=[{"role": "user", "content": "\n".join(user_parts)}],
         )
         return "".join(
-            block.text for block in message.content if getattr(block, "type", "") == "text"
+            block.text
+            for block in message.content
+            if getattr(block, "type", "") == "text"
         ).strip()
 
     async def on_window(self, window: Sequence[TranscriptSegment]) -> Optional[str]:

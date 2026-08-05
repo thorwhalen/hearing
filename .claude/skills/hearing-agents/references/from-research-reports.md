@@ -47,9 +47,11 @@ import asyncio
 from pipecat.frames.frames import Frame, InterimTranscriptionFrame, TranscriptionFrame
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
 
+
 class RealTimeAgentPipeline(FrameProcessor):
     """Intercepts completed transcription frames and pipelines them asynchronously
     to a background analysis agent without blocking the real-time audio pipeline."""
+
     def __init__(self, agent_client):
         super().__init__()
         self.agent = agent_client

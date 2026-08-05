@@ -82,6 +82,7 @@ Progressive disclosure: the simple thing is one function returning an async iter
 Swaps the batch capture/sink for streaming; the TranscriptSegment dataclass and
 the agent interface are unchanged from the batch path.
 """
+
 from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator, Callable
@@ -93,16 +94,16 @@ from hearing.types import TranscriptSegment  # reused verbatim from the batch pa
 @dataclass(frozen=True, slots=True)
 class PipelineConfig:
     sample_rate: int = 16_000
-    audio_queue_max: int = 50        # backpressure bound, capture->vad
-    segment_queue_max: int = 100     # backpressure bound, stt->agent
-    vad_silence_ms: int = 700        # turn-end after this much trailing silence
+    audio_queue_max: int = 50  # backpressure bound, capture->vad
+    segment_queue_max: int = 100  # backpressure bound, stt->agent
+    vad_silence_ms: int = 700  # turn-end after this much trailing silence
 
 
 async def transcribe_stream(
     capture: AsyncIterator[bytes],
-    stt: "STTEngine",                       # injected; hides RealtimeSTT/WhisperLive/OpenAI
+    stt: "STTEngine",  # injected; hides RealtimeSTT/WhisperLive/OpenAI
     *,
-    vad: "Vad | None" = None,               # default: silero
+    vad: "Vad | None" = None,  # default: silero
     config: PipelineConfig = PipelineConfig(),
 ) -> AsyncIterator[TranscriptSegment]:
     """Yield FINALIZED TranscriptSegments as utterances complete. The whole live
@@ -110,23 +111,29 @@ async def transcribe_stream(
     never stalls capture (bounded queues apply backpressure)."""
     vad = vad or _default_silero_vad()
     audio_q: asyncio.Queue[bytes] = asyncio.Queue(maxsize=config.audio_queue_max)
-    seg_q: asyncio.Queue[TranscriptSegment | None] = asyncio.Queue(maxsize=config.segment_queue_max)
+    seg_q: asyncio.Queue[TranscriptSegment | None] = asyncio.Queue(
+        maxsize=config.segment_queue_max
+    )
 
     async def capture_task() -> None:
         async for chunk in capture:
             try:
-                audio_q.put_nowait(chunk)      # NEVER block capture
+                audio_q.put_nowait(chunk)  # NEVER block capture
             except asyncio.QueueFull:
-                pass                            # drop oldest-policy lives here
-        await audio_q.put(b"")                  # sentinel
+                pass  # drop oldest-policy lives here
+        await audio_q.put(b"")  # sentinel
 
     async def vad_stt_task() -> None:
         # VAD -> buffer utterance -> on turn-end stream_transcribe -> emit FINAL segments
-        async for utterance in vad.utterances(audio_q, silence_ms=config.vad_silence_ms):
-            async for seg in stt.stream_transcribe(utterance, sample_rate=config.sample_rate):
-                if seg.meta.get("final"):       # downstream acts only on finalized turns
+        async for utterance in vad.utterances(
+            audio_q, silence_ms=config.vad_silence_ms
+        ):
+            async for seg in stt.stream_transcribe(
+                utterance, sample_rate=config.sample_rate
+            ):
+                if seg.meta.get("final"):  # downstream acts only on finalized turns
                     await seg_q.put(seg)
-        await seg_q.put(None)                   # sentinel
+        await seg_q.put(None)  # sentinel
 
     tasks = [asyncio.create_task(capture_task()), asyncio.create_task(vad_stt_task())]
     try:
@@ -140,14 +147,19 @@ async def transcribe_stream(
 Agent consumer (fire-and-forget so the agent can never stall the stream — mirror Pipecat's pattern [7]):
 
 ```python
-async def run_agent_loop(segments: AsyncIterator[TranscriptSegment], agent: "AgentConsumer") -> None:
-    async for seg in segments:                 # already FINALIZED (seg.meta['final'] truthy)
-        asyncio.create_task(_safe(agent.on_segment, seg))   # don't await -> no backpressure onto STT
+async def run_agent_loop(
+    segments: AsyncIterator[TranscriptSegment], agent: "AgentConsumer"
+) -> None:
+    async for seg in segments:  # already FINALIZED (seg.meta['final'] truthy)
+        asyncio.create_task(
+            _safe(agent.on_segment, seg)
+        )  # don't await -> no backpressure onto STT
+
 
 async def _safe(fn: Callable, seg: TranscriptSegment) -> None:
     try:
         await fn(seg)
-    except Exception as exc:                    # agent/RAG failure must not crash the media stream
+    except Exception as exc:  # agent/RAG failure must not crash the media stream
         # log via the project's error decorator; see CLAUDE.md "separate error concerns"
         ...
 ```
