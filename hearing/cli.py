@@ -247,7 +247,9 @@ def info() -> str:
     """Report which optional components are installed and what's missing."""
     lines = ["hearing — component availability:"]
     lines.append(_check("soundfile", "audio file reading"))
-    lines.append(_check("soxr", "high-quality resampling (optional; linear fallback)"))
+    lines.append(
+        _check("soxr", "fast resampling; linear fallback  [hearing[fast-resample]]")
+    )
     lines.append(
         _check("faster_whisper", "default local STT engine  [hearing[whisper]]")
     )
