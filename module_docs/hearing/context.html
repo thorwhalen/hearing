@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>hearing.context &mdash; hearing 0.0.2 documentation</title>
+  <title>hearing.context &mdash; hearing 0.0.3 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=e3a6060d"></script>
+      <script src="../../_static/documentation_options.js?v=47de8214"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -164,10 +164,10 @@ returns the nearest chunks. The embedder is injected (<code class="docutils lite
 backend-agnostic and testable with a deterministic fake — use
 <a class="reference internal" href="#hearing.context.openai_embedder" title="hearing.context.openai_embedder"><code class="xref py py-func docutils literal notranslate"><span class="pre">openai_embedder()</span></code></a> for real semantic recall.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fake</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">texts</span><span class="p">:</span> <span class="p">[[</span><span class="n">t</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;db&quot;</span><span class="p">),</span> <span class="n">t</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;ui&quot;</span><span class="p">)]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">texts</span><span class="p">]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">r</span> <span class="o">=</span> <span class="n">EmbeddingRetriever</span><span class="p">({</span><span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="s2">&quot;db db&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">:</span> <span class="s2">&quot;ui ui&quot;</span><span class="p">},</span> <span class="n">embed</span><span class="o">=</span><span class="n">fake</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;db&quot;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">title</span>
-<span class="go">&#39;a&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fake</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">texts</span><span class="p">:</span> <span class="p">[[</span><span class="n">t</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">"db"</span><span class="p">),</span> <span class="n">t</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">"ui"</span><span class="p">)]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">texts</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">r</span> <span class="o">=</span> <span class="n">EmbeddingRetriever</span><span class="p">({</span><span class="s2">"a"</span><span class="p">:</span> <span class="s2">"db db"</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">:</span> <span class="s2">"ui ui"</span><span class="p">},</span> <span class="n">embed</span><span class="o">=</span><span class="n">fake</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">"db"</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">title</span>
+<span class="go">'a'</span>
 </pre></div>
 </div>
 <dl class="py method">
@@ -183,15 +183,15 @@ backend-agnostic and testable with a deterministic fake — use
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.context.</span></span><span class="sig-name descname"><span class="pre">KeywordRetriever</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">docs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/hearing/context.html#KeywordRetriever"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.context.KeywordRetriever" title="Link to this definition"></a></dt>
 <dd><p>Dependency-free TF-IDF retriever over a small in-memory corpus.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">r</span> <span class="o">=</span> <span class="n">KeywordRetriever</span><span class="p">({</span><span class="s2">&quot;db&quot;</span><span class="p">:</span> <span class="s2">&quot;We will use PostgreSQL.&quot;</span><span class="p">,</span> <span class="s2">&quot;ui&quot;</span><span class="p">:</span> <span class="s2">&quot;React frontend.&quot;</span><span class="p">})</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">hits</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;postgresql migration&quot;</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">r</span> <span class="o">=</span> <span class="n">KeywordRetriever</span><span class="p">({</span><span class="s2">"db"</span><span class="p">:</span> <span class="s2">"We will use PostgreSQL."</span><span class="p">,</span> <span class="s2">"ui"</span><span class="p">:</span> <span class="s2">"React frontend."</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">hits</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">"postgresql migration"</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">hits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">title</span>
-<span class="go">&#39;db&#39;</span>
+<span class="go">'db'</span>
 </pre></div>
 </div>
 <p>Matching is purely lexical, so a query sharing no token with the corpus
 retrieves nothing — use <a class="reference internal" href="#hearing.context.EmbeddingRetriever" title="hearing.context.EmbeddingRetriever"><code class="xref py py-class docutils literal notranslate"><span class="pre">EmbeddingRetriever</span></code></a> for semantic recall.</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;which database?&quot;</span><span class="p">))</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">"which database?"</span><span class="p">))</span>
 <span class="go">[]</span>
 </pre></div>
 </div>

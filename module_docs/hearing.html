@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>hearing &mdash; hearing 0.0.2 documentation</title>
+  <title>hearing &mdash; hearing 0.0.3 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=e3a6060d"></script>
+      <script src="../_static/documentation_options.js?v=47de8214"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -126,7 +126,7 @@ injection: audio <strong>capture</strong> (mic + system audio on separate channe
 layer that consumes the transcript (batch or live).</p>
 <p>Progressive disclosure — the one-liner just works:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">hearing</span><span class="w"> </span><span class="kn">import</span> <span class="n">transcribe</span>
-<span class="n">transcript</span> <span class="o">=</span> <span class="n">transcribe</span><span class="p">(</span><span class="s2">&quot;meeting.wav&quot;</span><span class="p">)</span>
+<span class="n">transcript</span> <span class="o">=</span> <span class="n">transcribe</span><span class="p">(</span><span class="s2">"meeting.wav"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">transcript</span><span class="o">.</span><span class="n">formatted</span><span class="p">())</span>
 </pre></div>
 </div>
@@ -179,14 +179,14 @@ user, <code class="docutils literal notranslate"><span class="pre">SYSTEM</span>
 <p>Iterable and <code class="docutils literal notranslate"><span class="pre">len</span></code>-able, so it stands in for a <code class="docutils literal notranslate"><span class="pre">Sequence</span></code> of segments
 wherever the architecture’s facades return “segments”. Adds convenience
 accessors the CLI/agents need.</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">Transcript</span><span class="p">((</span><span class="n">TranscriptSegment</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="n">TimeSpan</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1000</span><span class="p">),</span> <span class="n">speaker</span><span class="o">=</span><span class="n">ME</span><span class="p">),</span>
-<span class="gp">... </span>                 <span class="n">TranscriptSegment</span><span class="p">(</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="n">TimeSpan</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">2000</span><span class="p">),</span> <span class="n">speaker</span><span class="o">=</span><span class="n">THEM</span><span class="p">)))</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">Transcript</span><span class="p">((</span><span class="n">TranscriptSegment</span><span class="p">(</span><span class="s2">"a"</span><span class="p">,</span> <span class="n">TimeSpan</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1000</span><span class="p">),</span> <span class="n">speaker</span><span class="o">=</span><span class="n">ME</span><span class="p">),</span>
+<span class="gp">... </span>                 <span class="n">TranscriptSegment</span><span class="p">(</span><span class="s2">"b"</span><span class="p">,</span> <span class="n">TimeSpan</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">2000</span><span class="p">),</span> <span class="n">speaker</span><span class="o">=</span><span class="n">THEM</span><span class="p">)))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="o">.</span><span class="n">text</span>
-<span class="go">&#39;a b&#39;</span>
+<span class="go">'a b'</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
 <span class="go">2</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">sorted</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">speakers</span><span class="p">)</span>
-<span class="go">[&#39;me&#39;, &#39;them&#39;]</span>
+<span class="go">['me', 'them']</span>
 </pre></div>
 </div>
 <dl class="py property">
@@ -236,11 +236,11 @@ metadata that a concern <em>enriches</em>: STT sets <code class="docutils litera
 <code class="docutils literal notranslate"><span class="pre">confidence</span></code>; capture sets <code class="docutils literal notranslate"><span class="pre">channel</span></code>; diarization sets <code class="docutils literal notranslate"><span class="pre">speaker</span></code>.
 Segments are frozen — enrich by copying (<code class="docutils literal notranslate"><span class="pre">with_speaker</span></code>/<code class="docutils literal notranslate"><span class="pre">with_channel</span></code>),
 never mutate.</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">seg</span> <span class="o">=</span> <span class="n">TranscriptSegment</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">,</span> <span class="n">TimeSpan</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">500</span><span class="p">))</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">seg</span> <span class="o">=</span> <span class="n">TranscriptSegment</span><span class="p">(</span><span class="s2">"hello"</span><span class="p">,</span> <span class="n">TimeSpan</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">500</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">seg</span><span class="o">.</span><span class="n">with_speaker</span><span class="p">(</span><span class="n">ME</span><span class="p">)</span><span class="o">.</span><span class="n">speaker</span>
-<span class="go">&#39;me&#39;</span>
+<span class="go">'me'</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">seg</span><span class="o">.</span><span class="n">text</span>
-<span class="go">&#39;hello&#39;</span>
+<span class="go">'hello'</span>
 </pre></div>
 </div>
 <dl class="py method">

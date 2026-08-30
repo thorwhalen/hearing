@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>hearing.context &mdash; hearing 0.0.2 documentation</title>
+  <title>hearing.context &mdash; hearing 0.0.3 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=e3a6060d"></script>
+      <script src="../../_static/documentation_options.js?v=47de8214"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -86,7 +86,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hearing.context</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Context stores and retrieval (RAG) for context-connected agents.</span>
+<span></span><span class="sd">"""Context stores and retrieval (RAG) for context-connected agents.</span>
 
 <span class="sd">An agent with no context is just a chatbot — the point of ``hearing`` is agents</span>
 <span class="sd">*bound to a meeting and a project*, drawing on accumulated knowledge (prior</span>
@@ -96,10 +96,10 @@
 
 <span class="sd">The default :class:`KeywordRetriever` is a dependency-free TF-IDF retriever —</span>
 <span class="sd">good enough to wire context-connection end-to-end and fully deterministic for</span>
-<span class="sd">tests. Swap in an embedding/vector backend (Qdrant + LlamaIndex, or the user&#39;s</span>
+<span class="sd">tests. Swap in an embedding/vector backend (Qdrant + LlamaIndex, or the user's</span>
 <span class="sd">own local store — check ``my-packages`` / ``python-storage``) behind the same</span>
 <span class="sd">Protocol when you need semantic recall.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -110,25 +110,33 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">runtime_checkable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">Mapping</span><span class="p">,</span>
+    <span class="n">Optional</span><span class="p">,</span>
+    <span class="n">Protocol</span><span class="p">,</span>
+    <span class="n">Sequence</span><span class="p">,</span>
+    <span class="n">Union</span><span class="p">,</span>
+    <span class="n">runtime_checkable</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="c1">#: A batch embedder: maps texts to equal-length float vectors.</span>
 <span class="n">EmbedFn</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]</span>
 
-<span class="n">_DOC_EXTENSIONS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;.md&quot;</span><span class="p">,</span> <span class="s2">&quot;.markdown&quot;</span><span class="p">)</span>
+<span class="n">_DOC_EXTENSIONS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">".txt"</span><span class="p">,</span> <span class="s2">".md"</span><span class="p">,</span> <span class="s2">".markdown"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="Chunk">
 <a class="viewcode-back" href="../../module_docs/hearing/context.html#hearing.context.Chunk">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Chunk</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A retrieved piece of context: the text plus where it came from.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A retrieved piece of context: the text plus where it came from."""</span>
 
     <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">score</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span></div>
 
 
@@ -137,12 +145,12 @@
 <a class="viewcode-back" href="../../module_docs/hearing/context.html#hearing.context.Retriever">[docs]</a>
 <span class="nd">@runtime_checkable</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Retriever</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieves project/meeting context relevant to a query (RAG).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Retrieves project/meeting context relevant to a query (RAG)."""</span>
 
 <div class="viewcode-block" id="Retriever.search">
 <a class="viewcode-back" href="../../module_docs/hearing/context.html#hearing.context.Retriever.search">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Chunk</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return up to ``k`` chunks most relevant to ``query``.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return up to ``k`` chunks most relevant to ``query``."""</span>
         <span class="o">...</span></div>
 </div>
 
@@ -152,18 +160,18 @@
 <a class="viewcode-back" href="../../module_docs/hearing/context.html#hearing.context.WebSearch">[docs]</a>
 <span class="nd">@runtime_checkable</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">WebSearch</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Brings outside information in — one targeted query, ``k`` results.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Brings outside information in — one targeted query, ``k`` results."""</span>
 
 <div class="viewcode-block" id="WebSearch.search">
 <a class="viewcode-back" href="../../module_docs/hearing/context.html#hearing.context.WebSearch.search">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Chunk</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return up to ``k`` web results as chunks (title/body/url).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return up to ``k`` web results as chunks (title/body/url)."""</span>
         <span class="o">...</span></div>
 </div>
 
 
 
-<span class="n">_TOKEN</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[a-z0-9]+&quot;</span><span class="p">)</span>
+<span class="n">_TOKEN</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[a-z0-9]+"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_tokens</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -171,7 +179,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_coerce_chunks</span><span class="p">(</span><span class="n">docs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Chunk</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize a dict / list of strings|Chunks|dicts into a list of Chunks.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Normalize a dict / list of strings|Chunks|dicts into a list of Chunks."""</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">docs</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">Chunk</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">title</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">))</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">docs</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
     <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Chunk</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -181,42 +189,48 @@
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Chunk</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">d</span><span class="p">))</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
-            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Chunk</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)),</span> <span class="n">title</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)),</span> <span class="n">source</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;source&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))))</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Chunk</span><span class="p">(</span>
+                    <span class="n">text</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"text"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)),</span>
+                    <span class="n">title</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)),</span>
+                    <span class="n">source</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"source"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
     <span class="k">return</span> <span class="n">out</span>
 
 
 <div class="viewcode-block" id="KeywordRetriever">
 <a class="viewcode-back" href="../../module_docs/hearing/context.html#hearing.context.KeywordRetriever">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">KeywordRetriever</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dependency-free TF-IDF retriever over a small in-memory corpus.</span>
+<span class="w">    </span><span class="sd">"""Dependency-free TF-IDF retriever over a small in-memory corpus.</span>
 
 <span class="sd">    &gt;&gt;&gt; import asyncio</span>
-<span class="sd">    &gt;&gt;&gt; r = KeywordRetriever({&quot;db&quot;: &quot;We will use PostgreSQL.&quot;, &quot;ui&quot;: &quot;React frontend.&quot;})</span>
-<span class="sd">    &gt;&gt;&gt; hits = asyncio.run(r.search(&quot;postgresql migration&quot;))</span>
+<span class="sd">    &gt;&gt;&gt; r = KeywordRetriever({"db": "We will use PostgreSQL.", "ui": "React frontend."})</span>
+<span class="sd">    &gt;&gt;&gt; hits = asyncio.run(r.search("postgresql migration"))</span>
 <span class="sd">    &gt;&gt;&gt; hits[0].title</span>
-<span class="sd">    &#39;db&#39;</span>
+<span class="sd">    'db'</span>
 
 <span class="sd">    Matching is purely lexical, so a query sharing no token with the corpus</span>
 <span class="sd">    retrieves nothing — use :class:`EmbeddingRetriever` for semantic recall.</span>
 
-<span class="sd">    &gt;&gt;&gt; asyncio.run(r.search(&quot;which database?&quot;))</span>
+<span class="sd">    &gt;&gt;&gt; asyncio.run(r.search("which database?"))</span>
 <span class="sd">    []</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">docs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">]):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_chunks</span> <span class="o">=</span> <span class="n">_coerce_chunks</span><span class="p">(</span><span class="n">docs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_doc_tokens</span> <span class="o">=</span> <span class="p">[</span><span class="n">_tokens</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chunks</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_doc_tokens</span> <span class="o">=</span> <span class="p">[</span><span class="n">_tokens</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chunks</span><span class="p">]</span>
         <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_chunks</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">1</span>
         <span class="n">df</span><span class="p">:</span> <span class="n">Counter</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">toks</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_doc_tokens</span><span class="p">:</span>
             <span class="n">df</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">toks</span><span class="p">))</span>
-        <span class="c1"># smoothed idf so common words don&#39;t dominate</span>
+        <span class="c1"># smoothed idf so common words don't dominate</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_idf</span> <span class="o">=</span> <span class="p">{</span><span class="n">w</span><span class="p">:</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">((</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">c</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="k">for</span> <span class="n">w</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
 <div class="viewcode-block" id="KeywordRetriever.search">
 <a class="viewcode-back" href="../../module_docs/hearing/context.html#hearing.context.KeywordRetriever.search">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Chunk</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the top-``k`` chunks by TF-IDF overlap with ``query``.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return the top-``k`` chunks by TF-IDF overlap with ``query``."""</span>
         <span class="n">q_terms</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">_tokens</span><span class="p">(</span><span class="n">query</span><span class="p">))</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">q_terms</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chunks</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
@@ -238,7 +252,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_rows</span><span class="p">(</span><span class="n">matrix</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;L2-normalize each row so a dot product equals cosine similarity.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""L2-normalize each row so a dot product equals cosine similarity."""</span>
     <span class="k">if</span> <span class="n">matrix</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">matrix</span>
     <span class="n">norms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -249,7 +263,7 @@
 <div class="viewcode-block" id="EmbeddingRetriever">
 <a class="viewcode-back" href="../../module_docs/hearing/context.html#hearing.context.EmbeddingRetriever">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">EmbeddingRetriever</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Semantic retriever: ranks chunks by cosine similarity of embeddings.</span>
+<span class="w">    </span><span class="sd">"""Semantic retriever: ranks chunks by cosine similarity of embeddings.</span>
 
 <span class="sd">    The corpus is embedded once at construction; ``search`` embeds the query and</span>
 <span class="sd">    returns the nearest chunks. The embedder is injected (``embed=``) so it is</span>
@@ -257,18 +271,18 @@
 <span class="sd">    :func:`openai_embedder` for real semantic recall.</span>
 
 <span class="sd">    &gt;&gt;&gt; import asyncio</span>
-<span class="sd">    &gt;&gt;&gt; fake = lambda texts: [[t.lower().count(&quot;db&quot;), t.lower().count(&quot;ui&quot;)] for t in texts]</span>
-<span class="sd">    &gt;&gt;&gt; r = EmbeddingRetriever({&quot;a&quot;: &quot;db db&quot;, &quot;b&quot;: &quot;ui ui&quot;}, embed=fake)</span>
-<span class="sd">    &gt;&gt;&gt; asyncio.run(r.search(&quot;db&quot;))[0].title</span>
-<span class="sd">    &#39;a&#39;</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &gt;&gt;&gt; fake = lambda texts: [[t.lower().count("db"), t.lower().count("ui")] for t in texts]</span>
+<span class="sd">    &gt;&gt;&gt; r = EmbeddingRetriever({"a": "db db", "b": "ui ui"}, embed=fake)</span>
+<span class="sd">    &gt;&gt;&gt; asyncio.run(r.search("db"))[0].title</span>
+<span class="sd">    'a'</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">docs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">embed</span><span class="p">:</span> <span class="n">EmbedFn</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_chunks</span> <span class="o">=</span> <span class="n">_coerce_chunks</span><span class="p">(</span><span class="n">docs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_embed</span> <span class="o">=</span> <span class="n">embed</span>
-        <span class="n">texts</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chunks</span><span class="p">]</span>
+        <span class="n">texts</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chunks</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_matrix</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">_normalize_rows</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">embed</span><span class="p">(</span><span class="n">texts</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">))</span>
+            <span class="n">_normalize_rows</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">embed</span><span class="p">(</span><span class="n">texts</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float64"</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">texts</span>
             <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
         <span class="p">)</span>
@@ -276,12 +290,12 @@
 <div class="viewcode-block" id="EmbeddingRetriever.search">
 <a class="viewcode-back" href="../../module_docs/hearing/context.html#hearing.context.EmbeddingRetriever.search">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Chunk</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the top-``k`` chunks by cosine similarity to ``query``.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return the top-``k`` chunks by cosine similarity to ``query``."""</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chunks</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
         <span class="c1"># embedding may hit the network — keep the event loop free</span>
         <span class="n">q</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_embed</span><span class="p">,</span> <span class="p">[</span><span class="n">query</span><span class="p">])</span>
-        <span class="n">qv</span> <span class="o">=</span> <span class="n">_normalize_rows</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">qv</span> <span class="o">=</span> <span class="n">_normalize_rows</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float64"</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">sims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matrix</span> <span class="o">@</span> <span class="n">qv</span>
         <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="o">-</span><span class="n">sims</span><span class="p">)[:</span><span class="n">k</span><span class="p">]</span>
         <span class="k">return</span> <span class="p">[</span>
@@ -301,20 +315,20 @@
 <div class="viewcode-block" id="openai_embedder">
 <a class="viewcode-back" href="../../module_docs/hearing/context.html#hearing.context.openai_embedder">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">openai_embedder</span><span class="p">(</span>
-    <span class="o">*</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;text-embedding-3-small&quot;</span><span class="p">,</span> <span class="n">api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"text-embedding-3-small"</span><span class="p">,</span> <span class="n">api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EmbedFn</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return an :data:`EmbedFn` backed by the OpenAI embeddings API.</span>
+<span class="w">    </span><span class="sd">"""Return an :data:`EmbedFn` backed by the OpenAI embeddings API.</span>
 
-<span class="sd">    Needs ``pip install &#39;hearing[openai]&#39;`` and ``OPENAI_API_KEY`` (or pass</span>
+<span class="sd">    Needs ``pip install 'hearing[openai]'`` and ``OPENAI_API_KEY`` (or pass</span>
 <span class="sd">    ``api_key=`` / inject ``client=`` for tests).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">embed</span><span class="p">(</span><span class="n">texts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
         <span class="n">c</span> <span class="o">=</span> <span class="n">client</span>
         <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="kn">import</span><span class="w"> </span><span class="nn">openai</span>
 
-            <span class="n">c</span> <span class="o">=</span> <span class="n">openai</span><span class="o">.</span><span class="n">OpenAI</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="n">api_key</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;OPENAI_API_KEY&quot;</span><span class="p">))</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">openai</span><span class="o">.</span><span class="n">OpenAI</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="n">api_key</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"OPENAI_API_KEY"</span><span class="p">))</span>
         <span class="n">resp</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">embeddings</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="nb">input</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">texts</span><span class="p">))</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">embedding</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">resp</span><span class="o">.</span><span class="n">data</span><span class="p">]</span>
 
@@ -327,9 +341,9 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">build_embedding_retriever</span><span class="p">(</span>
     <span class="n">source</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">embed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">EmbedFn</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EmbeddingRetriever</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an :class:`EmbeddingRetriever` (default embedder: OpenAI) from a</span>
+<span class="w">    </span><span class="sd">"""Build an :class:`EmbeddingRetriever` (default embedder: OpenAI) from a</span>
 <span class="sd">    dict, a list, or a folder of ``.md``/``.txt`` docs (same source forms as</span>
-<span class="sd">    :func:`build_retriever`).&quot;&quot;&quot;</span>
+<span class="sd">    :func:`build_retriever`)."""</span>
     <span class="n">kw</span> <span class="o">=</span> <span class="n">build_retriever</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>  <span class="c1"># reuse the source -&gt; chunks logic</span>
     <span class="k">return</span> <span class="n">EmbeddingRetriever</span><span class="p">(</span><span class="n">kw</span><span class="o">.</span><span class="n">_chunks</span><span class="p">,</span> <span class="n">embed</span><span class="o">=</span><span class="n">embed</span> <span class="ow">or</span> <span class="n">openai_embedder</span><span class="p">())</span></div>
 
@@ -338,20 +352,20 @@
 <div class="viewcode-block" id="build_retriever">
 <a class="viewcode-back" href="../../module_docs/hearing/context.html#hearing.context.build_retriever">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_retriever</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">KeywordRetriever</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a :class:`KeywordRetriever` from a dict, a list, or a folder/file.</span>
+<span class="w">    </span><span class="sd">"""Build a :class:`KeywordRetriever` from a dict, a list, or a folder/file.</span>
 
 <span class="sd">    A path to a directory indexes its ``.txt``/``.md`` files (keyed by stem); a</span>
 <span class="sd">    path to a single file indexes that file; a Mapping/Sequence is used directly.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">)):</span>
         <span class="n">root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
         <span class="n">docs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">root</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
-            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">"*"</span><span class="p">)):</span>
                 <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">_DOC_EXTENSIONS</span><span class="p">:</span>
-                    <span class="n">docs</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">stem</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+                    <span class="n">docs</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">stem</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">root</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
-            <span class="n">docs</span><span class="p">[</span><span class="n">root</span><span class="o">.</span><span class="n">stem</span><span class="p">]</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+            <span class="n">docs</span><span class="p">[</span><span class="n">root</span><span class="o">.</span><span class="n">stem</span><span class="p">]</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">KeywordRetriever</span><span class="p">(</span><span class="n">docs</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">KeywordRetriever</span><span class="p">(</span><span class="n">source</span><span class="p">)</span></div>
 
@@ -361,11 +375,11 @@
 <a class="viewcode-back" href="../../module_docs/hearing/context.html#hearing.context.CallableWebSearch">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CallableWebSearch</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adapt any callable into a :class:`WebSearch` (for custom backends/tests).</span>
+<span class="w">    </span><span class="sd">"""Adapt any callable into a :class:`WebSearch` (for custom backends/tests).</span>
 
 <span class="sd">    ``fn(query, k)`` may return Chunks, strings, or dicts (coerced), and may be</span>
 <span class="sd">    sync or async.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span>
 
@@ -381,21 +395,23 @@
 <a class="viewcode-back" href="../../module_docs/hearing/context.html#hearing.context.WikipediaSearch">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">WikipediaSearch</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Key-free, dependency-free :class:`WebSearch` over Wikipedia (stdlib urllib).</span>
+<span class="w">    </span><span class="sd">"""Key-free, dependency-free :class:`WebSearch` over Wikipedia (stdlib urllib).</span>
 
-<span class="sd">    Ideal for the live fact-check / &quot;who is X / what is Y&quot; use: one targeted</span>
+<span class="sd">    Ideal for the live fact-check / "who is X / what is Y" use: one targeted</span>
 <span class="sd">    query, a few result snippets with source URLs. The HTTP ``fetch`` is</span>
 <span class="sd">    injectable so tests need no network.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">lang</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;en&quot;</span>
+    <span class="n">lang</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"en"</span>
     <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">8.0</span>
     <span class="n">fetch</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">bytes</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_default_fetch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>  <span class="c1"># pragma: no cover - network</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">urllib.request</span>
 
-        <span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;User-Agent&quot;</span><span class="p">:</span> <span class="s2">&quot;hearing/0.0 (meeting assistant)&quot;</span><span class="p">})</span>
+        <span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span>
+            <span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">"User-Agent"</span><span class="p">:</span> <span class="s2">"hearing/0.0 (meeting assistant)"</span><span class="p">}</span>
+        <span class="p">)</span>
         <span class="k">with</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">req</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">resp</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 
@@ -404,15 +420,15 @@
 
         <span class="n">params</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(</span>
             <span class="p">{</span>
-                <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="s2">&quot;query&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;list&quot;</span><span class="p">:</span> <span class="s2">&quot;search&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;srsearch&quot;</span><span class="p">:</span> <span class="n">query</span><span class="p">[:</span><span class="mi">300</span><span class="p">],</span>
-                <span class="s2">&quot;srlimit&quot;</span><span class="p">:</span> <span class="n">k</span><span class="p">,</span>
-                <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;json&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;utf8&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="s2">"action"</span><span class="p">:</span> <span class="s2">"query"</span><span class="p">,</span>
+                <span class="s2">"list"</span><span class="p">:</span> <span class="s2">"search"</span><span class="p">,</span>
+                <span class="s2">"srsearch"</span><span class="p">:</span> <span class="n">query</span><span class="p">[:</span><span class="mi">300</span><span class="p">],</span>
+                <span class="s2">"srlimit"</span><span class="p">:</span> <span class="n">k</span><span class="p">,</span>
+                <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"json"</span><span class="p">,</span>
+                <span class="s2">"utf8"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
             <span class="p">}</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;https://</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">lang</span><span class="si">}</span><span class="s2">.wikipedia.org/w/api.php?</span><span class="si">{</span><span class="n">params</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"https://</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">lang</span><span class="si">}</span><span class="s2">.wikipedia.org/w/api.php?</span><span class="si">{</span><span class="n">params</span><span class="si">}</span><span class="s2">"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Chunk</span><span class="p">]:</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">html</span>
@@ -420,19 +436,23 @@
         <span class="kn">import</span><span class="w"> </span><span class="nn">urllib.parse</span>
 
         <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
-        <span class="n">hits</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;query&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;search&quot;</span><span class="p">,</span> <span class="p">[])[:</span><span class="n">k</span><span class="p">]</span>
+        <span class="n">hits</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"query"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"search"</span><span class="p">,</span> <span class="p">[])[:</span><span class="n">k</span><span class="p">]</span>
         <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Chunk</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">hits</span><span class="p">:</span>
-            <span class="n">title</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-            <span class="n">snippet</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;&lt;[^&gt;]+&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">h</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;snippet&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;https://</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">lang</span><span class="si">}</span><span class="s2">.wikipedia.org/wiki/&quot;</span> <span class="o">+</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">title</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">))</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+            <span class="n">snippet</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span>
+                <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"&lt;[^&gt;]+&gt;"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="n">h</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"snippet"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"https://</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">lang</span><span class="si">}</span><span class="s2">.wikipedia.org/wiki/"</span> <span class="o">+</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span>
+                <span class="n">title</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">" "</span><span class="p">,</span> <span class="s2">"_"</span><span class="p">)</span>
+            <span class="p">)</span>
             <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Chunk</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">snippet</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="n">url</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">out</span>
 
 <div class="viewcode-block" id="WikipediaSearch.search">
 <a class="viewcode-back" href="../../module_docs/hearing/context.html#hearing.context.WikipediaSearch.search">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Chunk</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return up to ``k`` Wikipedia search hits as chunks (title/snippet/url).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return up to ``k`` Wikipedia search hits as chunks (title/snippet/url)."""</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">query</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
             <span class="k">return</span> <span class="p">[]</span>
         <span class="n">fetch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fetch</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_fetch</span>

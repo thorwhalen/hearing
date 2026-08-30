@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>hearing.interfaces &mdash; hearing 0.0.2 documentation</title>
+  <title>hearing.interfaces &mdash; hearing 0.0.3 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=e3a6060d"></script>
+      <script src="../../_static/documentation_options.js?v=47de8214"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -86,7 +86,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hearing.interfaces</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Facade Protocols for the four pipeline concerns.</span>
+<span></span><span class="sd">"""Facade Protocols for the four pipeline concerns.</span>
 
 <span class="sd">Every engine/component is dependency-injected as one of these; the pipeline</span>
 <span class="sd">depends only on these interfaces, never on a concrete engine. Implementers</span>
@@ -94,7 +94,7 @@
 
 <span class="sd">This is the contract the ``hearing-architecture`` skill defines and that every</span>
 <span class="sd">other ``hearing-*`` concern implements against.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -117,26 +117,26 @@
 <a class="viewcode-back" href="../../module_docs/hearing/interfaces.html#hearing.interfaces.CaptureSource">[docs]</a>
 <span class="nd">@runtime_checkable</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CaptureSource</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Audio source — the ONLY thing that differs between batch and live.</span>
+<span class="w">    </span><span class="sd">"""Audio source — the ONLY thing that differs between batch and live.</span>
 
 <span class="sd">    Yields ``(channel, frames)`` so mic and system audio stay on separate</span>
 <span class="sd">    channels all the way down. A batch implementation reads a file; a live</span>
 <span class="sd">    implementation reads a device/tap.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span>
 
 <div class="viewcode-block" id="CaptureSource.frames">
 <a class="viewcode-back" href="../../module_docs/hearing/interfaces.html#hearing.interfaces.CaptureSource.frames">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">frames</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Channel</span><span class="p">,</span> <span class="s2">&quot;Any&quot;</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Batch / sync: yield ``(channel, frames[n_samples])`` blocks to EOF.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">frames</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Channel</span><span class="p">,</span> <span class="s2">"Any"</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Batch / sync: yield ``(channel, frames[n_samples])`` blocks to EOF."""</span>
         <span class="o">...</span></div>
 
 
 <div class="viewcode-block" id="CaptureSource.astream">
 <a class="viewcode-back" href="../../module_docs/hearing/interfaces.html#hearing.interfaces.CaptureSource.astream">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">astream</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Channel</span><span class="p">,</span> <span class="s2">&quot;Any&quot;</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Live / async: yield ``(channel, frames)`` blocks until stopped.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">astream</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Channel</span><span class="p">,</span> <span class="s2">"Any"</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Live / async: yield ``(channel, frames)`` blocks until stopped."""</span>
         <span class="o">...</span></div>
 </div>
 
@@ -147,32 +147,32 @@
 <a class="viewcode-back" href="../../module_docs/hearing/interfaces.html#hearing.interfaces.STTEngine">[docs]</a>
 <span class="nd">@runtime_checkable</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">STTEngine</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Speech-to-text.</span>
+<span class="w">    </span><span class="sd">"""Speech-to-text.</span>
 
 <span class="sd">    ``transcribe`` is the batch one-liner; ``stream_transcribe`` is the live</span>
 <span class="sd">    variant. Both yield :class:`~hearing.types.TranscriptSegment` — same shape,</span>
 <span class="sd">    same spine. The rest of the architecture never names a concrete engine.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="STTEngine.transcribe">
 <a class="viewcode-back" href="../../module_docs/hearing/interfaces.html#hearing.interfaces.STTEngine.transcribe">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">transcribe</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">:</span> <span class="s2">&quot;Any&quot;</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">language</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">:</span> <span class="s2">"Any"</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">language</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Batch: whole clip in (float32 mono ndarray), segments out.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Batch: whole clip in (float32 mono ndarray), segments out."""</span>
         <span class="o">...</span></div>
 
 
 <div class="viewcode-block" id="STTEngine.stream_transcribe">
 <a class="viewcode-back" href="../../module_docs/hearing/interfaces.html#hearing.interfaces.STTEngine.stream_transcribe">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stream_transcribe</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">frames</span><span class="p">:</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="s2">&quot;Any&quot;</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">frames</span><span class="p">:</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="s2">"Any"</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Live: yield interim then finalized segments as audio arrives.</span>
+<span class="w">        </span><span class="sd">"""Live: yield interim then finalized segments as audio arrives.</span>
 
-<span class="sd">        Mark interim vs final via ``meta`` (e.g. ``meta[&#39;final&#39;]``). See the</span>
+<span class="sd">        Mark interim vs final via ``meta`` (e.g. ``meta['final']``). See the</span>
 <span class="sd">        ``hearing-live-pipeline`` skill — this is the milestone-2 entry point.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="o">...</span></div>
 </div>
 
@@ -183,12 +183,12 @@
 <a class="viewcode-back" href="../../module_docs/hearing/interfaces.html#hearing.interfaces.Diarizer">[docs]</a>
 <span class="nd">@runtime_checkable</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Diarizer</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Labels who spoke — enriches segments with ``.speaker``.</span>
+<span class="w">    </span><span class="sd">"""Labels who spoke — enriches segments with ``.speaker``.</span>
 
 <span class="sd">    May use the audio (pyannote) or just the channel (the channel trick).</span>
-<span class="sd">    Identity resolution (``spk_0`` -&gt; ``&quot;Alice&quot;``) is an optional further step</span>
+<span class="sd">    Identity resolution (``spk_0`` -&gt; ``"Alice"``) is an optional further step</span>
 <span class="sd">    behind the same interface.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="Diarizer.assign_speakers">
 <a class="viewcode-back" href="../../module_docs/hearing/interfaces.html#hearing.interfaces.Diarizer.assign_speakers">[docs]</a>
@@ -196,10 +196,10 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">segments</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">],</span>
         <span class="o">*</span><span class="p">,</span>
-        <span class="n">audio</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;Any&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">audio</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">"Any"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">sample_rate</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Yield segments with ``.speaker`` populated (enrich-by-copy).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Yield segments with ``.speaker`` populated (enrich-by-copy)."""</span>
         <span class="o">...</span></div>
 </div>
 
@@ -210,28 +210,28 @@
 <a class="viewcode-back" href="../../module_docs/hearing/interfaces.html#hearing.interfaces.AgentConsumer">[docs]</a>
 <span class="nd">@runtime_checkable</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">AgentConsumer</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Consumes the (labeled) transcript stream and does things.</span>
+<span class="w">    </span><span class="sd">"""Consumes the (labeled) transcript stream and does things.</span>
 
 <span class="sd">    Running notes, suggested questions, RAG over related docs, post-meeting</span>
 <span class="sd">    summaries. Defaults to Claude but stays pluggable (see the ``claude-api``</span>
 <span class="sd">    skill for model ids / pricing / tool use).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="AgentConsumer.on_segment">
 <a class="viewcode-back" href="../../module_docs/hearing/interfaces.html#hearing.interfaces.AgentConsumer.on_segment">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_segment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">segment</span><span class="p">:</span> <span class="n">TranscriptSegment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Called per finalized segment (live). Return an optional insight.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Called per finalized segment (live). Return an optional insight."""</span>
         <span class="o">...</span></div>
 
 
 <div class="viewcode-block" id="AgentConsumer.on_window">
 <a class="viewcode-back" href="../../module_docs/hearing/interfaces.html#hearing.interfaces.AgentConsumer.on_window">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">window</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Called on a window/turn or the whole transcript (batch).</span>
+<span class="w">        </span><span class="sd">"""Called on a window/turn or the whole transcript (batch).</span>
 
 <span class="sd">        Return an optional insight (summary, action items, a suggested</span>
 <span class="sd">        question, a surfaced document, ...).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="o">...</span></div>
 </div>
 
