@@ -42,7 +42,6 @@ dependencies = [
     "scribed",  # transcription façade: STT engines, VAD, audio conditioning, live streaming
     "numpy>=1.24",
     "soundfile>=0.12",
-    "soxr>=0.3",
     "argh>=0.30",
 ]
 
@@ -55,6 +54,12 @@ Documentation = "https://thorwhalen.github.io/hearing"
 hearing = "hearing.cli:main"
 
 [project.optional-dependencies]
+# Faster, higher-quality resampling. Purely opt-in: `hearing` never imports soxr,
+# and scribed's `resample` already falls back to `np.interp` when it is absent.
+# LGPL-2.1-or-later, hence not a core dependency of this MIT package.
+fast-resample = [
+    "soxr>=0.3",
+]
 # Default local STT engine — now provided by scribed's faster-whisper backend.
 whisper = [
     "scribed[faster-whisper]",
