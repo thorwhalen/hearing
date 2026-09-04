@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hearing"
-version = "0.0.4"
+version = "0.0.5"
 description = "Pluggable meeting transcription & context-aware AI agents, batch or live"
 readme = "README.md"
 requires-python = ">=3.10"
