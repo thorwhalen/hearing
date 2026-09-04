@@ -24,7 +24,7 @@ its own development skill under `.claude/skills/`.
 | "Me vs them" channel-trick diarizer | ✅ done | `hearing/diarize.py` (`ChannelTrickDiarizer`) |
 | Batch agents — Claude (default, pluggable) + offline extractive fallback | ✅ done | `hearing/agents.py` |
 | Pipeline facade `transcribe(...)` + `summarize(...)` (composition/DI) | ✅ done | `hearing/pipeline.py` |
-| `argh` CLI (`transcribe` / `summarize` / `info`) | ✅ done | `hearing/cli.py` |
+| `cw` CLI (`transcribe` / `summarize` / `info`) | ✅ done | `hearing/cli.py` |
 | Tests + runnable demo | ✅ done | `tests/`, `examples/demo_meeting.py` |
 | **Acoustic diarization** (pyannote) for *individual* remote speakers | 🔬 stubbed | `PyannoteDiarizer` implemented, untested (needs HF token) |
 | **Live macOS capture source** (BlackHole / Core Audio taps → channels) | 🔬 partial | `DeviceCapture` (sounddevice) implemented but needs hardware to verify; `StreamingFileCapture` streams a file today |
