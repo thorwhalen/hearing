@@ -12,6 +12,7 @@ and it is the only thing standing between ``hearing live [FILE]`` and
 ``hearing/cli.py`` makes that test fail — which is how we know it can.
 """
 
+import os
 import subprocess
 import sys
 
@@ -33,13 +34,20 @@ def usage_of(stdout):
     return " ".join(lines)
 
 
+#: Pins that make recorded text reproducible. Merged ONTO ``os.environ``, never
+#: substituted for it: a replaced environment loses ``SYSTEMROOT`` on Windows and
+#: the child interpreter dies in ``_Py_HashRandomization_Init`` before it runs a
+#: line of our code.
+ENV_PINS = {"COLUMNS": "100", "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
+
+
 def run_cli(*argv):
     """Run ``python -m hearing.cli`` in a subprocess and return the result."""
     return subprocess.run(
         [sys.executable, "-m", "hearing.cli", *argv],
         capture_output=True,
         text=True,
-        env={"COLUMNS": "100", "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"},
+        env=dict(os.environ, **ENV_PINS),
         timeout=180,
     )
 
