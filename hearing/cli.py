@@ -1,4 +1,4 @@
-"""Command-line interface for hearing, dispatched with `argh`.
+"""Command-line interface for hearing, dispatched with `cw`.
 
 Surfaces the Python facades (`transcribe`, `summarize`) as subcommands — it does
 not reimplement them (the facades are the SSOT; see the ``python-dispatching``
@@ -13,10 +13,13 @@ script::
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import sys
 from pathlib import Path
 from typing import Optional
+
+import cw
 
 
 def transcribe(
@@ -279,24 +282,29 @@ def _check(module: str, what: str) -> str:
     return f"  [{'x' if found else ' '}] {module:<16} {what}"
 
 
-def main(argv=None) -> None:
-    """Entry point for the ``hearing`` console script."""
-    try:
-        import argh
-    except ImportError:  # pragma: no cover - argh is a core dependency
-        print("hearing CLI needs `argh` (pip install argh).", file=sys.stderr)
-        raise SystemExit(1)
-    from argh.assembling import NameMappingPolicy
+_COMMANDS = [transcribe, summarize, live, serve, meetings, info]
 
-    parser = argh.ArghParser(description="hearing — meeting transcription & AI agents")
-    # BY_NAME_IF_KWONLY: positional params stay positional (optional when they have
-    # a default, e.g. `hearing live [FILE]`); keyword-only params become --options.
-    argh.add_commands(
-        parser,
-        [transcribe, summarize, live, serve, meetings, info],
-        name_mapping_policy=NameMappingPolicy.BY_NAME_IF_KWONLY,
+# BY_NAME_IF_KWONLY: positional params stay positional (optional when they have a
+# default, e.g. `hearing live [FILE]`); keyword-only params become --options. This
+# is a real, load-bearing choice, not a leftover: under cw's default
+# (`by_name_if_has_default`, which is argh's legacy rule) `hearing live FILE` would
+# become `hearing live --path FILE`.
+_CONVENTION = dataclasses.replace(cw.ARGH, naming=cw.BY_NAME_IF_KWONLY)
+
+
+def main(argv=None) -> None:
+    """Entry point for the ``hearing`` console script.
+
+    ``cw.run`` *returns* the exit code (argh's ``parser.dispatch`` exited by
+    itself), so the ``SystemExit`` here is what makes ``hearing no-such-command``
+    exit 2.
+    """
+    parser = cw.mk_parser(
+        _COMMANDS,
+        convention=_CONVENTION,
+        description="hearing — meeting transcription & AI agents",
     )
-    parser.dispatch(argv)
+    raise SystemExit(cw.run(parser, argv))
 
 
 if __name__ == "__main__":
