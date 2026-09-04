@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>hearing.cli &mdash; hearing 0.0.3 documentation</title>
+  <title>hearing.cli &mdash; hearing 0.0.4 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=47de8214"></script>
+      <script src="../../_static/documentation_options.js?v=8c5712d9"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -99,7 +99,7 @@
              
   <section id="module-hearing.cli">
 <span id="hearing-cli"></span><h1>hearing.cli<a class="headerlink" href="#module-hearing.cli" title="Link to this heading"></a></h1>
-<p>Command-line interface for hearing, dispatched with <cite>argh</cite>.</p>
+<p>Command-line interface for hearing, dispatched with <cite>cw</cite>.</p>
 <p>Surfaces the Python facades (<cite>transcribe</cite>, <cite>summarize</cite>) as subcommands — it does
 not reimplement them (the facades are the SSOT; see the <code class="docutils literal notranslate"><span class="pre">python-dispatching</span></code>
 and <code class="docutils literal notranslate"><span class="pre">hearing-architecture</span></code> skills). Installed as the <code class="docutils literal notranslate"><span class="pre">hearing</span></code> console
@@ -139,6 +139,9 @@ with mic + BlackHole; see the hearing-audio-capture skill).</p></li>
 <dt class="sig sig-object py" id="hearing.cli.main">
 <span class="sig-prename descclassname"><span class="pre">hearing.cli.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">argv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/hearing/cli.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.cli.main" title="Link to this definition"></a></dt>
 <dd><p>Entry point for the <code class="docutils literal notranslate"><span class="pre">hearing</span></code> console script.</p>
+<p><code class="docutils literal notranslate"><span class="pre">cw.run</span></code> <em>returns</em> the exit code (argh’s <code class="docutils literal notranslate"><span class="pre">parser.dispatch</span></code> exited by
+itself), so the <code class="docutils literal notranslate"><span class="pre">SystemExit</span></code> here is what makes <code class="docutils literal notranslate"><span class="pre">hearing</span> <span class="pre">no-such-command</span></code>
+exit 2.</p>
 </dd></dl>
 
 <dl class="py function">

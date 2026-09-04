@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>hearing.cli &mdash; hearing 0.0.3 documentation</title>
+  <title>hearing.cli &mdash; hearing 0.0.4 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=47de8214"></script>
+      <script src="../../_static/documentation_options.js?v=8c5712d9"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -86,7 +86,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hearing.cli</h1><div class="highlight"><pre>
-<span></span><span class="sd">"""Command-line interface for hearing, dispatched with `argh`.</span>
+<span></span><span class="sd">"""Command-line interface for hearing, dispatched with `cw`.</span>
 
 <span class="sd">Surfaces the Python facades (`transcribe`, `summarize`) as subcommands — it does</span>
 <span class="sd">not reimplement them (the facades are the SSOT; see the ``python-dispatching``</span>
@@ -101,10 +101,13 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">cw</span>
 
 
 <div class="viewcode-block" id="transcribe">
@@ -385,26 +388,31 @@
     <span class="k">return</span> <span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="s1">'x'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">found</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">' '</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">module</span><span class="si">:</span><span class="s2">&lt;16</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">what</span><span class="si">}</span><span class="s2">"</span>
 
 
+<span class="n">_COMMANDS</span> <span class="o">=</span> <span class="p">[</span><span class="n">transcribe</span><span class="p">,</span> <span class="n">summarize</span><span class="p">,</span> <span class="n">live</span><span class="p">,</span> <span class="n">serve</span><span class="p">,</span> <span class="n">meetings</span><span class="p">,</span> <span class="n">info</span><span class="p">]</span>
+
+<span class="c1"># BY_NAME_IF_KWONLY: positional params stay positional (optional when they have a</span>
+<span class="c1"># default, e.g. `hearing live [FILE]`); keyword-only params become --options. This</span>
+<span class="c1"># is a real, load-bearing choice, not a leftover: under cw's default</span>
+<span class="c1"># (`by_name_if_has_default`, which is argh's legacy rule) `hearing live FILE` would</span>
+<span class="c1"># become `hearing live --path FILE`.</span>
+<span class="n">_CONVENTION</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">cw</span><span class="o">.</span><span class="n">ARGH</span><span class="p">,</span> <span class="n">naming</span><span class="o">=</span><span class="n">cw</span><span class="o">.</span><span class="n">BY_NAME_IF_KWONLY</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../module_docs/hearing/cli.html#hearing.cli.main">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Entry point for the ``hearing`` console script."""</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="kn">import</span><span class="w"> </span><span class="nn">argh</span>
-    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - argh is a core dependency</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">"hearing CLI needs `argh` (pip install argh)."</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
-        <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">argh.assembling</span><span class="w"> </span><span class="kn">import</span> <span class="n">NameMappingPolicy</span>
+<span class="w">    </span><span class="sd">"""Entry point for the ``hearing`` console script.</span>
 
-    <span class="n">parser</span> <span class="o">=</span> <span class="n">argh</span><span class="o">.</span><span class="n">ArghParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"hearing — meeting transcription &amp; AI agents"</span><span class="p">)</span>
-    <span class="c1"># BY_NAME_IF_KWONLY: positional params stay positional (optional when they have</span>
-    <span class="c1"># a default, e.g. `hearing live [FILE]`); keyword-only params become --options.</span>
-    <span class="n">argh</span><span class="o">.</span><span class="n">add_commands</span><span class="p">(</span>
-        <span class="n">parser</span><span class="p">,</span>
-        <span class="p">[</span><span class="n">transcribe</span><span class="p">,</span> <span class="n">summarize</span><span class="p">,</span> <span class="n">live</span><span class="p">,</span> <span class="n">serve</span><span class="p">,</span> <span class="n">meetings</span><span class="p">,</span> <span class="n">info</span><span class="p">],</span>
-        <span class="n">name_mapping_policy</span><span class="o">=</span><span class="n">NameMappingPolicy</span><span class="o">.</span><span class="n">BY_NAME_IF_KWONLY</span><span class="p">,</span>
+<span class="sd">    ``cw.run`` *returns* the exit code (argh's ``parser.dispatch`` exited by</span>
+<span class="sd">    itself), so the ``SystemExit`` here is what makes ``hearing no-such-command``</span>
+<span class="sd">    exit 2.</span>
+<span class="sd">    """</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">cw</span><span class="o">.</span><span class="n">mk_parser</span><span class="p">(</span>
+        <span class="n">_COMMANDS</span><span class="p">,</span>
+        <span class="n">convention</span><span class="o">=</span><span class="n">_CONVENTION</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"hearing — meeting transcription &amp; AI agents"</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span></div>
+    <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="n">cw</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="n">argv</span><span class="p">))</span></div>
 
 
 
