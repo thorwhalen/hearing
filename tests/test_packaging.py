@@ -11,7 +11,10 @@ from pathlib import Path
 
 import pytest
 
-tomllib = pytest.importorskip("tomllib")  # stdlib from 3.11; requires-python is 3.10
+try:
+    import tomllib  # stdlib from 3.11
+except ImportError:  # requires-python is 3.10
+    tomllib = pytest.importorskip("tomli")
 
 PYPROJECT = Path(__file__).resolve().parent.parent / "pyproject.toml"
 

@@ -96,9 +96,10 @@ storage = [
 ]
 # Everything needed for the full app (batch + live, HTTP API, persisted
 # transcripts), composed from the extras above so it cannot drift from them.
-# Left out on purpose: `diarize` (pyannote, a heavy model stack) and `openai`
-# (a paid cloud engine), each an alternative to a default `all` already covers;
-# `vad` (EnergyVAD is the default); `fast-resample` (LGPL, see above).
+# Left out on purpose: `diarize` (pyannote, a heavy model stack); `openai` (a
+# paid cloud API: the cloud STT engine, and the default embedder of the context
+# retriever, `hearing.context.build_embedding_retriever`, so add `[openai]` for
+# that); `vad` (EnergyVAD is the default); `fast-resample` (LGPL, see above).
 all = [
     "hearing[whisper,agents,capture,http,storage]",
 ]
