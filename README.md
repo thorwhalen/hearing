@@ -26,7 +26,7 @@ print(transcript.formatted())
 pip install hearing                 # core: data model, channel split, CLI
 pip install 'hearing[whisper]'      # + default local STT engine (faster-whisper)
 pip install 'hearing[agents]'       # + Claude-backed agent layer
-pip install 'hearing[all]'          # whisper + agents
+pip install 'hearing[all]'          # whisper + agents + capture + http + storage (dol)
 pip install 'hearing[diarize]'      # + pyannote (separate individual remote speakers)
 ```
 
