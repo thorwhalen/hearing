@@ -92,7 +92,7 @@ http = [
 ]
 # Persisting transcripts to a dol store (a filesystem fallback works without it).
 storage = [
-    "dol>=3",
+    "dol>=0.3",
 ]
 # Everything needed for the full app (batch + live).
 all = [
