@@ -94,11 +94,13 @@ http = [
 storage = [
     "dol>=0.3",
 ]
-# Everything needed for the full app (batch + live).
+# Everything needed for the full app (batch + live, HTTP API, persisted
+# transcripts), composed from the extras above so it cannot drift from them.
+# Left out on purpose: `diarize` (pyannote, a heavy model stack) and `openai`
+# (a paid cloud engine), each an alternative to a default `all` already covers;
+# `vad` (EnergyVAD is the default); `fast-resample` (LGPL, see above).
 all = [
-    "faster-whisper>=1.0",
-    "anthropic>=0.40",
-    "sounddevice>=0.4",
+    "hearing[whisper,agents,capture,http,storage]",
 ]
 # CI installs `.[dev]` only, and it runs `pytest --doctest-modules` over the
 # package — so `dev` must carry everything needed to *import* every module and
