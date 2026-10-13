@@ -1,0 +1,26 @@
+hearing.agents
+==============
+
+.. automodule:: hearing.agents
+
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+   
+      DEFAULT_CLAUDE_MODEL
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      build_default_agent
+      summarize_transcript
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      ClaudeAgent
+      ExtractiveAgent
+   

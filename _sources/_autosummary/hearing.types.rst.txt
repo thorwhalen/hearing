@@ -1,0 +1,22 @@
+hearing.types
+=============
+
+.. automodule:: hearing.types
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      merge_segments
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      Channel
+      TimeSpan
+      Transcript
+      TranscriptSegment
+      Word
+   

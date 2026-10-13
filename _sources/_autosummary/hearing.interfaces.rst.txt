@@ -1,0 +1,15 @@
+hearing.interfaces
+==================
+
+.. automodule:: hearing.interfaces
+
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      AgentConsumer
+      CaptureSource
+      Diarizer
+      STTEngine
+   

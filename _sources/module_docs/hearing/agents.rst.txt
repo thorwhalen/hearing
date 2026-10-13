@@ -1,4 +1,0 @@
-hearing.agents
-==============
-.. automodule:: hearing.agents
-   :members:

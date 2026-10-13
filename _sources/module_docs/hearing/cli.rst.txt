@@ -1,4 +1,0 @@
-hearing.cli
-===========
-.. automodule:: hearing.cli
-   :members:

@@ -1,0 +1,32 @@
+hearing.context
+===============
+
+.. automodule:: hearing.context
+
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+   
+      EmbedFn
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      build_embedding_retriever
+      build_retriever
+      openai_embedder
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      CallableWebSearch
+      Chunk
+      EmbeddingRetriever
+      KeywordRetriever
+      Retriever
+      WebSearch
+      WikipediaSearch
+   

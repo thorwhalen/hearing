@@ -1,4 +1,0 @@
-hearing.context
-===============
-.. automodule:: hearing.context
-   :members:

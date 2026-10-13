@@ -1,0 +1,43 @@
+﻿hearing
+=======
+
+.. automodule:: hearing
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      transcribe
+      live_transcribe
+      summarize
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      Transcript
+      TranscriptSegment
+      TimeSpan
+      Word
+      Channel
+      SpeakerLabel
+   
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :recursive:
+
+   agents
+   capture
+   cli
+   context
+   diarize
+   http_app
+   interfaces
+   pipeline
+   storage
+   stt
+   types
+   vad

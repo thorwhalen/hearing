@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "built_at": "2026-10-13T20:25:06Z",
+  "package": {
+    "name": "hearing",
+    "version": "0.0.5",
+    "display_name": "hearing",
+    "source": "pyproject.toml"
+  },
+  "git": {
+    "available": true,
+    "commit": "4afa7686f3b5c15b082e733f22e7bf980f37e9b4",
+    "short_commit": "4afa768",
+    "branch": "main",
+    "tags": [],
+    "dirty": false,
+    "remote_url": "https://github.com/thorwhalen/hearing",
+    "commit_url": "https://github.com/thorwhalen/hearing/commit/4afa7686f3b5c15b082e733f22e7bf980f37e9b4",
+    "error": null
+  },
+  "ci": {
+    "provider": "github",
+    "repository": "thorwhalen/hearing",
+    "sha": "4afa7686f3b5c15b082e733f22e7bf980f37e9b4",
+    "sha_in_history": true,
+    "ref": "refs/heads/main",
+    "ref_name": "main",
+    "run_id": "38462436094",
+    "run_url": "https://github.com/thorwhalen/hearing/actions/runs/38462436094",
+    "server_url": "https://github.com"
+  },
+  "tools": {
+    "epythet": "0.2.17",
+    "sphinx": "9.1.0",
+    "docutils": "0.22.4",
+    "python": "3.12.15"
+  },
+  "config": {
+    "theme": "auto",
+    "html_theme": "furo",
+    "accent": "#4d4b9e",
+    "mode": "auto",
+    "api_generator": "autosummary",
+    "ignore": [
+      "tests/",
+      "scrap/",
+      "examples/"
+    ],
+    "agent_outputs": true,
+    "aggregates": [
+      "md"
+    ],
+    "ai_artifacts": true,
+    "provenance": true,
+    "docs_dir": "docsrc"
+  },
+  "site": {
+    "modules_documented": 12,
+    "objects_documented": 123
+  },
+  "pypi": {
+    "checked": true,
+    "latest": "0.0.6",
+    "relation": "behind",
+    "error": null
+  },
+  "reproduce": "git clone https://github.com/thorwhalen/hearing && cd hearing\ngit checkout 4afa7686f3b5c15b082e733f22e7bf980f37e9b4\npip install \"epythet==0.2.17\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
+  "warnings": [],
+  "alignment": {
+    "aligned": false,
+    "notes": [
+      "The documented version (0.0.5) is behind the latest release on PyPI (0.0.6): `pip install hearing` gives newer code than these docs describe."
+    ]
+  }
+}

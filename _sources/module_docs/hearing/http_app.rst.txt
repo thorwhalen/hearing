@@ -1,4 +1,0 @@
-hearing.http_app
-================
-.. automodule:: hearing.http_app
-   :members:

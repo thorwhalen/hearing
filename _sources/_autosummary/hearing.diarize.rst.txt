@@ -1,0 +1,13 @@
+hearing.diarize
+===============
+
+.. automodule:: hearing.diarize
+
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      ChannelTrickDiarizer
+      PyannoteDiarizer
+   

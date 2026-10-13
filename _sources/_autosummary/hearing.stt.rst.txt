@@ -1,0 +1,27 @@
+hearing.stt
+===========
+
+.. automodule:: hearing.stt
+
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+   
+      DEFAULT_BACKEND
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      FasterWhisperSTT
+      OpenAISTT
+      default_engine
+      get_engine
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      ScribedSTT
+   

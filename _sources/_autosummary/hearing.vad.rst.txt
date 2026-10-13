@@ -1,0 +1,20 @@
+hearing.vad
+===========
+
+.. automodule:: hearing.vad
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      segment_utterances
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      VAD
+      EnergyVAD
+      SileroVAD
+   

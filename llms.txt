@@ -1,0 +1,31 @@
+# hearing
+
+> Pluggable meeting transcription & context-aware AI agents, batch or live
+
+
+## Pages
+
+- [hearing](index.html.md): Pluggable meeting transcription &amp; context-connected AI agents — batch today, live next.
+- [API reference](api.html.md): | &#96;hearing&#96;   | hearing — pluggable meeting transcription &amp; context-aware AI agents.   |
+- [hearing](_autosummary/hearing.html.md): hearing — pluggable meeting transcription &amp; context-aware AI agents.
+- [hearing.agents](_autosummary/hearing.agents.html.md): The agent / “copilot” layer — the actual point of the hearing project.
+- [hearing.capture](_autosummary/hearing.capture.html.md): Audio capture and channel handling for the hearing pipeline.
+- [hearing.cli](_autosummary/hearing.cli.html.md): Command-line interface for hearing, dispatched with &#96;cw&#96;.
+- [hearing.context](_autosummary/hearing.context.html.md): Context stores and retrieval (RAG) for context-connected agents.
+- [hearing.diarize](_autosummary/hearing.diarize.html.md): Diarization and speaker labelling for the hearing pipeline.
+- [hearing.interfaces](_autosummary/hearing.interfaces.html.md): Facade Protocols for the four pipeline concerns.
+- [hearing.pipeline](_autosummary/hearing.pipeline.html.md): Pipeline assembly — compose the four concerns by dependency injection.
+- [hearing.storage](_autosummary/hearing.storage.html.md): Transcript persistence via key-value stores (python-storage / &#96;dol&#96;).
+- [hearing.stt](_autosummary/hearing.stt.html.md): Speech-to-text for hearing — now backed by the scribed transcription façade.
+- [hearing.types](_autosummary/hearing.types.html.md): Shared data model for the hearing pipeline.
+- [hearing.vad](_autosummary/hearing.vad.html.md): Voice-activity detection and utterance segmentation — re-exported from scribed.
+- [For AI agents](ai-agents.html.md): &#96;hearing&#96; ships artifacts for coding agents alongside its code. This page lists
+- [About this build](about-this-build.html.md): This documentation was built on &#42;&#42;2026-10-13 20:25 UTC&#42;&#42; from commit &lt;a href="https://github.com/tho...
+
+## Optional
+
+- [hearing.md](hearing.md): Complete documentation in a single file.
+
+## Build
+
+- [build_info.json](build_info.json): build provenance (commit, version, tool versions, whether the docs match the package)

@@ -1,4 +1,0 @@
-hearing.types
-=============
-.. automodule:: hearing.types
-   :members:

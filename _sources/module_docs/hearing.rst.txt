@@ -1,4 +1,0 @@
-hearing
-=======
-.. automodule:: hearing
-   :members:

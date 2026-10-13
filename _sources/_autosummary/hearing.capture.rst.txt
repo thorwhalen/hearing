@@ -1,0 +1,20 @@
+hearing.capture
+===============
+
+.. automodule:: hearing.capture
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      split_channels
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      ChannelSplitFileCapture
+      DeviceCapture
+      StreamingFileCapture
+   

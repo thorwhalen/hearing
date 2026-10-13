@@ -1,4 +1,0 @@
-hearing.stt
-===========
-.. automodule:: hearing.stt
-   :members:

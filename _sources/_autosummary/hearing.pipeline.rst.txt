@@ -1,0 +1,14 @@
+hearing.pipeline
+================
+
+.. automodule:: hearing.pipeline
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      live_transcribe
+      summarize
+      transcribe
+   

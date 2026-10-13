@@ -1,0 +1,18 @@
+hearing.cli
+===========
+
+.. automodule:: hearing.cli
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      info
+      live
+      main
+      meetings
+      serve
+      summarize
+      transcribe
+   
