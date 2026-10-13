@@ -1,32 +1,32 @@
 {
   "schema_version": 1,
-  "built_at": "2026-10-13T20:25:06Z",
+  "built_at": "2026-10-13T20:47:53Z",
   "package": {
     "name": "hearing",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "display_name": "hearing",
     "source": "pyproject.toml"
   },
   "git": {
     "available": true,
-    "commit": "4afa7686f3b5c15b082e733f22e7bf980f37e9b4",
-    "short_commit": "4afa768",
+    "commit": "cc566583fe8f99e31f83459dc9a855920592a970",
+    "short_commit": "cc56658",
     "branch": "main",
     "tags": [],
     "dirty": false,
     "remote_url": "https://github.com/thorwhalen/hearing",
-    "commit_url": "https://github.com/thorwhalen/hearing/commit/4afa7686f3b5c15b082e733f22e7bf980f37e9b4",
+    "commit_url": "https://github.com/thorwhalen/hearing/commit/cc566583fe8f99e31f83459dc9a855920592a970",
     "error": null
   },
   "ci": {
     "provider": "github",
     "repository": "thorwhalen/hearing",
-    "sha": "4afa7686f3b5c15b082e733f22e7bf980f37e9b4",
+    "sha": "cc566583fe8f99e31f83459dc9a855920592a970",
     "sha_in_history": true,
     "ref": "refs/heads/main",
     "ref_name": "main",
-    "run_id": "38462436094",
-    "run_url": "https://github.com/thorwhalen/hearing/actions/runs/38462436094",
+    "run_id": "38465423680",
+    "run_url": "https://github.com/thorwhalen/hearing/actions/runs/38465423680",
     "server_url": "https://github.com"
   },
   "tools": {
@@ -61,15 +61,13 @@
   "pypi": {
     "checked": true,
     "latest": "0.0.6",
-    "relation": "behind",
+    "relation": "same",
     "error": null
   },
-  "reproduce": "git clone https://github.com/thorwhalen/hearing && cd hearing\ngit checkout 4afa7686f3b5c15b082e733f22e7bf980f37e9b4\npip install \"epythet==0.2.17\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
+  "reproduce": "git clone https://github.com/thorwhalen/hearing && cd hearing\ngit checkout cc566583fe8f99e31f83459dc9a855920592a970\npip install \"epythet==0.2.17\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
   "warnings": [],
   "alignment": {
-    "aligned": false,
-    "notes": [
-      "The documented version (0.0.5) is behind the latest release on PyPI (0.0.6): `pip install hearing` gives newer code than these docs describe."
-    ]
+    "aligned": true,
+    "notes": []
   }
 }
