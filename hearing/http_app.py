@@ -146,13 +146,12 @@ def create_app(
             return app.state.engine
         key = (name, model)
         if key not in app.state.engine_cache:
-            from hearing.stt import get_engine
+            from hearing.stt import ENGINE_ALIASES, WHISPER_SIZED_BACKENDS, get_engine
 
-            kwargs = (
-                {"model_size": model}
-                if name in ("whisper", "faster-whisper", "local")
-                else {}
-            )
+            # The form's `model` is a whisper size: only meaningful to whisper-family
+            # engines; the others (cloud, parakeet) keep their own default model.
+            sized = ENGINE_ALIASES.get(name.lower(), name) in WHISPER_SIZED_BACKENDS
+            kwargs = {"model_size": model} if sized else {}
             app.state.engine_cache[key] = get_engine(name, **kwargs)
         return app.state.engine_cache[key]
 

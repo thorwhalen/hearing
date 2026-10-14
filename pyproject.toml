@@ -72,6 +72,23 @@ agents = [
 openai = [
     "scribed[openai]",
 ]
+# Cloud STT via Deepgram (Nova-3) — provided by scribed's deepgram backend.
+# Needs DEEPGRAM_API_KEY.
+deepgram = [
+    "scribed[deepgram]",
+]
+# Apple-Silicon STT via MLX: mlx-whisper (default) and parakeet-mlx. These are
+# scribed backends that hearing contributes (hearing/backends/). The markers make
+# the extra a no-op anywhere MLX cannot run.
+mlx = [
+    "mlx-whisper>=0.4; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "parakeet-mlx>=0.3; sys_platform == 'darwin' and platform_machine == 'arm64'",
+]
+# WhisperX: batched Whisper + word alignment + optional pyannote diarization
+# (torch-heavy). Diarization also needs HF_TOKEN.
+whisperx = [
+    "whisperx>=3.3",
+]
 # Acoustic speaker diarization (separate individual remote speakers).
 diarize = [
     "pyannote.audio>=3.1",
@@ -96,8 +113,9 @@ storage = [
 ]
 # Everything needed for the full app (batch + live, HTTP API, persisted
 # transcripts), composed from the extras above so it cannot drift from them.
-# Left out on purpose: `diarize` (pyannote, a heavy model stack); `openai` (a
-# paid cloud API: the cloud STT engine, and the default embedder of the context
+# Left out on purpose: `diarize` (pyannote, a heavy model stack); `deepgram`
+# (a paid cloud API); `mlx` (Apple Silicon only); `whisperx` (torch + pyannote,
+# heavy); `openai` (a paid cloud API: the cloud STT engine, and the default embedder of the context
 # retriever, `hearing.context.build_embedding_retriever`, so add `[openai]` for
 # that); `vad` (EnergyVAD is the default); `fast-resample` (LGPL, see above).
 all = [

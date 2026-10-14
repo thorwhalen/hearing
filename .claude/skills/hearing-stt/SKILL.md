@@ -7,6 +7,27 @@ description: Use when choosing, wiring, swapping, or benchmarking a speech-to-te
 
 The pluggable speech-to-text layer for the `hearing` project. The whole point: **the rest of the architecture must not know which engine runs.** Everything downstream (diarization, the agent loop, storage, UI) consumes `TranscriptSegment`s, never an engine SDK. Get the facade right and you can swap a local Whisper for a cloud API by changing one config string.
 
+## What is implemented (read this before the design notes below)
+
+`hearing.stt` does not implement engines itself: `ScribedSTT` adapts the **scribed** transcription facade to the `STTEngine` Protocol, and `get_engine(name, **kw)` maps a friendly name to a scribed backend id through `ENGINE_ALIASES` (the SSOT that the CLI's `--engine`, `summarize --engine` and `live --engine` also use).
+
+| name (`--engine`) | scribed backend | constructor | extra | env |
+|---|---|---|---|---|
+| `whisper` (default) | `faster-whisper` | `FasterWhisperSTT(model_size=...)` | `hearing[whisper]` | — |
+| `openai` | `openai` | `OpenAISTT()` | `hearing[openai]` | `OPENAI_API_KEY` |
+| `deepgram` | `deepgram` (Nova-3 REST, scribed) | `DeepgramSTT(model="nova-3")` | `hearing[deepgram]` | `DEEPGRAM_API_KEY` |
+| `mlx` | `mlx-whisper` (hearing plugin) | `MLXSTT(model=..., mlx_backend="mlx-whisper")` | `hearing[mlx]` | macOS arm64 only |
+| `parakeet` | `parakeet-mlx` (hearing plugin) | `MLXSTT(mlx_backend="parakeet-mlx")` | `hearing[mlx]` | macOS arm64 only |
+| `whisperx` | `whisperx` (hearing plugin) | `WhisperXSTT(diarize=False)` | `hearing[whisperx]` | `HF_TOKEN` if `diarize=True` |
+
+- **Model is a keyword everywhere** (`model=` on the constructors, `model_size=` on `ScribedSTT`, `--model` on the CLI); omit it for the engine's default. Extra backend kwargs go through `ScribedSTT(options={...})` (e.g. `{"diarize": True}`).
+- **Live path:** `stream_transcribe` uses the backend's native streamer when it has one, else scribed's `vad_segmented_stream` (VAD utterances -> batch `transcribe`). Deepgram currently takes the VAD path; a websocket streamer would belong in scribed's deepgram adapter (`natively_streams=True` + `_stream_native`), not here.
+- **hearing's own backends** (`hearing/backends/<id>/{config,adapter}.py`) are laid out exactly like `scribed.backends.<id>`, registered lazily and non-clobbering with `scribed.register_backend` (`hearing.backends.register_backends`). Once scribed ships one of these ids, scribed's wins; moving them upstream is a file move.
+- **Errors:** MLX engines raise `RuntimeError` off Apple Silicon; a missing engine package raises `ImportError` naming the hearing extra; a missing cloud key raises scribed's `MissingCredentialError` naming the env var.
+- **Testing:** never install an engine. Inject a fake module with `monkeypatch.setitem(sys.modules, "mlx_whisper" | "parakeet_mlx" | "whisperx" | "deepgram", fake)` and drop scribed's cached adapter for that backend (see the `fresh` fixture in `tests/test_more_stt_engines.py`).
+
+The sections below are the original design notes (Protocol, decision table, pricing); code sketches in them predate the scribed refactor.
+
 ## The core abstraction (non-negotiable)
 
 **One Protocol, two methods, the shared data spine for I/O.** The Protocol is named `STTEngine` and the data types — `TranscriptSegment` and `TimeSpan` (integer-millisecond spans) — are **imported from `hearing.types`** (defined by [[hearing-architecture]]). This skill does **not** define its own segment dataclass and does **not** use float-second spans in the data spine. Define it once, depend on it everywhere.

@@ -30,6 +30,21 @@ pip install 'hearing[all]'          # whisper + agents + capture + http + storag
 pip install 'hearing[diarize]'      # + pyannote (separate individual remote speakers)
 ```
 
+### STT engines
+
+One `STTEngine` facade, many engines; pick one with `--engine` (CLI) or `get_engine(name)` (Python). Nothing downstream changes.
+
+| `--engine` | Engine | Install | Needs |
+|---|---|---|---|
+| `whisper` (default) | faster-whisper, local, any CPU/GPU | `hearing[whisper]` | — |
+| `openai` | OpenAI transcription API (cloud) | `hearing[openai]` | `OPENAI_API_KEY` |
+| `deepgram` | Deepgram Nova-3 (cloud; `--model nova-2` etc. swaps it) | `hearing[deepgram]` | `DEEPGRAM_API_KEY` |
+| `mlx` | Whisper on Apple Silicon via mlx-whisper | `hearing[mlx]` | macOS on M-series |
+| `parakeet` | NVIDIA Parakeet-TDT on Apple Silicon via parakeet-mlx | `hearing[mlx]` | macOS on M-series |
+| `whisperx` | WhisperX: aligned word timestamps, optional pyannote diarization | `hearing[whisperx]` | `HF_TOKEN` (diarization only) |
+
+The live path (`hearing live`, `stream_transcribe`) works with every engine: engines without native streaming are fed VAD-segmented utterances. `--model` overrides the engine's default model (a whisper size such as `small` for whisper/mlx/whisperx, a model name for cloud engines).
+
 ## What works today (the batch milestone)
 
 Give it a recording and get back a **speaker-labelled transcript** plus optional
@@ -42,6 +57,8 @@ who is local.
 hearing transcribe meeting.wav                      # diarized transcript to stdout
 hearing transcribe meeting.wav --model small --out notes.json
 hearing transcribe meeting.wav --engine openai      # cloud STT (OpenAI); needs OPENAI_API_KEY + hearing[openai]
+hearing transcribe meeting.wav --engine deepgram    # cloud STT (Deepgram Nova-3); needs DEEPGRAM_API_KEY + hearing[deepgram]
+hearing transcribe meeting.wav --engine mlx         # local, Apple Silicon (hearing[mlx]); also: parakeet, whisperx
 hearing transcribe meeting.wav --save ./meetings    # persist the transcript (then `hearing meetings ./meetings`)
 hearing summarize  meeting.wav                      # transcribe + AI notes (Claude)
 hearing summarize  meeting.wav --agent extractive   # offline, no API key needed
@@ -123,7 +140,7 @@ from hearing.stt import FasterWhisperSTT
 from hearing.diarize import ChannelTrickDiarizer, PyannoteDiarizer
 from hearing.agents import ClaudeAgent, ExtractiveAgent
 
-from hearing.stt import OpenAISTT
+from hearing.stt import OpenAISTT  # or DeepgramSTT, MLXSTT, WhisperXSTT
 
 transcribe(
     "meeting.wav",
@@ -149,9 +166,10 @@ Live device capture is the next milestone; today you bring a recording.
 
 ## Not yet (designed, on the roadmap)
 
-- **Cloud / lower-latency streaming engines** (Deepgram, OpenAI Realtime,
-  WhisperLive) behind the same `STTEngine` facade, and **semantic turn
-  detection** — see `hearing-live-pipeline`.
+- **Native streaming engines** (Deepgram websocket, OpenAI Realtime,
+  WhisperLive) behind the same `STTEngine` facade — today every engine streams
+  through VAD-segmented batch calls — and **semantic turn detection** — see
+  `hearing-live-pipeline`.
 - **Live device capture verified on hardware** (`DeviceCapture` is written; needs
   a BlackHole + Aggregate Device) — see `hearing-audio-capture`.
 - **TypeScript frontend** (schema-driven transcript viewer + copilot overlay
