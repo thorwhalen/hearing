@@ -40,7 +40,7 @@ One `STTEngine` facade, many engines; pick one with `--engine` (CLI) or `get_eng
 | `openai` | OpenAI transcription API (cloud) | `hearing[openai]` | `OPENAI_API_KEY` |
 | `deepgram` | Deepgram Nova-3 (cloud; `--model nova-2` etc. swaps it) | `hearing[deepgram]` | `DEEPGRAM_API_KEY` |
 | `mlx` | Whisper on Apple Silicon via mlx-whisper | `hearing[mlx]` | macOS on M-series |
-| `parakeet` | NVIDIA Parakeet-TDT on Apple Silicon via parakeet-mlx | `hearing[mlx]` | macOS on M-series |
+| `parakeet` | NVIDIA Parakeet-TDT on Apple Silicon via parakeet-mlx | `hearing[mlx]` | macOS on M-series, plus `ffmpeg` on PATH (parakeet-mlx decodes audio with it) |
 | `whisperx` | WhisperX: aligned word timestamps, optional pyannote diarization | `hearing[whisperx]` | `HF_TOKEN` (diarization only) |
 
 The live path (`hearing live`, `stream_transcribe`) works with every engine: engines without native streaming are fed VAD-segmented utterances. `--model` overrides the engine's default model (a whisper size such as `small` for whisper/mlx/whisperx, a model name for cloud engines).

@@ -17,6 +17,8 @@ for device auto-detection) are imported on first use.
 from __future__ import annotations
 
 import importlib
+import inspect
+import warnings
 
 from scribed.base import Transcript
 from scribed.make_backend import BaseTranscriberAdapter
@@ -77,7 +79,14 @@ class Adapter(BaseTranscriberAdapter):
             cls = importlib.import_module(
                 f"{self.module_name}.diarize"
             ).DiarizationPipeline
-        return cls(use_auth_token=_hf_token(), device=device)
+        # whisperx renamed the token argument (``use_auth_token`` up to 3.4,
+        # ``token`` by 3.8); pass whichever this install's pipeline takes.
+        try:
+            params = inspect.signature(cls).parameters
+        except (TypeError, ValueError):
+            params = {}
+        key = "use_auth_token" if "use_auth_token" in params else "token"
+        return cls(**{key: _hf_token()}, device=device)
 
     def _transcribe(
         self,
@@ -111,10 +120,19 @@ class Adapter(BaseTranscriberAdapter):
         detected = result.get("language") or language
 
         if align and result.get("segments") and detected:
-            align_model, metadata = self._cached(
-                ("align", detected, device),
-                lambda: wx.load_align_model(language_code=detected, device=device),
-            )
+            try:
+                align_model, metadata = self._cached(
+                    ("align", detected, device),
+                    lambda: wx.load_align_model(language_code=detected, device=device),
+                )
+            except ValueError as exc:  # no default align model for this language
+                warnings.warn(
+                    f"whisperx: no word alignment for {detected!r} ({exc}); "
+                    "returning the unaligned segments",
+                    stacklevel=2,
+                )
+                align = False
+        if align and result.get("segments") and detected:
             result = wx.align(
                 result["segments"],
                 align_model,

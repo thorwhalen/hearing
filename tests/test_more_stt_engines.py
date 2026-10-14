@@ -503,3 +503,30 @@ def test_cli_transcribe_routes_engine_and_model(monkeypatch):
     monkeypatch.setattr(hearing, "transcribe", lambda path, **kw: _Transcript())
     assert cli.transcribe("x.wav", engine="deepgram", model="nova-2") == "ok"
     assert seen == {"name": "deepgram", "model_size": "nova-2"}
+
+
+
+# --- review fixes (#33) -------------------------------------------------------
+
+
+@pytest.mark.parametrize("arg", ["use_auth_token", "token"])
+def test_diarization_pipeline_gets_the_token_under_either_whisperx_spelling(arg, monkeypatch):
+    """whisperx <= 3.4 takes ``use_auth_token``; 3.8 takes ``token``."""
+    from types import SimpleNamespace
+
+    from hearing.backends.whisperx.adapter import Adapter
+
+    seen = {}
+    if arg == "token":
+        class Pipeline:
+            def __init__(self, model_name=None, token=None, device="cpu", cache_dir=None):
+                seen.update(token=token, device=device)
+    else:
+        class Pipeline:
+            def __init__(self, model_name=None, use_auth_token=None, device="cpu"):
+                seen.update(token=use_auth_token, device=device)
+
+    monkeypatch.setenv("HF_TOKEN", "hf_fake")
+    adapter = Adapter.__new__(Adapter)
+    adapter._diarization_pipeline(SimpleNamespace(DiarizationPipeline=Pipeline), "cpu")
+    assert seen == {"token": "hf_fake", "device": "cpu"}
