@@ -7,6 +7,7 @@ script::
 
     hearing transcribe meeting.wav
     hearing transcribe meeting.wav --model small --out notes.json
+    hearing transcribe meeting.wav --engine deepgram   # or openai / mlx / parakeet / whisperx
     hearing summarize meeting.wav            # transcribe + AI meeting notes
     hearing info                             # check what's installed/available
 """
@@ -26,7 +27,7 @@ def transcribe(
     path: str,
     *,
     engine: str = "whisper",
-    model: str = "base",
+    model: Optional[str] = None,
     language: Optional[str] = None,
     split: bool = True,
     diarize: bool = True,
@@ -38,8 +39,12 @@ def transcribe(
 
     Args:
         path: audio file (wav/flac/aiff/...; convert mp3/m4a with ffmpeg first).
-        engine: STT engine — "whisper" (local faster-whisper) or "openai" (cloud).
-        model: whisper model size (tiny/base/small/medium/large-v3/...); local only.
+        engine: STT engine — "whisper" (local faster-whisper, default), "openai"
+            (cloud), "deepgram" (cloud, Nova-3), "mlx" (Whisper on Apple Silicon),
+            "parakeet" (Parakeet-TDT on Apple Silicon), or "whisperx" (aligned words).
+        model: engine model override — a whisper size (tiny/base/small/large-v3/...)
+            for whisper/mlx/whisperx, a model name for cloud engines (e.g.
+            "nova-3"); omit for the engine's default.
         language: force a language code (e.g. "en"); omit to auto-detect.
         split: split mic/system channels for multi-channel files (me vs them).
         diarize: apply the channel-trick "me vs them" labelling.
@@ -52,11 +57,7 @@ def transcribe(
     from hearing.diarize import ChannelTrickDiarizer
     from hearing.stt import get_engine
 
-    stt = (
-        get_engine("openai")
-        if engine == "openai"
-        else get_engine("whisper", model_size=model)
-    )
+    stt = get_engine(engine, model_size=model)
     transcript = _transcribe(
         path,
         engine=stt,
@@ -94,7 +95,8 @@ def summarize(
     context_dir: Optional[str] = None,
     retriever: str = "keyword",
     web_search: bool = False,
-    transcribe_model: str = "base",
+    engine: str = "whisper",
+    transcribe_model: Optional[str] = None,
     split: bool = True,
 ) -> Optional[str]:
     """Transcribe a meeting and produce AI notes (summary, actions, questions).
@@ -110,12 +112,13 @@ def summarize(
         retriever: "keyword" (TF-IDF, offline) or "embedding" (OpenAI semantic;
             needs hearing[openai] + OPENAI_API_KEY). Only used with context_dir.
         web_search: also bring in Wikipedia fact context (key-free) for the agent.
-        transcribe_model: whisper model size used for transcription.
+        engine: STT engine (same choices as `transcribe --engine`).
+        transcribe_model: STT model override (omit for the engine's default).
         split: split mic/system channels (me vs them).
     """
     from hearing.agents import build_default_agent
     from hearing.pipeline import summarize as _summarize
-    from hearing.stt import FasterWhisperSTT
+    from hearing.stt import get_engine
 
     retr = None
     if context_dir:
@@ -138,7 +141,7 @@ def summarize(
     return _summarize(
         path,
         agent=chosen,
-        engine=FasterWhisperSTT(model_size=transcribe_model),
+        engine=get_engine(engine, model_size=transcribe_model),
         split=split,
     )
 
@@ -162,7 +165,8 @@ def meetings(store: str, *, show: Optional[str] = None) -> str:
 def live(
     path: Optional[str] = None,
     *,
-    model: str = "base",
+    engine: str = "whisper",
+    model: Optional[str] = None,
     device: Optional[str] = None,
     block_ms: int = 200,
     realtime: bool = False,
@@ -172,7 +176,9 @@ def live(
     Args:
         path: stream this audio FILE through the live loop (great for a demo /
             no hardware). Omit to capture from an audio DEVICE instead.
-        model: whisper model size for the streaming STT.
+        engine: STT engine (same choices as `transcribe --engine`); engines
+            without native streaming are fed VAD-segmented utterances.
+        model: STT model override (omit for the engine's default).
         device: audio device index/name for live capture (an Aggregate Device
             with mic + BlackHole; see the hearing-audio-capture skill).
         block_ms: streaming block size in milliseconds.
@@ -182,10 +188,10 @@ def live(
 
     from hearing.capture import DeviceCapture, StreamingFileCapture
     from hearing.pipeline import live_transcribe
-    from hearing.stt import FasterWhisperSTT
+    from hearing.stt import get_engine
     from hearing.types import _ms_to_clock
 
-    engine = FasterWhisperSTT(model_size=model)
+    stt = get_engine(engine, model_size=model)
     if path:
         source = StreamingFileCapture(path, block_ms=block_ms, realtime=realtime)
     else:
@@ -193,7 +199,7 @@ def live(
         print("Listening (Ctrl+C to stop)…", file=sys.stderr)
 
     async def _run() -> None:
-        async for seg in live_transcribe(source=source, engine=engine):
+        async for seg in live_transcribe(source=source, engine=stt):
             who = seg.speaker or seg.channel.value
             print(
                 f"[{_ms_to_clock(seg.span.start_ms)}] {who}: {seg.text.strip()}",
@@ -256,14 +262,24 @@ def info() -> str:
     lines.append(
         _check("faster_whisper", "default local STT engine  [hearing[whisper]]")
     )
+    lines.append(_check("openai", "cloud STT: OpenAI             [hearing[openai]]"))
+    lines.append(
+        _check("deepgram", "cloud STT: Deepgram Nova-3    [hearing[deepgram]]")
+    )
+    lines.append(_check("mlx_whisper", "Apple-Silicon STT (Whisper)   [hearing[mlx]]"))
+    lines.append(_check("parakeet_mlx", "Apple-Silicon STT (Parakeet)  [hearing[mlx]]"))
+    lines.append(
+        _check("whisperx", "WhisperX STT (align+diarize)  [hearing[whisperx]]")
+    )
     lines.append(_check("anthropic", "Claude agent backend          [hearing[agents]]"))
     lines.append(
         _check("pyannote.audio", "speaker diarization          [hearing[diarize]]")
     )
     import os
 
-    key = "set" if os.getenv("ANTHROPIC_API_KEY") else "NOT set"
-    lines.append(f"  ANTHROPIC_API_KEY: {key}")
+    for env_var in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "DEEPGRAM_API_KEY"):
+        key = "set" if os.getenv(env_var) else "NOT set"
+        lines.append(f"  {env_var}: {key}")
     lines.append("  (system-audio capture on macOS needs BlackHole or Core Audio")
     lines.append("   taps — see the hearing-audio-capture skill.)")
     return "\n".join(lines)

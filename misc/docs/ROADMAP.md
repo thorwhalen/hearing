@@ -20,7 +20,8 @@ its own development skill under `.claude/skills/`.
 | Shared data model (`TranscriptSegment` spine, integer-ms `TimeSpan`, `Channel`) | ✅ done | `hearing/types.py`, `hearing/interfaces.py` |
 | Channel handling (load multi-channel file, split mic/system, resample) | ✅ done | `hearing/capture.py` |
 | STT facade + default local engine (faster-whisper) | ✅ done | `hearing/stt.py` |
-| Cloud STT engine (OpenAI) behind the same facade | ✅ done | `OpenAISTT` (whisper-1 / gpt-4o-transcribe); `get_engine()`; `transcribe --engine openai`; verified live. Deepgram/MLX still optional (#3) |
+| Cloud STT engine (OpenAI) behind the same facade | ✅ done | `OpenAISTT` (whisper-1 / gpt-4o-transcribe); `get_engine()`; `transcribe --engine openai`; verified live. |
+| More engines: Deepgram, Apple-Silicon MLX (mlx-whisper, parakeet-mlx), WhisperX | ✅ done | `DeepgramSTT`, `MLXSTT`, `WhisperXSTT`; `--engine deepgram\|mlx\|parakeet\|whisperx` (#3). MLX/WhisperX are scribed plugins in `hearing/backends/`, tested with fake engine modules only |
 | "Me vs them" channel-trick diarizer | ✅ done | `hearing/diarize.py` (`ChannelTrickDiarizer`) |
 | Batch agents — Claude (default, pluggable) + offline extractive fallback | ✅ done | `hearing/agents.py` |
 | Pipeline facade `transcribe(...)` + `summarize(...)` (composition/DI) | ✅ done | `hearing/pipeline.py` |
@@ -44,7 +45,7 @@ its own development skill under `.claude/skills/`.
 | `live_transcribe(...)` orchestrator (decoupled async stages, bounded queues) | ✅ done | `hearing/pipeline.py`; per-channel demux preserves "me vs them"; fire-and-forget agent |
 | Streaming source for testing/demo | ✅ done | `StreamingFileCapture` (+ `hearing live FILE` CLI) |
 | Tests (VAD, live orchestration, real-whisper live integration) | ✅ done | `tests/test_vad.py`, `tests/test_live_pipeline.py` |
-| Cloud / lower-latency streaming engines (Deepgram, OpenAI Realtime, WhisperLive) | 📋 todo | behind the same `STTEngine` facade |
+| Native streaming engines (Deepgram websocket, OpenAI Realtime, WhisperLive) | 📋 todo | behind the same `STTEngine` facade |
 | Semantic turn detection (beats naive VAD on mid-sentence pauses) | 📋 todo | see the skill's latency section |
 | Live mic/device capture verified on hardware | 📋 todo | `DeviceCapture` written; needs a BlackHole + Aggregate Device to confirm |
 

@@ -10,12 +10,24 @@ The default engine is scribed's faster-whisper backend (local, fast). Swap engin
 changing the scribed ``backend=`` (e.g. ``"openai"``) — nothing downstream changes.
 See scribed's ``scribed-choose-backend`` skill for the full engine landscape, pricing,
 and the local-vs-cloud decision.
+
+Engines by friendly name (:data:`ENGINE_ALIASES`, used by :func:`get_engine` and the
+CLI's ``--engine``):
+
+- ``whisper`` — faster-whisper, local, any CPU/GPU (default; ``hearing[whisper]``)
+- ``openai`` — OpenAI transcription API (``hearing[openai]``, ``OPENAI_API_KEY``)
+- ``deepgram`` — Deepgram Nova-3 (``hearing[deepgram]``, ``DEEPGRAM_API_KEY``)
+- ``mlx`` / ``parakeet`` — Whisper / Parakeet-TDT on Apple Silicon (``hearing[mlx]``)
+- ``whisperx`` — WhisperX, aligned words + optional diarization (``hearing[whisperx]``)
+
+The last three are scribed backends that hearing itself contributes
+(:mod:`hearing.backends`); they are registered with scribed on first use.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, AsyncIterator, Optional, Sequence
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, AsyncIterator, Dict, Mapping, Optional, Sequence
 
 import numpy as np
 import scribed
@@ -30,6 +42,38 @@ if TYPE_CHECKING:  # avoid importing optional/heavy modules at import time
 
 #: Default scribed backend id for local transcription.
 DEFAULT_BACKEND: str = "faster-whisper"
+
+#: Friendly engine name -> scribed backend id (the SSOT for ``get_engine``/the CLI).
+#: Any other registered scribed backend id is accepted as-is.
+ENGINE_ALIASES: Dict[str, str] = {
+    "whisper": "faster-whisper",
+    "faster-whisper": "faster-whisper",
+    "local": "faster-whisper",
+    "openai": "openai",
+    "cloud": "openai",
+    "deepgram": "deepgram",
+    "nova": "deepgram",
+    "mlx": "mlx-whisper",
+    "mlx-whisper": "mlx-whisper",
+    "parakeet": "parakeet-mlx",
+    "parakeet-mlx": "parakeet-mlx",
+    "whisperx": "whisperx",
+}
+
+#: Backends whose ``model`` accepts a bare whisper size ("base", "small", ...).
+WHISPER_SIZED_BACKENDS = frozenset({"faster-whisper", "mlx-whisper", "whisperx"})
+
+#: Engine names shown in help and error messages (one per backend).
+ENGINE_NAMES = ("whisper", "openai", "deepgram", "mlx", "parakeet", "whisperx")
+
+
+def _service(backend: str):
+    """scribed's service handle for ``backend``, registering hearing's backends first."""
+    from hearing.backends import BACKEND_MODULES, register_backends
+
+    if backend in BACKEND_MODULES:
+        register_backends([backend])
+    return scribed.services[backend]
 
 
 def _to_hearing_segment(
@@ -89,16 +133,20 @@ class ScribedSTT:
         model_size: optional model override forwarded to the backend (e.g. ``"tiny"``).
         language: force a language code; ``None`` => auto-detect.
         vad: utterance segmenter for ``stream_transcribe`` (default: scribed EnergyVAD).
+        options: extra backend kwargs forwarded on every call (e.g.
+            ``{"diarize": True}`` for WhisperX/Deepgram); see the backend's
+            ``param_map`` for what it accepts.
     """
 
     backend: str = DEFAULT_BACKEND
     model_size: Optional[str] = None
     language: Optional[str] = None
     vad: Optional["VAD"] = None
+    options: Mapping[str, Any] = field(default_factory=dict)
 
     def _kwargs(self, language: Optional[str]) -> dict:
-        """Build scribed transcribe kwargs (model + language) from this engine's config."""
-        kw: dict = {}
+        """Build scribed transcribe kwargs (options + model + language)."""
+        kw: dict = dict(self.options)
         if self.model_size is not None:
             kw["model"] = self.model_size
         lang = language if language is not None else self.language
@@ -114,9 +162,7 @@ class ScribedSTT:
         if mono16.size == 0:
             return []
         wav = to_wav_bytes(mono16, STT_SAMPLE_RATE)
-        transcript = scribed.services[self.backend].transcribe(
-            wav, **self._kwargs(language)
-        )
+        transcript = _service(self.backend).transcribe(wav, **self._kwargs(language))
         return [_to_hearing_segment(s) for s in transcript.segments]
 
     async def stream_transcribe(
@@ -124,7 +170,7 @@ class ScribedSTT:
     ) -> AsyncIterator[TranscriptSegment]:
         """Stream finalized segments as utterances complete (via scribed's live path)."""
         source = _FramesSource(frames=frames, sample_rate=sample_rate)
-        agen = scribed.services[self.backend].transcribe_live(
+        agen = _service(self.backend).transcribe_live(
             source, vad=self.vad, **self._kwargs(None)
         )
         async for seg in agen:
@@ -132,19 +178,27 @@ class ScribedSTT:
 
 
 def get_engine(name: str = "whisper", **kwargs) -> ScribedSTT:
-    """Build a scribed-backed STT engine by friendly name.
+    """Build a scribed-backed STT engine by friendly name (see :data:`ENGINE_ALIASES`).
 
-    ``"whisper"``/``"faster-whisper"``/``"local"`` -> faster-whisper; ``"openai"``/
-    ``"cloud"`` -> openai. Any other registered scribed backend id works too.
+    ``"whisper"`` -> faster-whisper, ``"openai"``, ``"deepgram"``, ``"mlx"`` ->
+    mlx-whisper, ``"parakeet"`` -> parakeet-mlx, ``"whisperx"``. Any other
+    registered scribed backend id works too. ``kwargs`` go to :class:`ScribedSTT`.
+
+    >>> get_engine("mlx").backend
+    'mlx-whisper'
     """
+    from hearing.backends import BACKEND_MODULES
+
     key = name.lower()
-    if key in ("whisper", "faster-whisper", "local"):
-        return ScribedSTT(backend="faster-whisper", **kwargs)
-    if key in ("openai", "cloud"):
-        return ScribedSTT(backend="openai", **kwargs)
-    if key in scribed.list_backends():
-        return ScribedSTT(backend=key, **kwargs)
-    raise ValueError(f"Unknown STT engine {name!r}; use 'whisper' or 'openai'.")
+    backend = ENGINE_ALIASES.get(key)
+    if backend is None and (key in BACKEND_MODULES or key in scribed.list_backends()):
+        backend = key
+    if backend is None:
+        raise ValueError(
+            f"Unknown STT engine {name!r}; use one of {', '.join(ENGINE_NAMES)} "
+            "(or any scribed backend id)."
+        )
+    return ScribedSTT(backend=backend, **kwargs)
 
 
 def default_engine(**kwargs) -> ScribedSTT:
@@ -167,3 +221,40 @@ def FasterWhisperSTT(*, model_size: Optional[str] = None, **kwargs) -> ScribedST
 def OpenAISTT(**kwargs) -> ScribedSTT:
     """Backward-compatible constructor for the OpenAI engine (returns a ``ScribedSTT``)."""
     return ScribedSTT(backend="openai", **kwargs)
+
+
+def DeepgramSTT(*, model: Optional[str] = None, **kwargs) -> ScribedSTT:
+    """Deepgram (cloud) engine — Nova-3 by default; ``model="nova-2"`` etc. swaps it.
+
+    Batch goes to Deepgram's pre-recorded REST API (via scribed's deepgram backend);
+    the live path is scribed's VAD-segmented stream over that batch call. Needs
+    ``pip install 'hearing[deepgram]'`` and ``DEEPGRAM_API_KEY``.
+    """
+    return ScribedSTT(backend="deepgram", model_size=model, **kwargs)
+
+
+def MLXSTT(
+    *, model: Optional[str] = None, mlx_backend: str = "mlx-whisper", **kwargs
+) -> ScribedSTT:
+    """Apple-Silicon (MLX) engine: mlx-whisper by default, or ``mlx_backend="parakeet-mlx"``.
+
+    ``model`` is a Hugging Face repo id or (mlx-whisper) a bare Whisper size such as
+    ``"small"``. Needs macOS on Apple Silicon and ``pip install 'hearing[mlx]'``.
+    """
+    if mlx_backend not in ("mlx-whisper", "parakeet-mlx"):
+        raise ValueError(
+            f"Unknown MLX backend {mlx_backend!r}; use 'mlx-whisper' or 'parakeet-mlx'."
+        )
+    return ScribedSTT(backend=mlx_backend, model_size=model, **kwargs)
+
+
+def WhisperXSTT(
+    *, model: Optional[str] = None, diarize: bool = False, **kwargs
+) -> ScribedSTT:
+    """WhisperX engine: aligned word timestamps, plus pyannote speakers if ``diarize``.
+
+    Needs ``pip install 'hearing[whisperx]'``; ``diarize=True`` also needs a
+    Hugging Face token in ``HF_TOKEN``.
+    """
+    options = {**kwargs.pop("options", {}), "diarize": diarize}
+    return ScribedSTT(backend="whisperx", model_size=model, options=options, **kwargs)
