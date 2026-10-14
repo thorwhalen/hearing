@@ -205,6 +205,24 @@
 <li class="toctree-l1 current has-children"><a class="reference internal" href="../api.html">API reference</a><input aria-label="Toggle navigation of API reference" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l2 current has-children"><a class="reference internal" href="hearing.html">hearing</a><input aria-label="Toggle navigation of hearing" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="hearing.agents.html">hearing.agents</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="hearing.backends.html">hearing.backends</a><input aria-label="Toggle navigation of hearing.backends" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="hearing.backends.mlx_whisper.html">hearing.backends.mlx_whisper</a><input aria-label="Toggle navigation of hearing.backends.mlx_whisper" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="hearing.backends.mlx_whisper.adapter.html">hearing.backends.mlx_whisper.adapter</a></li>
+<li class="toctree-l5"><a class="reference internal" href="hearing.backends.mlx_whisper.config.html">hearing.backends.mlx_whisper.config</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="hearing.backends.parakeet_mlx.html">hearing.backends.parakeet_mlx</a><input aria-label="Toggle navigation of hearing.backends.parakeet_mlx" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="hearing.backends.parakeet_mlx.adapter.html">hearing.backends.parakeet_mlx.adapter</a></li>
+<li class="toctree-l5"><a class="reference internal" href="hearing.backends.parakeet_mlx.config.html">hearing.backends.parakeet_mlx.config</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="hearing.backends.whisperx.html">hearing.backends.whisperx</a><input aria-label="Toggle navigation of hearing.backends.whisperx" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="hearing.backends.whisperx.adapter.html">hearing.backends.whisperx.adapter</a></li>
+<li class="toctree-l5"><a class="reference internal" href="hearing.backends.whisperx.config.html">hearing.backends.whisperx.config</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="hearing.capture.html">hearing.capture</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hearing.cli.html">hearing.cli</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hearing.context.html">hearing.context</a></li>
@@ -270,12 +288,32 @@ the architecture still sees only the <a class="reference internal" href="hearing
 changing the scribed <code class="docutils literal notranslate"><span class="pre">backend=</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;openai&quot;</span></code>) — nothing downstream changes.
 See scribed’s <code class="docutils literal notranslate"><span class="pre">scribed-choose-backend</span></code> skill for the full engine landscape, pricing,
 and the local-vs-cloud decision.</p>
+<p>Engines by friendly name (<a class="reference internal" href="#hearing.stt.ENGINE_ALIASES" title="hearing.stt.ENGINE_ALIASES"><code class="xref py py-data docutils literal notranslate"><span class="pre">ENGINE_ALIASES</span></code></a>, used by <a class="reference internal" href="#hearing.stt.get_engine" title="hearing.stt.get_engine"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_engine()</span></code></a> and the
+CLI’s <code class="docutils literal notranslate"><span class="pre">--engine</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">whisper</span></code> — faster-whisper, local, any CPU/GPU (default; <code class="docutils literal notranslate"><span class="pre">hearing[whisper]</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">openai</span></code> — OpenAI transcription API (<code class="docutils literal notranslate"><span class="pre">hearing[openai]</span></code>, <code class="docutils literal notranslate"><span class="pre">OPENAI_API_KEY</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">deepgram</span></code> — Deepgram Nova-3 (<code class="docutils literal notranslate"><span class="pre">hearing[deepgram]</span></code>, <code class="docutils literal notranslate"><span class="pre">DEEPGRAM_API_KEY</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mlx</span></code> / <code class="docutils literal notranslate"><span class="pre">parakeet</span></code> — Whisper / Parakeet-TDT on Apple Silicon (<code class="docutils literal notranslate"><span class="pre">hearing[mlx]</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">whisperx</span></code> — WhisperX, aligned words + optional diarization (<code class="docutils literal notranslate"><span class="pre">hearing[whisperx]</span></code>)</p></li>
+</ul>
+<p>The last three are scribed backends that hearing itself contributes
+(<a class="reference internal" href="hearing.backends.html#module-hearing.backends" title="hearing.backends"><code class="xref py py-mod docutils literal notranslate"><span class="pre">hearing.backends</span></code></a>); they are registered with scribed on first use.</p>
 <p class="rubric">Module Attributes</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#hearing.stt.DEFAULT_BACKEND" title="hearing.stt.DEFAULT_BACKEND"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DEFAULT_BACKEND</span></code></a></p></td>
 <td><p>Default scribed backend id for local transcription.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hearing.stt.ENGINE_ALIASES" title="hearing.stt.ENGINE_ALIASES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ENGINE_ALIASES</span></code></a></p></td>
+<td><p>Friendly engine name -&gt; scribed backend id (the SSOT for <code class="docutils literal notranslate"><span class="pre">get_engine</span></code>/the CLI).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.stt.WHISPER_SIZED_BACKENDS" title="hearing.stt.WHISPER_SIZED_BACKENDS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WHISPER_SIZED_BACKENDS</span></code></a></p></td>
+<td><p>Backends whose <code class="docutils literal notranslate"><span class="pre">model</span></code> accepts a bare whisper size (&quot;base&quot;, &quot;small&quot;, ...).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hearing.stt.ENGINE_NAMES" title="hearing.stt.ENGINE_NAMES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ENGINE_NAMES</span></code></a></p></td>
+<td><p>Engine names shown in help and error messages (one per backend).</p></td>
 </tr>
 </tbody>
 </table>
@@ -284,17 +322,26 @@ and the local-vs-cloud decision.</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.stt.FasterWhisperSTT" title="hearing.stt.FasterWhisperSTT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FasterWhisperSTT</span></code></a>(*[, model_size])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.stt.DeepgramSTT" title="hearing.stt.DeepgramSTT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DeepgramSTT</span></code></a>(*[, model])</p></td>
+<td><p>Deepgram (cloud) engine — Nova-3 by default; <code class="docutils literal notranslate"><span class="pre">model=&quot;nova-2&quot;</span></code> etc.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hearing.stt.FasterWhisperSTT" title="hearing.stt.FasterWhisperSTT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FasterWhisperSTT</span></code></a>(*[, model_size])</p></td>
 <td><p>Backward-compatible constructor for the local engine (returns a <code class="docutils literal notranslate"><span class="pre">ScribedSTT</span></code>).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.stt.MLXSTT" title="hearing.stt.MLXSTT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MLXSTT</span></code></a>(*[, model, mlx_backend])</p></td>
+<td><p>Apple-Silicon (MLX) engine: mlx-whisper by default, or <code class="docutils literal notranslate"><span class="pre">mlx_backend=&quot;parakeet-mlx&quot;</span></code>.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#hearing.stt.OpenAISTT" title="hearing.stt.OpenAISTT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OpenAISTT</span></code></a>(**kwargs)</p></td>
 <td><p>Backward-compatible constructor for the OpenAI engine (returns a <code class="docutils literal notranslate"><span class="pre">ScribedSTT</span></code>).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.stt.default_engine" title="hearing.stt.default_engine"><code class="xref py py-obj docutils literal notranslate"><span class="pre">default_engine</span></code></a>(**kwargs)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.stt.WhisperXSTT" title="hearing.stt.WhisperXSTT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WhisperXSTT</span></code></a>(*[, model, diarize])</p></td>
+<td><p>WhisperX engine: aligned word timestamps, plus pyannote speakers if <code class="docutils literal notranslate"><span class="pre">diarize</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hearing.stt.default_engine" title="hearing.stt.default_engine"><code class="xref py py-obj docutils literal notranslate"><span class="pre">default_engine</span></code></a>(**kwargs)</p></td>
 <td><p>Return the project's default STT engine (scribed faster-whisper).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#hearing.stt.get_engine" title="hearing.stt.get_engine"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_engine</span></code></a>([name])</p></td>
-<td><p>Build a scribed-backed STT engine by friendly name.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.stt.get_engine" title="hearing.stt.get_engine"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_engine</span></code></a>([name])</p></td>
+<td><p>Build a scribed-backed STT engine by friendly name (see <a class="reference internal" href="#hearing.stt.ENGINE_ALIASES" title="hearing.stt.ENGINE_ALIASES"><code class="xref py py-data docutils literal notranslate"><span class="pre">ENGINE_ALIASES</span></code></a>).</p></td>
 </tr>
 </tbody>
 </table>
@@ -303,7 +350,7 @@ and the local-vs-cloud decision.</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.stt.ScribedSTT" title="hearing.stt.ScribedSTT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ScribedSTT</span></code></a>([backend, model_size, language, vad])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.stt.ScribedSTT" title="hearing.stt.ScribedSTT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ScribedSTT</span></code></a>([backend, model_size, language, ...])</p></td>
 <td><p>An <code class="docutils literal notranslate"><span class="pre">STTEngine</span></code> backed by scribed — the single engine hearing now uses.</p></td>
 </tr>
 </tbody>
@@ -316,11 +363,51 @@ and the local-vs-cloud decision.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="hearing.stt.DeepgramSTT">
+<span class="sig-prename descclassname"><span class="pre">hearing.stt.</span></span><span class="sig-name descname"><span class="pre">DeepgramSTT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/stt.html#DeepgramSTT"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.stt.DeepgramSTT" title="Link to this definition">¶</a></dt>
+<dd><p>Deepgram (cloud) engine — Nova-3 by default; <code class="docutils literal notranslate"><span class="pre">model=&quot;nova-2&quot;</span></code> etc. swaps it.</p>
+<p>Batch goes to Deepgram’s pre-recorded REST API (via scribed’s deepgram backend);
+the live path is scribed’s VAD-segmented stream over that batch call. Needs
+<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">'hearing[deepgram]'</span></code> and <code class="docutils literal notranslate"><span class="pre">DEEPGRAM_API_KEY</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#hearing.stt.ScribedSTT" title="hearing.stt.ScribedSTT"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScribedSTT</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="hearing.stt.ENGINE_ALIASES">
+<span class="sig-prename descclassname"><span class="pre">hearing.stt.</span></span><span class="sig-name descname"><span class="pre">ENGINE_ALIASES</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.15)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'cloud':</span> <span class="pre">'openai',</span> <span class="pre">'deepgram':</span> <span class="pre">'deepgram',</span> <span class="pre">'faster-whisper':</span> <span class="pre">'faster-whisper',</span> <span class="pre">'local':</span> <span class="pre">'faster-whisper',</span> <span class="pre">'mlx':</span> <span class="pre">'mlx-whisper',</span> <span class="pre">'mlx-whisper':</span> <span class="pre">'mlx-whisper',</span> <span class="pre">'nova':</span> <span class="pre">'deepgram',</span> <span class="pre">'openai':</span> <span class="pre">'openai',</span> <span class="pre">'parakeet':</span> <span class="pre">'parakeet-mlx',</span> <span class="pre">'parakeet-mlx':</span> <span class="pre">'parakeet-mlx',</span> <span class="pre">'whisper':</span> <span class="pre">'faster-whisper',</span> <span class="pre">'whisperx':</span> <span class="pre">'whisperx'}</span></span><a class="headerlink" href="#hearing.stt.ENGINE_ALIASES" title="Link to this definition">¶</a></dt>
+<dd><p>Friendly engine name -&gt; scribed backend id (the SSOT for <code class="docutils literal notranslate"><span class="pre">get_engine</span></code>/the CLI).
+Any other registered scribed backend id is accepted as-is.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="hearing.stt.ENGINE_NAMES">
+<span class="sig-prename descclassname"><span class="pre">hearing.stt.</span></span><span class="sig-name descname"><span class="pre">ENGINE_NAMES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('whisper',</span> <span class="pre">'openai',</span> <span class="pre">'deepgram',</span> <span class="pre">'mlx',</span> <span class="pre">'parakeet',</span> <span class="pre">'whisperx')</span></span><a class="headerlink" href="#hearing.stt.ENGINE_NAMES" title="Link to this definition">¶</a></dt>
+<dd><p>Engine names shown in help and error messages (one per backend).</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="hearing.stt.FasterWhisperSTT">
 <span class="sig-prename descclassname"><span class="pre">hearing.stt.</span></span><span class="sig-name descname"><span class="pre">FasterWhisperSTT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/stt.html#FasterWhisperSTT"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.stt.FasterWhisperSTT" title="Link to this definition">¶</a></dt>
 <dd><p>Backward-compatible constructor for the local engine (returns a <code class="docutils literal notranslate"><span class="pre">ScribedSTT</span></code>).</p>
 <p>Retained so existing call sites (<code class="docutils literal notranslate"><span class="pre">FasterWhisperSTT(model_size=&quot;tiny&quot;)</span></code>) keep
 working now that the engines are centralized in scribed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#hearing.stt.ScribedSTT" title="hearing.stt.ScribedSTT"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScribedSTT</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hearing.stt.MLXSTT">
+<span class="sig-prename descclassname"><span class="pre">hearing.stt.</span></span><span class="sig-name descname"><span class="pre">MLXSTT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mlx_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mlx-whisper'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/stt.html#MLXSTT"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.stt.MLXSTT" title="Link to this definition">¶</a></dt>
+<dd><p>Apple-Silicon (MLX) engine: mlx-whisper by default, or <code class="docutils literal notranslate"><span class="pre">mlx_backend=&quot;parakeet-mlx&quot;</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">model</span></code> is a Hugging Face repo id or (mlx-whisper) a bare Whisper size such as
+<code class="docutils literal notranslate"><span class="pre">&quot;small&quot;</span></code>. Needs macOS on Apple Silicon and <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">'hearing[mlx]'</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#hearing.stt.ScribedSTT" title="hearing.stt.ScribedSTT"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScribedSTT</span></code></a></span></p>
@@ -341,7 +428,7 @@ working now that the engines are centralized in scribed.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="hearing.stt.ScribedSTT">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.stt.</span></span><span class="sig-name descname"><span class="pre">ScribedSTT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'faster-whisper'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">language</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/stt.html#ScribedSTT"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.stt.ScribedSTT" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.stt.</span></span><span class="sig-name descname"><span class="pre">ScribedSTT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'faster-whisper'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">language</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/stt.html#ScribedSTT"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.stt.ScribedSTT" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>An <code class="docutils literal notranslate"><span class="pre">STTEngine</span></code> backed by scribed — the single engine hearing now uses.</p>
 <dl class="field-list simple">
@@ -351,6 +438,9 @@ working now that the engines are centralized in scribed.</p>
 <li><p><strong>model_size</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.15)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span>) – optional model override forwarded to the backend (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;tiny&quot;</span></code>).</p></li>
 <li><p><strong>language</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.15)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span>) – force a language code; <code class="docutils literal notranslate"><span class="pre">None</span></code> =&gt; auto-detect.</p></li>
 <li><p><strong>vad</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.15)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference internal" href="hearing.vad.html#hearing.vad.VAD" title="scribed.vad.VAD"><code class="xref py py-class docutils literal notranslate"><span class="pre">VAD</span></code></a>]</span>) – utterance segmenter for <code class="docutils literal notranslate"><span class="pre">stream_transcribe</span></code> (default: scribed EnergyVAD).</p></li>
+<li><p><strong>options</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code></a>[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.15)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]</span>) – extra backend kwargs forwarded on every call (e.g.
+<code class="docutils literal notranslate"><span class="pre">{&quot;diarize&quot;:</span> <span class="pre">True}</span></code> for WhisperX/Deepgram); see the backend’s
+<code class="docutils literal notranslate"><span class="pre">param_map</span></code> for what it accepts.</p></li>
 </ul>
 </dd>
 </dl>
@@ -378,6 +468,25 @@ working now that the engines are centralized in scribed.</p>
 
 </dd></dl>
 
+<dl class="py data">
+<dt class="sig sig-object py" id="hearing.stt.WHISPER_SIZED_BACKENDS">
+<span class="sig-prename descclassname"><span class="pre">hearing.stt.</span></span><span class="sig-name descname"><span class="pre">WHISPER_SIZED_BACKENDS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">frozenset({'faster-whisper',</span> <span class="pre">'mlx-whisper',</span> <span class="pre">'whisperx'})</span></span><a class="headerlink" href="#hearing.stt.WHISPER_SIZED_BACKENDS" title="Link to this definition">¶</a></dt>
+<dd><p>Backends whose <code class="docutils literal notranslate"><span class="pre">model</span></code> accepts a bare whisper size (“base”, “small”, …).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hearing.stt.WhisperXSTT">
+<span class="sig-prename descclassname"><span class="pre">hearing.stt.</span></span><span class="sig-name descname"><span class="pre">WhisperXSTT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diarize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/stt.html#WhisperXSTT"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.stt.WhisperXSTT" title="Link to this definition">¶</a></dt>
+<dd><p>WhisperX engine: aligned word timestamps, plus pyannote speakers if <code class="docutils literal notranslate"><span class="pre">diarize</span></code>.</p>
+<p>Needs <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">'hearing[whisperx]'</span></code>; <code class="docutils literal notranslate"><span class="pre">diarize=True</span></code> also needs a
+Hugging Face token in <code class="docutils literal notranslate"><span class="pre">HF_TOKEN</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#hearing.stt.ScribedSTT" title="hearing.stt.ScribedSTT"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScribedSTT</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="hearing.stt.default_engine">
 <span class="sig-prename descclassname"><span class="pre">hearing.stt.</span></span><span class="sig-name descname"><span class="pre">default_engine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/stt.html#default_engine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.stt.default_engine" title="Link to this definition">¶</a></dt>
@@ -393,14 +502,19 @@ working now that the engines are centralized in scribed.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="hearing.stt.get_engine">
 <span class="sig-prename descclassname"><span class="pre">hearing.stt.</span></span><span class="sig-name descname"><span class="pre">get_engine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'whisper'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/stt.html#get_engine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.stt.get_engine" title="Link to this definition">¶</a></dt>
-<dd><p>Build a scribed-backed STT engine by friendly name.</p>
-<p><code class="docutils literal notranslate"><span class="pre">&quot;whisper&quot;</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;faster-whisper&quot;</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;local&quot;</span></code> -&gt; faster-whisper; <code class="docutils literal notranslate"><span class="pre">&quot;openai&quot;</span></code>/
-<code class="docutils literal notranslate"><span class="pre">&quot;cloud&quot;</span></code> -&gt; openai. Any other registered scribed backend id works too.</p>
+<dd><p>Build a scribed-backed STT engine by friendly name (see <a class="reference internal" href="#hearing.stt.ENGINE_ALIASES" title="hearing.stt.ENGINE_ALIASES"><code class="xref py py-data docutils literal notranslate"><span class="pre">ENGINE_ALIASES</span></code></a>).</p>
+<p><code class="docutils literal notranslate"><span class="pre">&quot;whisper&quot;</span></code> -&gt; faster-whisper, <code class="docutils literal notranslate"><span class="pre">&quot;openai&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;deepgram&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;mlx&quot;</span></code> -&gt;
+mlx-whisper, <code class="docutils literal notranslate"><span class="pre">&quot;parakeet&quot;</span></code> -&gt; parakeet-mlx, <code class="docutils literal notranslate"><span class="pre">&quot;whisperx&quot;</span></code>. Any other
+registered scribed backend id works too. <code class="docutils literal notranslate"><span class="pre">kwargs</span></code> go to <a class="reference internal" href="#hearing.stt.ScribedSTT" title="hearing.stt.ScribedSTT"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScribedSTT</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#hearing.stt.ScribedSTT" title="hearing.stt.ScribedSTT"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScribedSTT</span></code></a></span></p>
 </dd>
 </dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">get_engine</span><span class="p">(</span><span class="s2">"mlx"</span><span class="p">)</span><span class="o">.</span><span class="n">backend</span>
+<span class="go">'mlx-whisper'</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </section>
@@ -458,13 +572,19 @@ working now that the engines are centralized in scribed.</p>
             <ul>
 <li><a class="reference internal" href="#">hearing.stt</a><ul>
 <li><a class="reference internal" href="#hearing.stt.DEFAULT_BACKEND"><code class="docutils literal notranslate"><span class="pre">DEFAULT_BACKEND</span></code></a></li>
+<li><a class="reference internal" href="#hearing.stt.DeepgramSTT"><code class="docutils literal notranslate"><span class="pre">DeepgramSTT()</span></code></a></li>
+<li><a class="reference internal" href="#hearing.stt.ENGINE_ALIASES"><code class="docutils literal notranslate"><span class="pre">ENGINE_ALIASES</span></code></a></li>
+<li><a class="reference internal" href="#hearing.stt.ENGINE_NAMES"><code class="docutils literal notranslate"><span class="pre">ENGINE_NAMES</span></code></a></li>
 <li><a class="reference internal" href="#hearing.stt.FasterWhisperSTT"><code class="docutils literal notranslate"><span class="pre">FasterWhisperSTT()</span></code></a></li>
+<li><a class="reference internal" href="#hearing.stt.MLXSTT"><code class="docutils literal notranslate"><span class="pre">MLXSTT()</span></code></a></li>
 <li><a class="reference internal" href="#hearing.stt.OpenAISTT"><code class="docutils literal notranslate"><span class="pre">OpenAISTT()</span></code></a></li>
 <li><a class="reference internal" href="#hearing.stt.ScribedSTT"><code class="docutils literal notranslate"><span class="pre">ScribedSTT</span></code></a><ul>
 <li><a class="reference internal" href="#hearing.stt.ScribedSTT.stream_transcribe"><code class="docutils literal notranslate"><span class="pre">ScribedSTT.stream_transcribe()</span></code></a></li>
 <li><a class="reference internal" href="#hearing.stt.ScribedSTT.transcribe"><code class="docutils literal notranslate"><span class="pre">ScribedSTT.transcribe()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#hearing.stt.WHISPER_SIZED_BACKENDS"><code class="docutils literal notranslate"><span class="pre">WHISPER_SIZED_BACKENDS</span></code></a></li>
+<li><a class="reference internal" href="#hearing.stt.WhisperXSTT"><code class="docutils literal notranslate"><span class="pre">WhisperXSTT()</span></code></a></li>
 <li><a class="reference internal" href="#hearing.stt.default_engine"><code class="docutils literal notranslate"><span class="pre">default_engine()</span></code></a></li>
 <li><a class="reference internal" href="#hearing.stt.get_engine"><code class="docutils literal notranslate"><span class="pre">get_engine()</span></code></a></li>
 </ul>
@@ -478,7 +598,7 @@ working now that the engines are centralized in scribed.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=1d1a88ea"></script>
+</div><script src="../_static/documentation_options.js?v=b45afc8c"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

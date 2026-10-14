@@ -10,6 +10,7 @@ script:
 ```default
 hearing transcribe meeting.wav
 hearing transcribe meeting.wav --model small --out notes.json
+hearing transcribe meeting.wav --engine deepgram   # or openai / mlx / parakeet / whisperx
 hearing summarize meeting.wav            # transcribe + AI meeting notes
 hearing info                             # check what's installed/available
 ```
@@ -18,7 +19,7 @@ hearing info                             # check what's installed/available
 
 | [`info`](#hearing.cli.info)()                                            | Report which optional components are installed and what's missing.         |
 |----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|
-| [`live`](#hearing.cli.live)([path, model, device, block_ms, realtime])   | Run the LIVE streaming pipeline, printing segments as utterances finalize. |
+| [`live`](#hearing.cli.live)([path, engine, model, device, ...])          | Run the LIVE streaming pipeline, printing segments as utterances finalize. |
 | [`main`](#hearing.cli.main)([argv])                                      | Entry point for the `hearing` console script.                              |
 | [`meetings`](#hearing.cli.meetings)(store, \*[, show])                       | List transcripts saved in a store (or print one with --show ID).           |
 | [`serve`](#hearing.cli.serve)(\*[, host, port, reload])                   | Serve the HTTP API (FastAPI) the frontend talks to.                        |
@@ -32,14 +33,16 @@ Report which optional components are installed and what’s missing.
 * **Return type:**
   [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
-### hearing.cli.live(path=None, , model='base', device=None, block_ms=200, realtime=False)
+### hearing.cli.live(path=None, , engine='whisper', model=None, device=None, block_ms=200, realtime=False)
 
 Run the LIVE streaming pipeline, printing segments as utterances finalize.
 
 * **Parameters:**
   * **path** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – stream this audio FILE through the live loop (great for a demo /
     no hardware). Omit to capture from an audio DEVICE instead.
-  * **model** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – whisper model size for the streaming STT.
+  * **engine** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – STT engine (same choices as `transcribe --engine`); engines
+    without native streaming are fed VAD-segmented utterances.
+  * **model** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – STT model override (omit for the engine’s default).
   * **device** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – audio device index/name for live capture (an Aggregate Device
     with mic + BlackHole; see the hearing-audio-capture skill).
   * **block_ms** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – streaming block size in milliseconds.
@@ -79,7 +82,7 @@ Serve the HTTP API (FastAPI) the frontend talks to.
 * **Return type:**
   [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
-### hearing.cli.summarize(path, , agent='auto', model=None, context=None, context_dir=None, retriever='keyword', web_search=False, transcribe_model='base', split=True)
+### hearing.cli.summarize(path, , agent='auto', model=None, context=None, context_dir=None, retriever='keyword', web_search=False, engine='whisper', transcribe_model=None, split=True)
 
 Transcribe a meeting and produce AI notes (summary, actions, questions).
 
@@ -94,19 +97,24 @@ Transcribe a meeting and produce AI notes (summary, actions, questions).
   * **retriever** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – “keyword” (TF-IDF, offline) or “embedding” (OpenAI semantic;
     needs hearing[openai] + OPENAI_API_KEY). Only used with context_dir.
   * **web_search** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – also bring in Wikipedia fact context (key-free) for the agent.
-  * **transcribe_model** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – whisper model size used for transcription.
+  * **engine** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – STT engine (same choices as `transcribe --engine`).
+  * **transcribe_model** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – STT model override (omit for the engine’s default).
   * **split** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – split mic/system channels (me vs them).
 * **Return type:**
   [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
 
-### hearing.cli.transcribe(path, , engine='whisper', model='base', language=None, split=True, diarize=True, out=None, fmt='text', save=None)
+### hearing.cli.transcribe(path, , engine='whisper', model=None, language=None, split=True, diarize=True, out=None, fmt='text', save=None)
 
 Transcribe an audio file to text or JSON.
 
 * **Parameters:**
   * **path** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – audio file (wav/flac/aiff/…; convert mp3/m4a with ffmpeg first).
-  * **engine** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – STT engine — “whisper” (local faster-whisper) or “openai” (cloud).
-  * **model** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – whisper model size (tiny/base/small/medium/large-v3/…); local only.
+  * **engine** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – STT engine — “whisper” (local faster-whisper, default), “openai”
+    (cloud), “deepgram” (cloud, Nova-3), “mlx” (Whisper on Apple Silicon),
+    “parakeet” (Parakeet-TDT on Apple Silicon), or “whisperx” (aligned words).
+  * **model** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – engine model override — a whisper size (tiny/base/small/large-v3/…)
+    for whisper/mlx/whisperx, a model name for cloud engines (e.g.
+    “nova-3”); omit for the engine’s default.
   * **language** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – force a language code (e.g. “en”); omit to auto-detect.
   * **split** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – split mic/system channels for multi-channel files (me vs them).
   * **diarize** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – apply the channel-trick “me vs them” labelling.

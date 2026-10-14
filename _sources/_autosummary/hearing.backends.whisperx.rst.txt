@@ -1,0 +1,14 @@
+hearing.backends.whisperx
+=========================
+
+.. automodule:: hearing.backends.whisperx
+
+   
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :recursive:
+
+   adapter
+   config

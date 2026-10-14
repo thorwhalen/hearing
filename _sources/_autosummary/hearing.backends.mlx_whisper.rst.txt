@@ -1,0 +1,14 @@
+hearing.backends.mlx\_whisper
+=============================
+
+.. automodule:: hearing.backends.mlx_whisper
+
+   
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :recursive:
+
+   adapter
+   config

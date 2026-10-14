@@ -1,0 +1,14 @@
+hearing.backends.parakeet\_mlx
+==============================
+
+.. automodule:: hearing.backends.parakeet_mlx
+
+   
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :recursive:
+
+   adapter
+   config

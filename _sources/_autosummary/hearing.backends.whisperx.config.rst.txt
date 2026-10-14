@@ -1,0 +1,13 @@
+hearing.backends.whisperx.config
+================================
+
+.. automodule:: hearing.backends.whisperx.config
+
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+   
+      DEFAULT_MODEL
+      HF_TOKEN_ENV_VARS
+   

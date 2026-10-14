@@ -7,6 +7,16 @@
 
 - [hearing](hearing.html.md): hearing — pluggable meeting transcription &amp; context-aware AI agents.
 - [hearing.agents](hearing.agents.html.md): The agent / “copilot” layer — the actual point of the hearing project.
+- [hearing.backends](hearing.backends.html.md): Extra scribed backends that hearing contributes: Apple-Silicon MLX and WhisperX.
+- [hearing.backends.mlx_whisper](hearing.backends.mlx_whisper.html.md): mlx-whisper (Whisper on Apple Silicon via MLX) backend for scribed, from hearing.
+- [hearing.backends.mlx_whisper.adapter](hearing.backends.mlx_whisper.adapter.html.md): Adapter for the mlx-whisper backend (Whisper on Apple Silicon via MLX).
+- [hearing.backends.mlx_whisper.config](hearing.backends.mlx_whisper.config.html.md): Configuration for the mlx-whisper backend (Whisper on Apple Silicon via MLX).
+- [hearing.backends.parakeet_mlx](hearing.backends.parakeet_mlx.html.md): parakeet-mlx (NVIDIA Parakeet-TDT on Apple Silicon via MLX) backend for scribed, from hearing.
+- [hearing.backends.parakeet_mlx.adapter](hearing.backends.parakeet_mlx.adapter.html.md): Adapter for the parakeet-mlx backend (NVIDIA Parakeet-TDT on Apple Silicon).
+- [hearing.backends.parakeet_mlx.config](hearing.backends.parakeet_mlx.config.html.md): Configuration for the parakeet-mlx backend (NVIDIA Parakeet-TDT on Apple Silicon).
+- [hearing.backends.whisperx](hearing.backends.whisperx.html.md): WhisperX (batched Whisper + alignment + optional diarization) backend for scribed, from hearing.
+- [hearing.backends.whisperx.adapter](hearing.backends.whisperx.adapter.html.md): Adapter for the WhisperX backend (transcribe -&gt; align -&gt; optionally diarize).
+- [hearing.backends.whisperx.config](hearing.backends.whisperx.config.html.md): Configuration for the WhisperX backend.
 - [hearing.capture](hearing.capture.html.md): Audio capture and channel handling for the hearing pipeline.
 - [hearing.cli](hearing.cli.html.md): Command-line interface for hearing, dispatched with &#96;cw&#96;.
 - [hearing.context](hearing.context.html.md): Context stores and retrieval (RAG) for context-connected agents.

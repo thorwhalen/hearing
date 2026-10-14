@@ -205,6 +205,24 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="api.html">API reference</a><input aria-label="Toggle navigation of API reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="_autosummary/hearing.html">hearing</a><input aria-label="Toggle navigation of hearing" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/hearing.agents.html">hearing.agents</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/hearing.backends.html">hearing.backends</a><input aria-label="Toggle navigation of hearing.backends" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="_autosummary/hearing.backends.mlx_whisper.html">hearing.backends.mlx_whisper</a><input aria-label="Toggle navigation of hearing.backends.mlx_whisper" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="_autosummary/hearing.backends.mlx_whisper.adapter.html">hearing.backends.mlx_whisper.adapter</a></li>
+<li class="toctree-l5"><a class="reference internal" href="_autosummary/hearing.backends.mlx_whisper.config.html">hearing.backends.mlx_whisper.config</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="_autosummary/hearing.backends.parakeet_mlx.html">hearing.backends.parakeet_mlx</a><input aria-label="Toggle navigation of hearing.backends.parakeet_mlx" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="_autosummary/hearing.backends.parakeet_mlx.adapter.html">hearing.backends.parakeet_mlx.adapter</a></li>
+<li class="toctree-l5"><a class="reference internal" href="_autosummary/hearing.backends.parakeet_mlx.config.html">hearing.backends.parakeet_mlx.config</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="_autosummary/hearing.backends.whisperx.html">hearing.backends.whisperx</a><input aria-label="Toggle navigation of hearing.backends.whisperx" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="_autosummary/hearing.backends.whisperx.adapter.html">hearing.backends.whisperx.adapter</a></li>
+<li class="toctree-l5"><a class="reference internal" href="_autosummary/hearing.backends.whisperx.config.html">hearing.backends.whisperx.config</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/hearing.capture.html">hearing.capture</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/hearing.cli.html">hearing.cli</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/hearing.context.html">hearing.context</a></li>
@@ -285,6 +303,54 @@ pip<span class="w"> </span>install<span class="w"> </span><span class="s1">'hear
 pip<span class="w"> </span>install<span class="w"> </span><span class="s1">'hearing[diarize]'</span><span class="w">      </span><span class="c1"># + pyannote (separate individual remote speakers)</span>
 </pre></div>
 </div>
+<section id="stt-engines">
+<h3>STT engines<a class="headerlink" href="#stt-engines" title="Link to this heading">¶</a></h3>
+<p>One <code class="docutils literal notranslate"><span class="pre">STTEngine</span></code> facade, many engines; pick one with <code class="docutils literal notranslate"><span class="pre">--engine</span></code> (CLI) or <code class="docutils literal notranslate"><span class="pre">get_engine(name)</span></code> (Python). Nothing downstream changes.</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">--engine</span></code></p></th>
+<th class="head"><p>Engine</p></th>
+<th class="head"><p>Install</p></th>
+<th class="head"><p>Needs</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">whisper</span></code> (default)</p></td>
+<td><p>faster-whisper, local, any CPU/GPU</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">hearing[whisper]</span></code></p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">openai</span></code></p></td>
+<td><p>OpenAI transcription API (cloud)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">hearing[openai]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">OPENAI_API_KEY</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">deepgram</span></code></p></td>
+<td><p>Deepgram Nova-3 (cloud; <code class="docutils literal notranslate"><span class="pre">--model</span> <span class="pre">nova-2</span></code> etc. swaps it)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">hearing[deepgram]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DEEPGRAM_API_KEY</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">mlx</span></code></p></td>
+<td><p>Whisper on Apple Silicon via mlx-whisper</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">hearing[mlx]</span></code></p></td>
+<td><p>macOS on M-series</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">parakeet</span></code></p></td>
+<td><p>NVIDIA Parakeet-TDT on Apple Silicon via parakeet-mlx</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">hearing[mlx]</span></code></p></td>
+<td><p>macOS on M-series, plus <code class="docutils literal notranslate"><span class="pre">ffmpeg</span></code> on PATH (parakeet-mlx decodes audio with it)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">whisperx</span></code></p></td>
+<td><p>WhisperX: aligned word timestamps, optional pyannote diarization</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">hearing[whisperx]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">HF_TOKEN</span></code> (diarization only)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The live path (<code class="docutils literal notranslate"><span class="pre">hearing</span> <span class="pre">live</span></code>, <code class="docutils literal notranslate"><span class="pre">stream_transcribe</span></code>) works with every engine: engines without native streaming are fed VAD-segmented utterances. <code class="docutils literal notranslate"><span class="pre">--model</span></code> overrides the engine’s default model (a whisper size such as <code class="docutils literal notranslate"><span class="pre">small</span></code> for whisper/mlx/whisperx, a model name for cloud engines).</p>
+</section>
 </section>
 <section id="what-works-today-the-batch-milestone">
 <h2>What works today (the batch milestone)<a class="headerlink" href="#what-works-today-the-batch-milestone" title="Link to this heading">¶</a></h2>
@@ -296,6 +362,8 @@ who is local.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>hearing<span class="w"> </span>transcribe<span class="w"> </span>meeting.wav<span class="w">                      </span><span class="c1"># diarized transcript to stdout</span>
 hearing<span class="w"> </span>transcribe<span class="w"> </span>meeting.wav<span class="w"> </span>--model<span class="w"> </span>small<span class="w"> </span>--out<span class="w"> </span>notes.json
 hearing<span class="w"> </span>transcribe<span class="w"> </span>meeting.wav<span class="w"> </span>--engine<span class="w"> </span>openai<span class="w">      </span><span class="c1"># cloud STT (OpenAI); needs OPENAI_API_KEY + hearing[openai]</span>
+hearing<span class="w"> </span>transcribe<span class="w"> </span>meeting.wav<span class="w"> </span>--engine<span class="w"> </span>deepgram<span class="w">    </span><span class="c1"># cloud STT (Deepgram Nova-3); needs DEEPGRAM_API_KEY + hearing[deepgram]</span>
+hearing<span class="w"> </span>transcribe<span class="w"> </span>meeting.wav<span class="w"> </span>--engine<span class="w"> </span>mlx<span class="w">         </span><span class="c1"># local, Apple Silicon (hearing[mlx]); also: parakeet, whisperx</span>
 hearing<span class="w"> </span>transcribe<span class="w"> </span>meeting.wav<span class="w"> </span>--save<span class="w"> </span>./meetings<span class="w">    </span><span class="c1"># persist the transcript (then `hearing meetings ./meetings`)</span>
 hearing<span class="w"> </span>summarize<span class="w">  </span>meeting.wav<span class="w">                      </span><span class="c1"># transcribe + AI notes (Claude)</span>
 hearing<span class="w"> </span>summarize<span class="w">  </span>meeting.wav<span class="w"> </span>--agent<span class="w"> </span>extractive<span class="w">   </span><span class="c1"># offline, no API key needed</span>
@@ -371,7 +439,7 @@ synthesizes a two-speaker meeting with macOS <code class="docutils literal notra
 <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.diarize</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChannelTrickDiarizer</span><span class="p">,</span> <span class="n">PyannoteDiarizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.agents</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClaudeAgent</span><span class="p">,</span> <span class="n">ExtractiveAgent</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">hearing.stt</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAISTT</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hearing.stt</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAISTT</span>  <span class="c1"># or DeepgramSTT, MLXSTT, WhisperXSTT</span>
 
 <span class="n">transcribe</span><span class="p">(</span>
     <span class="s2">"meeting.wav"</span><span class="p">,</span>
@@ -399,9 +467,10 @@ Live device capture is the next milestone; today you bring a recording.</p>
 <section id="not-yet-designed-on-the-roadmap">
 <h2>Not yet (designed, on the roadmap)<a class="headerlink" href="#not-yet-designed-on-the-roadmap" title="Link to this heading">¶</a></h2>
 <ul class="simple">
-<li><p><strong>Cloud / lower-latency streaming engines</strong> (Deepgram, OpenAI Realtime,
-WhisperLive) behind the same <code class="docutils literal notranslate"><span class="pre">STTEngine</span></code> facade, and <strong>semantic turn
-detection</strong> — see <code class="docutils literal notranslate"><span class="pre">hearing-live-pipeline</span></code>.</p></li>
+<li><p><strong>Native streaming engines</strong> (Deepgram websocket, OpenAI Realtime,
+WhisperLive) behind the same <code class="docutils literal notranslate"><span class="pre">STTEngine</span></code> facade — today every engine streams
+through VAD-segmented batch calls — and <strong>semantic turn detection</strong> — see
+<code class="docutils literal notranslate"><span class="pre">hearing-live-pipeline</span></code>.</p></li>
 <li><p><strong>Live device capture verified on hardware</strong> (<code class="docutils literal notranslate"><span class="pre">DeviceCapture</span></code> is written; needs
 a BlackHole + Aggregate Device) — see <code class="docutils literal notranslate"><span class="pre">hearing-audio-capture</span></code>.</p></li>
 <li><p><strong>TypeScript frontend</strong> (schema-driven transcript viewer + copilot overlay
@@ -444,7 +513,7 @@ is grounded in are in <code class="docutils literal notranslate"><span class="pr
 </section>
 </section>
 
-<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-10-13 20:47 UTC from <a href="https://github.com/thorwhalen/hearing/commit/cc566583fe8f99e31f83459dc9a855920592a970">cc56658</a> (main) · hearing 0.0.6 · <a href="about-this-build.html">about this build</a></p>
+<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-10-14 05:27 UTC from <a href="https://github.com/thorwhalen/hearing/commit/e6ef5233da0d2217bf626bdba9d05c3831b07e0a">e6ef523</a> (main) · hearing 0.0.7 · <a href="about-this-build.html">about this build</a></p>
         </article>
       </div>
       <footer>
@@ -487,7 +556,10 @@ is grounded in are in <code class="docutils literal notranslate"><span class="pr
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">hearing</a><ul>
-<li><a class="reference internal" href="#install">Install</a></li>
+<li><a class="reference internal" href="#install">Install</a><ul>
+<li><a class="reference internal" href="#stt-engines">STT engines</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#what-works-today-the-batch-milestone">What works today (the batch milestone)</a><ul>
 <li><a class="reference internal" href="#live-streaming-milestone-2-core-working">Live / streaming (milestone 2 — core working)</a></li>
 <li><a class="reference internal" href="#composition-dependency-injection">Composition (dependency injection)</a></li>
@@ -509,7 +581,7 @@ is grounded in are in <code class="docutils literal notranslate"><span class="pr
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=1d1a88ea"></script>
+</div><script src="_static/documentation_options.js?v=b45afc8c"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

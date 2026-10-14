@@ -9,13 +9,19 @@ hearing.stt
    .. autosummary::
    
       DEFAULT_BACKEND
+      ENGINE_ALIASES
+      WHISPER_SIZED_BACKENDS
+      ENGINE_NAMES
    
    .. rubric:: Functions
 
    .. autosummary::
    
+      DeepgramSTT
       FasterWhisperSTT
+      MLXSTT
       OpenAISTT
+      WhisperXSTT
       default_engine
       get_engine
    

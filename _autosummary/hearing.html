@@ -205,6 +205,24 @@
 <li class="toctree-l1 current has-children"><a class="reference internal" href="../api.html">API reference</a><input aria-label="Toggle navigation of API reference" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l2 current has-children current-page"><a class="current reference internal" href="#">hearing</a><input aria-label="Toggle navigation of hearing" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="hearing.agents.html">hearing.agents</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="hearing.backends.html">hearing.backends</a><input aria-label="Toggle navigation of hearing.backends" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="hearing.backends.mlx_whisper.html">hearing.backends.mlx_whisper</a><input aria-label="Toggle navigation of hearing.backends.mlx_whisper" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="hearing.backends.mlx_whisper.adapter.html">hearing.backends.mlx_whisper.adapter</a></li>
+<li class="toctree-l5"><a class="reference internal" href="hearing.backends.mlx_whisper.config.html">hearing.backends.mlx_whisper.config</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="hearing.backends.parakeet_mlx.html">hearing.backends.parakeet_mlx</a><input aria-label="Toggle navigation of hearing.backends.parakeet_mlx" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="hearing.backends.parakeet_mlx.adapter.html">hearing.backends.parakeet_mlx.adapter</a></li>
+<li class="toctree-l5"><a class="reference internal" href="hearing.backends.parakeet_mlx.config.html">hearing.backends.parakeet_mlx.config</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="hearing.backends.whisperx.html">hearing.backends.whisperx</a><input aria-label="Toggle navigation of hearing.backends.whisperx" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="hearing.backends.whisperx.adapter.html">hearing.backends.whisperx.adapter</a></li>
+<li class="toctree-l5"><a class="reference internal" href="hearing.backends.whisperx.config.html">hearing.backends.whisperx.config</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="hearing.capture.html">hearing.capture</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hearing.cli.html">hearing.cli</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hearing.context.html">hearing.context</a></li>
@@ -565,34 +583,37 @@ of segments). Segments carry text, span, channel, and speaker.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="hearing.agents.html#module-hearing.agents" title="hearing.agents"><code class="xref py py-obj docutils literal notranslate"><span class="pre">agents</span></code></a></p></td>
 <td><p>The agent / &quot;copilot&quot; layer — the actual point of the hearing project.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hearing.capture.html#module-hearing.capture" title="hearing.capture"><code class="xref py py-obj docutils literal notranslate"><span class="pre">capture</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hearing.backends.html#module-hearing.backends" title="hearing.backends"><code class="xref py py-obj docutils literal notranslate"><span class="pre">backends</span></code></a></p></td>
+<td><p>Extra scribed backends that hearing contributes: Apple-Silicon MLX and WhisperX.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="hearing.capture.html#module-hearing.capture" title="hearing.capture"><code class="xref py py-obj docutils literal notranslate"><span class="pre">capture</span></code></a></p></td>
 <td><p>Audio capture and channel handling for the hearing pipeline.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hearing.cli.html#module-hearing.cli" title="hearing.cli"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cli</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hearing.cli.html#module-hearing.cli" title="hearing.cli"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cli</span></code></a></p></td>
 <td><p>Command-line interface for hearing, dispatched with <code class="code docutils literal notranslate"><span class="pre">cw</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hearing.context.html#module-hearing.context" title="hearing.context"><code class="xref py py-obj docutils literal notranslate"><span class="pre">context</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hearing.context.html#module-hearing.context" title="hearing.context"><code class="xref py py-obj docutils literal notranslate"><span class="pre">context</span></code></a></p></td>
 <td><p>Context stores and retrieval (RAG) for context-connected agents.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hearing.diarize.html#module-hearing.diarize" title="hearing.diarize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">diarize</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hearing.diarize.html#module-hearing.diarize" title="hearing.diarize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">diarize</span></code></a></p></td>
 <td><p>Diarization and speaker labelling for the hearing pipeline.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hearing.interfaces.html#module-hearing.interfaces" title="hearing.interfaces"><code class="xref py py-obj docutils literal notranslate"><span class="pre">interfaces</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hearing.interfaces.html#module-hearing.interfaces" title="hearing.interfaces"><code class="xref py py-obj docutils literal notranslate"><span class="pre">interfaces</span></code></a></p></td>
 <td><p>Facade Protocols for the four pipeline concerns.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hearing.pipeline.html#module-hearing.pipeline" title="hearing.pipeline"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pipeline</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hearing.pipeline.html#module-hearing.pipeline" title="hearing.pipeline"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pipeline</span></code></a></p></td>
 <td><p>Pipeline assembly — compose the four concerns by dependency injection.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hearing.storage.html#module-hearing.storage" title="hearing.storage"><code class="xref py py-obj docutils literal notranslate"><span class="pre">storage</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hearing.storage.html#module-hearing.storage" title="hearing.storage"><code class="xref py py-obj docutils literal notranslate"><span class="pre">storage</span></code></a></p></td>
 <td><p>Transcript persistence via key-value stores (python-storage / <code class="docutils literal notranslate"><span class="pre">dol</span></code>).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hearing.stt.html#module-hearing.stt" title="hearing.stt"><code class="xref py py-obj docutils literal notranslate"><span class="pre">stt</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hearing.stt.html#module-hearing.stt" title="hearing.stt"><code class="xref py py-obj docutils literal notranslate"><span class="pre">stt</span></code></a></p></td>
 <td><p>Speech-to-text for hearing — now backed by the scribed transcription façade.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="hearing.types.html#module-hearing.types" title="hearing.types"><code class="xref py py-obj docutils literal notranslate"><span class="pre">types</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="hearing.types.html#module-hearing.types" title="hearing.types"><code class="xref py py-obj docutils literal notranslate"><span class="pre">types</span></code></a></p></td>
 <td><p>Shared data model for the hearing pipeline.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="hearing.vad.html#module-hearing.vad" title="hearing.vad"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vad</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="hearing.vad.html#module-hearing.vad" title="hearing.vad"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vad</span></code></a></p></td>
 <td><p>Voice-activity detection and utterance segmentation — re-exported from scribed.</p></td>
 </tr>
 </tbody>
@@ -688,7 +709,7 @@ of segments). Segments carry text, span, channel, and speaker.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=1d1a88ea"></script>
+</div><script src="../_static/documentation_options.js?v=b45afc8c"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

@@ -202,6 +202,24 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../api.html">API reference</a><input aria-label="Toggle navigation of API reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/hearing.html">hearing</a><input aria-label="Toggle navigation of hearing" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/hearing.agents.html">hearing.agents</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/hearing.backends.html">hearing.backends</a><input aria-label="Toggle navigation of hearing.backends" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../../_autosummary/hearing.backends.mlx_whisper.html">hearing.backends.mlx_whisper</a><input aria-label="Toggle navigation of hearing.backends.mlx_whisper" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../../_autosummary/hearing.backends.mlx_whisper.adapter.html">hearing.backends.mlx_whisper.adapter</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../_autosummary/hearing.backends.mlx_whisper.config.html">hearing.backends.mlx_whisper.config</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../../_autosummary/hearing.backends.parakeet_mlx.html">hearing.backends.parakeet_mlx</a><input aria-label="Toggle navigation of hearing.backends.parakeet_mlx" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../../_autosummary/hearing.backends.parakeet_mlx.adapter.html">hearing.backends.parakeet_mlx.adapter</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../_autosummary/hearing.backends.parakeet_mlx.config.html">hearing.backends.parakeet_mlx.config</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../../_autosummary/hearing.backends.whisperx.html">hearing.backends.whisperx</a><input aria-label="Toggle navigation of hearing.backends.whisperx" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../../_autosummary/hearing.backends.whisperx.adapter.html">hearing.backends.whisperx.adapter</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../_autosummary/hearing.backends.whisperx.config.html">hearing.backends.whisperx.config</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/hearing.capture.html">hearing.capture</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/hearing.cli.html">hearing.cli</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/hearing.context.html">hearing.context</a></li>
@@ -262,12 +280,24 @@
 <span class="sd">changing the scribed ``backend=`` (e.g. ``"openai"``) — nothing downstream changes.</span>
 <span class="sd">See scribed's ``scribed-choose-backend`` skill for the full engine landscape, pricing,</span>
 <span class="sd">and the local-vs-cloud decision.</span>
+
+<span class="sd">Engines by friendly name (:data:`ENGINE_ALIASES`, used by :func:`get_engine` and the</span>
+<span class="sd">CLI's ``--engine``):</span>
+
+<span class="sd">- ``whisper`` — faster-whisper, local, any CPU/GPU (default; ``hearing[whisper]``)</span>
+<span class="sd">- ``openai`` — OpenAI transcription API (``hearing[openai]``, ``OPENAI_API_KEY``)</span>
+<span class="sd">- ``deepgram`` — Deepgram Nova-3 (``hearing[deepgram]``, ``DEEPGRAM_API_KEY``)</span>
+<span class="sd">- ``mlx`` / ``parakeet`` — Whisper / Parakeet-TDT on Apple Silicon (``hearing[mlx]``)</span>
+<span class="sd">- ``whisperx`` — WhisperX, aligned words + optional diarization (``hearing[whisperx]``)</span>
+
+<span class="sd">The last three are scribed backends that hearing itself contributes</span>
+<span class="sd">(:mod:`hearing.backends`); they are registered with scribed on first use.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">AsyncIterator</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">AsyncIterator</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">scribed</span>
@@ -282,6 +312,38 @@
 
 <span class="c1">#: Default scribed backend id for local transcription.</span>
 <span class="n">DEFAULT_BACKEND</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"faster-whisper"</span>
+
+<span class="c1">#: Friendly engine name -&gt; scribed backend id (the SSOT for ``get_engine``/the CLI).</span>
+<span class="c1">#: Any other registered scribed backend id is accepted as-is.</span>
+<span class="n">ENGINE_ALIASES</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"whisper"</span><span class="p">:</span> <span class="s2">"faster-whisper"</span><span class="p">,</span>
+    <span class="s2">"faster-whisper"</span><span class="p">:</span> <span class="s2">"faster-whisper"</span><span class="p">,</span>
+    <span class="s2">"local"</span><span class="p">:</span> <span class="s2">"faster-whisper"</span><span class="p">,</span>
+    <span class="s2">"openai"</span><span class="p">:</span> <span class="s2">"openai"</span><span class="p">,</span>
+    <span class="s2">"cloud"</span><span class="p">:</span> <span class="s2">"openai"</span><span class="p">,</span>
+    <span class="s2">"deepgram"</span><span class="p">:</span> <span class="s2">"deepgram"</span><span class="p">,</span>
+    <span class="s2">"nova"</span><span class="p">:</span> <span class="s2">"deepgram"</span><span class="p">,</span>
+    <span class="s2">"mlx"</span><span class="p">:</span> <span class="s2">"mlx-whisper"</span><span class="p">,</span>
+    <span class="s2">"mlx-whisper"</span><span class="p">:</span> <span class="s2">"mlx-whisper"</span><span class="p">,</span>
+    <span class="s2">"parakeet"</span><span class="p">:</span> <span class="s2">"parakeet-mlx"</span><span class="p">,</span>
+    <span class="s2">"parakeet-mlx"</span><span class="p">:</span> <span class="s2">"parakeet-mlx"</span><span class="p">,</span>
+    <span class="s2">"whisperx"</span><span class="p">:</span> <span class="s2">"whisperx"</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1">#: Backends whose ``model`` accepts a bare whisper size ("base", "small", ...).</span>
+<span class="n">WHISPER_SIZED_BACKENDS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"faster-whisper"</span><span class="p">,</span> <span class="s2">"mlx-whisper"</span><span class="p">,</span> <span class="s2">"whisperx"</span><span class="p">})</span>
+
+<span class="c1">#: Engine names shown in help and error messages (one per backend).</span>
+<span class="n">ENGINE_NAMES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"whisper"</span><span class="p">,</span> <span class="s2">"openai"</span><span class="p">,</span> <span class="s2">"deepgram"</span><span class="p">,</span> <span class="s2">"mlx"</span><span class="p">,</span> <span class="s2">"parakeet"</span><span class="p">,</span> <span class="s2">"whisperx"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_service</span><span class="p">(</span><span class="n">backend</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""scribed's service handle for ``backend``, registering hearing's backends first."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">BACKEND_MODULES</span><span class="p">,</span> <span class="n">register_backends</span>
+
+    <span class="k">if</span> <span class="n">backend</span> <span class="ow">in</span> <span class="n">BACKEND_MODULES</span><span class="p">:</span>
+        <span class="n">register_backends</span><span class="p">([</span><span class="n">backend</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">scribed</span><span class="o">.</span><span class="n">services</span><span class="p">[</span><span class="n">backend</span><span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_to_hearing_segment</span><span class="p">(</span>
@@ -343,16 +405,20 @@
 <span class="sd">        model_size: optional model override forwarded to the backend (e.g. ``"tiny"``).</span>
 <span class="sd">        language: force a language code; ``None`` =&gt; auto-detect.</span>
 <span class="sd">        vad: utterance segmenter for ``stream_transcribe`` (default: scribed EnergyVAD).</span>
+<span class="sd">        options: extra backend kwargs forwarded on every call (e.g.</span>
+<span class="sd">            ``{"diarize": True}`` for WhisperX/Deepgram); see the backend's</span>
+<span class="sd">            ``param_map`` for what it accepts.</span>
 <span class="sd">    """</span>
 
     <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_BACKEND</span>
     <span class="n">model_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">language</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">vad</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">"VAD"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">options</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">language</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Build scribed transcribe kwargs (model + language) from this engine's config."""</span>
-        <span class="n">kw</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="w">        </span><span class="sd">"""Build scribed transcribe kwargs (options + model + language)."""</span>
+        <span class="n">kw</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">kw</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_size</span>
         <span class="n">lang</span> <span class="o">=</span> <span class="n">language</span> <span class="k">if</span> <span class="n">language</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">language</span>
@@ -370,9 +436,7 @@
         <span class="k">if</span> <span class="n">mono16</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
         <span class="n">wav</span> <span class="o">=</span> <span class="n">to_wav_bytes</span><span class="p">(</span><span class="n">mono16</span><span class="p">,</span> <span class="n">STT_SAMPLE_RATE</span><span class="p">)</span>
-        <span class="n">transcript</span> <span class="o">=</span> <span class="n">scribed</span><span class="o">.</span><span class="n">services</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="p">]</span><span class="o">.</span><span class="n">transcribe</span><span class="p">(</span>
-            <span class="n">wav</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_kwargs</span><span class="p">(</span><span class="n">language</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="n">transcript</span> <span class="o">=</span> <span class="n">_service</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="p">)</span><span class="o">.</span><span class="n">transcribe</span><span class="p">(</span><span class="n">wav</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_kwargs</span><span class="p">(</span><span class="n">language</span><span class="p">))</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">_to_hearing_segment</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">transcript</span><span class="o">.</span><span class="n">segments</span><span class="p">]</span></div>
 
 
@@ -383,7 +447,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Stream finalized segments as utterances complete (via scribed's live path)."""</span>
         <span class="n">source</span> <span class="o">=</span> <span class="n">_FramesSource</span><span class="p">(</span><span class="n">frames</span><span class="o">=</span><span class="n">frames</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">)</span>
-        <span class="n">agen</span> <span class="o">=</span> <span class="n">scribed</span><span class="o">.</span><span class="n">services</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="p">]</span><span class="o">.</span><span class="n">transcribe_live</span><span class="p">(</span>
+        <span class="n">agen</span> <span class="o">=</span> <span class="n">_service</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="p">)</span><span class="o">.</span><span class="n">transcribe_live</span><span class="p">(</span>
             <span class="n">source</span><span class="p">,</span> <span class="n">vad</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">vad</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_kwargs</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="k">async</span> <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">agen</span><span class="p">:</span>
@@ -395,19 +459,27 @@
 <div class="viewcode-block" id="get_engine">
 <a class="viewcode-back" href="../../_autosummary/hearing.stt.html#hearing.stt.get_engine">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_engine</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"whisper"</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ScribedSTT</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Build a scribed-backed STT engine by friendly name.</span>
+<span class="w">    </span><span class="sd">"""Build a scribed-backed STT engine by friendly name (see :data:`ENGINE_ALIASES`).</span>
 
-<span class="sd">    ``"whisper"``/``"faster-whisper"``/``"local"`` -&gt; faster-whisper; ``"openai"``/</span>
-<span class="sd">    ``"cloud"`` -&gt; openai. Any other registered scribed backend id works too.</span>
+<span class="sd">    ``"whisper"`` -&gt; faster-whisper, ``"openai"``, ``"deepgram"``, ``"mlx"`` -&gt;</span>
+<span class="sd">    mlx-whisper, ``"parakeet"`` -&gt; parakeet-mlx, ``"whisperx"``. Any other</span>
+<span class="sd">    registered scribed backend id works too. ``kwargs`` go to :class:`ScribedSTT`.</span>
+
+<span class="sd">    &gt;&gt;&gt; get_engine("mlx").backend</span>
+<span class="sd">    'mlx-whisper'</span>
 <span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">BACKEND_MODULES</span>
+
     <span class="n">key</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"whisper"</span><span class="p">,</span> <span class="s2">"faster-whisper"</span><span class="p">,</span> <span class="s2">"local"</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">ScribedSTT</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">"faster-whisper"</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"openai"</span><span class="p">,</span> <span class="s2">"cloud"</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">ScribedSTT</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">"openai"</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">scribed</span><span class="o">.</span><span class="n">list_backends</span><span class="p">():</span>
-        <span class="k">return</span> <span class="n">ScribedSTT</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown STT engine </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">; use 'whisper' or 'openai'."</span><span class="p">)</span></div>
+    <span class="n">backend</span> <span class="o">=</span> <span class="n">ENGINE_ALIASES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">backend</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="n">key</span> <span class="ow">in</span> <span class="n">BACKEND_MODULES</span> <span class="ow">or</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">scribed</span><span class="o">.</span><span class="n">list_backends</span><span class="p">()):</span>
+        <span class="n">backend</span> <span class="o">=</span> <span class="n">key</span>
+    <span class="k">if</span> <span class="n">backend</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Unknown STT engine </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">; use one of </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ENGINE_NAMES</span><span class="p">)</span><span class="si">}</span><span class="s2"> "</span>
+            <span class="s2">"(or any scribed backend id)."</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ScribedSTT</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
 
@@ -440,6 +512,52 @@
 <span class="w">    </span><span class="sd">"""Backward-compatible constructor for the OpenAI engine (returns a ``ScribedSTT``)."""</span>
     <span class="k">return</span> <span class="n">ScribedSTT</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">"openai"</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
+
+
+<div class="viewcode-block" id="DeepgramSTT">
+<a class="viewcode-back" href="../../_autosummary/hearing.stt.html#hearing.stt.DeepgramSTT">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">DeepgramSTT</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ScribedSTT</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Deepgram (cloud) engine — Nova-3 by default; ``model="nova-2"`` etc. swaps it.</span>
+
+<span class="sd">    Batch goes to Deepgram's pre-recorded REST API (via scribed's deepgram backend);</span>
+<span class="sd">    the live path is scribed's VAD-segmented stream over that batch call. Needs</span>
+<span class="sd">    ``pip install 'hearing[deepgram]'`` and ``DEEPGRAM_API_KEY``.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">ScribedSTT</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">"deepgram"</span><span class="p">,</span> <span class="n">model_size</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="MLXSTT">
+<a class="viewcode-back" href="../../_autosummary/hearing.stt.html#hearing.stt.MLXSTT">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">MLXSTT</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">mlx_backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mlx-whisper"</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ScribedSTT</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Apple-Silicon (MLX) engine: mlx-whisper by default, or ``mlx_backend="parakeet-mlx"``.</span>
+
+<span class="sd">    ``model`` is a Hugging Face repo id or (mlx-whisper) a bare Whisper size such as</span>
+<span class="sd">    ``"small"``. Needs macOS on Apple Silicon and ``pip install 'hearing[mlx]'``.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">mlx_backend</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"mlx-whisper"</span><span class="p">,</span> <span class="s2">"parakeet-mlx"</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Unknown MLX backend </span><span class="si">{</span><span class="n">mlx_backend</span><span class="si">!r}</span><span class="s2">; use 'mlx-whisper' or 'parakeet-mlx'."</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ScribedSTT</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">mlx_backend</span><span class="p">,</span> <span class="n">model_size</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="WhisperXSTT">
+<a class="viewcode-back" href="../../_autosummary/hearing.stt.html#hearing.stt.WhisperXSTT">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">WhisperXSTT</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">diarize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ScribedSTT</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""WhisperX engine: aligned word timestamps, plus pyannote speakers if ``diarize``.</span>
+
+<span class="sd">    Needs ``pip install 'hearing[whisperx]'``; ``diarize=True`` also needs a</span>
+<span class="sd">    Hugging Face token in ``HF_TOKEN``.</span>
+<span class="sd">    """</span>
+    <span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"options"</span><span class="p">,</span> <span class="p">{}),</span> <span class="s2">"diarize"</span><span class="p">:</span> <span class="n">diarize</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">ScribedSTT</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">"whisperx"</span><span class="p">,</span> <span class="n">model_size</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
 </pre></div>
         </article>
       </div>
@@ -468,7 +586,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=1d1a88ea"></script>
+</div><script src="../../_static/documentation_options.js?v=b45afc8c"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

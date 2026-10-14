@@ -1,32 +1,32 @@
 {
   "schema_version": 1,
-  "built_at": "2026-10-13T20:47:53Z",
+  "built_at": "2026-10-14T05:27:37Z",
   "package": {
     "name": "hearing",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "display_name": "hearing",
     "source": "pyproject.toml"
   },
   "git": {
     "available": true,
-    "commit": "cc566583fe8f99e31f83459dc9a855920592a970",
-    "short_commit": "cc56658",
+    "commit": "e6ef5233da0d2217bf626bdba9d05c3831b07e0a",
+    "short_commit": "e6ef523",
     "branch": "main",
     "tags": [],
     "dirty": false,
     "remote_url": "https://github.com/thorwhalen/hearing",
-    "commit_url": "https://github.com/thorwhalen/hearing/commit/cc566583fe8f99e31f83459dc9a855920592a970",
+    "commit_url": "https://github.com/thorwhalen/hearing/commit/e6ef5233da0d2217bf626bdba9d05c3831b07e0a",
     "error": null
   },
   "ci": {
     "provider": "github",
     "repository": "thorwhalen/hearing",
-    "sha": "cc566583fe8f99e31f83459dc9a855920592a970",
+    "sha": "e6ef5233da0d2217bf626bdba9d05c3831b07e0a",
     "sha_in_history": true,
     "ref": "refs/heads/main",
     "ref_name": "main",
-    "run_id": "38465423680",
-    "run_url": "https://github.com/thorwhalen/hearing/actions/runs/38465423680",
+    "run_id": "38516604881",
+    "run_url": "https://github.com/thorwhalen/hearing/actions/runs/38516604881",
     "server_url": "https://github.com"
   },
   "tools": {
@@ -55,16 +55,16 @@
     "docs_dir": "docsrc"
   },
   "site": {
-    "modules_documented": 12,
-    "objects_documented": 123
+    "modules_documented": 22,
+    "objects_documented": 152
   },
   "pypi": {
     "checked": true,
-    "latest": "0.0.6",
+    "latest": "0.0.7",
     "relation": "same",
     "error": null
   },
-  "reproduce": "git clone https://github.com/thorwhalen/hearing && cd hearing\ngit checkout cc566583fe8f99e31f83459dc9a855920592a970\npip install \"epythet==0.2.17\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
+  "reproduce": "git clone https://github.com/thorwhalen/hearing && cd hearing\ngit checkout e6ef5233da0d2217bf626bdba9d05c3831b07e0a\npip install \"epythet==0.2.17\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
   "warnings": [],
   "alignment": {
     "aligned": true,

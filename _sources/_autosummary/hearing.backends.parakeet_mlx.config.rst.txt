@@ -1,0 +1,12 @@
+hearing.backends.parakeet\_mlx.config
+=====================================
+
+.. automodule:: hearing.backends.parakeet_mlx.config
+
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+   
+      DEFAULT_MODEL
+   

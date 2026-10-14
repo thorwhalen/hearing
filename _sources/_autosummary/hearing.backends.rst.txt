@@ -1,0 +1,34 @@
+hearing.backends
+================
+
+.. automodule:: hearing.backends
+
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+   
+      BACKEND_MODULES
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      backend_config
+      is_apple_silicon
+      logprob_to_confidence
+      register_backends
+      require_apple_silicon
+      require_module
+      to_waveform_16k
+      whisper_result_to_segments
+   
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :recursive:
+
+   mlx_whisper
+   parakeet_mlx
+   whisperx

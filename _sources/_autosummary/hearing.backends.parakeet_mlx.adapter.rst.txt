@@ -1,0 +1,12 @@
+hearing.backends.parakeet\_mlx.adapter
+======================================
+
+.. automodule:: hearing.backends.parakeet_mlx.adapter
+
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      Adapter
+   

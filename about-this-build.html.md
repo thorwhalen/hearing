@@ -2,7 +2,7 @@
 
 # About this build
 
-This documentation was built on **2026-10-13 20:47 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/cc566583fe8f99e31f83459dc9a855920592a970"><code>cc56658</code></a> on branch <code>main</code>, for **hearing 0.0.6** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-14 05:27 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/e6ef5233da0d2217bf626bdba9d05c3831b07e0a"><code>e6ef523</code></a> on branch <code>main</code>, for **hearing 0.0.7** (from <code>pyproject.toml</code>).
 
 #### NOTE
 Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
@@ -11,7 +11,7 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 |                     |                                                                                                                                                           |
 |---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/cc566583fe8f99e31f83459dc9a855920592a970"><code>cc566583fe8f99e31f83459dc9a855920592a970</code></a> |
+| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/e6ef5233da0d2217bf626bdba9d05c3831b07e0a"><code>e6ef5233da0d2217bf626bdba9d05c3831b07e0a</code></a> |
 | Branch              | <code>main</code>                                                                                                                                         |
 | Tags at this commit | none                                                                                                                                                      |
 | Working tree        | clean                                                                                                                                                     |
@@ -22,9 +22,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>thorwhalen/hearing</code>                                                            |
-| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/38465423680">38465423680</a>   |
+| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/38516604881">38516604881</a>   |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>cc566583fe8f99e31f83459dc9a855920592a970</code> (in the history of the built commit) |
+| Event commit | <code>e6ef5233da0d2217bf626bdba9d05c3831b07e0a</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -49,13 +49,13 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/hearing/0.0.6/">0.0.6</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/hearing/0.0.7/">0.0.7</a>, the same as the documented version.
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/thorwhalen/hearing && cd hearing
-git checkout cc566583fe8f99e31f83459dc9a855920592a970
+git checkout e6ef5233da0d2217bf626bdba9d05c3831b07e0a
 pip install "epythet==0.2.17"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

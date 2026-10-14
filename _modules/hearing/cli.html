@@ -202,6 +202,24 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../api.html">API reference</a><input aria-label="Toggle navigation of API reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/hearing.html">hearing</a><input aria-label="Toggle navigation of hearing" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/hearing.agents.html">hearing.agents</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/hearing.backends.html">hearing.backends</a><input aria-label="Toggle navigation of hearing.backends" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../../_autosummary/hearing.backends.mlx_whisper.html">hearing.backends.mlx_whisper</a><input aria-label="Toggle navigation of hearing.backends.mlx_whisper" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../../_autosummary/hearing.backends.mlx_whisper.adapter.html">hearing.backends.mlx_whisper.adapter</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../_autosummary/hearing.backends.mlx_whisper.config.html">hearing.backends.mlx_whisper.config</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../../_autosummary/hearing.backends.parakeet_mlx.html">hearing.backends.parakeet_mlx</a><input aria-label="Toggle navigation of hearing.backends.parakeet_mlx" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../../_autosummary/hearing.backends.parakeet_mlx.adapter.html">hearing.backends.parakeet_mlx.adapter</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../_autosummary/hearing.backends.parakeet_mlx.config.html">hearing.backends.parakeet_mlx.config</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../../_autosummary/hearing.backends.whisperx.html">hearing.backends.whisperx</a><input aria-label="Toggle navigation of hearing.backends.whisperx" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../../_autosummary/hearing.backends.whisperx.adapter.html">hearing.backends.whisperx.adapter</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../_autosummary/hearing.backends.whisperx.config.html">hearing.backends.whisperx.config</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/hearing.capture.html">hearing.capture</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/hearing.cli.html">hearing.cli</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/hearing.context.html">hearing.context</a></li>
@@ -259,6 +277,7 @@
 
 <span class="sd">    hearing transcribe meeting.wav</span>
 <span class="sd">    hearing transcribe meeting.wav --model small --out notes.json</span>
+<span class="sd">    hearing transcribe meeting.wav --engine deepgram   # or openai / mlx / parakeet / whisperx</span>
 <span class="sd">    hearing summarize meeting.wav            # transcribe + AI meeting notes</span>
 <span class="sd">    hearing info                             # check what's installed/available</span>
 <span class="sd">"""</span>
@@ -280,7 +299,7 @@
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">engine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"whisper"</span><span class="p">,</span>
-    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"base"</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">language</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">split</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">diarize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -292,8 +311,12 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        path: audio file (wav/flac/aiff/...; convert mp3/m4a with ffmpeg first).</span>
-<span class="sd">        engine: STT engine — "whisper" (local faster-whisper) or "openai" (cloud).</span>
-<span class="sd">        model: whisper model size (tiny/base/small/medium/large-v3/...); local only.</span>
+<span class="sd">        engine: STT engine — "whisper" (local faster-whisper, default), "openai"</span>
+<span class="sd">            (cloud), "deepgram" (cloud, Nova-3), "mlx" (Whisper on Apple Silicon),</span>
+<span class="sd">            "parakeet" (Parakeet-TDT on Apple Silicon), or "whisperx" (aligned words).</span>
+<span class="sd">        model: engine model override — a whisper size (tiny/base/small/large-v3/...)</span>
+<span class="sd">            for whisper/mlx/whisperx, a model name for cloud engines (e.g.</span>
+<span class="sd">            "nova-3"); omit for the engine's default.</span>
 <span class="sd">        language: force a language code (e.g. "en"); omit to auto-detect.</span>
 <span class="sd">        split: split mic/system channels for multi-channel files (me vs them).</span>
 <span class="sd">        diarize: apply the channel-trick "me vs them" labelling.</span>
@@ -306,11 +329,7 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.diarize</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChannelTrickDiarizer</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.stt</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_engine</span>
 
-    <span class="n">stt</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">get_engine</span><span class="p">(</span><span class="s2">"openai"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">engine</span> <span class="o">==</span> <span class="s2">"openai"</span>
-        <span class="k">else</span> <span class="n">get_engine</span><span class="p">(</span><span class="s2">"whisper"</span><span class="p">,</span> <span class="n">model_size</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
-    <span class="p">)</span>
+    <span class="n">stt</span> <span class="o">=</span> <span class="n">get_engine</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">model_size</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
     <span class="n">transcript</span> <span class="o">=</span> <span class="n">_transcribe</span><span class="p">(</span>
         <span class="n">path</span><span class="p">,</span>
         <span class="n">engine</span><span class="o">=</span><span class="n">stt</span><span class="p">,</span>
@@ -351,7 +370,8 @@
     <span class="n">context_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">retriever</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"keyword"</span><span class="p">,</span>
     <span class="n">web_search</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">transcribe_model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"base"</span><span class="p">,</span>
+    <span class="n">engine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"whisper"</span><span class="p">,</span>
+    <span class="n">transcribe_model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">split</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Transcribe a meeting and produce AI notes (summary, actions, questions).</span>
@@ -367,12 +387,13 @@
 <span class="sd">        retriever: "keyword" (TF-IDF, offline) or "embedding" (OpenAI semantic;</span>
 <span class="sd">            needs hearing[openai] + OPENAI_API_KEY). Only used with context_dir.</span>
 <span class="sd">        web_search: also bring in Wikipedia fact context (key-free) for the agent.</span>
-<span class="sd">        transcribe_model: whisper model size used for transcription.</span>
+<span class="sd">        engine: STT engine (same choices as `transcribe --engine`).</span>
+<span class="sd">        transcribe_model: STT model override (omit for the engine's default).</span>
 <span class="sd">        split: split mic/system channels (me vs them).</span>
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.agents</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_default_agent</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">summarize</span> <span class="k">as</span> <span class="n">_summarize</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.stt</span><span class="w"> </span><span class="kn">import</span> <span class="n">FasterWhisperSTT</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.stt</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_engine</span>
 
     <span class="n">retr</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">context_dir</span><span class="p">:</span>
@@ -395,7 +416,7 @@
     <span class="k">return</span> <span class="n">_summarize</span><span class="p">(</span>
         <span class="n">path</span><span class="p">,</span>
         <span class="n">agent</span><span class="o">=</span><span class="n">chosen</span><span class="p">,</span>
-        <span class="n">engine</span><span class="o">=</span><span class="n">FasterWhisperSTT</span><span class="p">(</span><span class="n">model_size</span><span class="o">=</span><span class="n">transcribe_model</span><span class="p">),</span>
+        <span class="n">engine</span><span class="o">=</span><span class="n">get_engine</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">model_size</span><span class="o">=</span><span class="n">transcribe_model</span><span class="p">),</span>
         <span class="n">split</span><span class="o">=</span><span class="n">split</span><span class="p">,</span>
     <span class="p">)</span></div>
 
@@ -425,7 +446,8 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">live</span><span class="p">(</span>
     <span class="n">path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"base"</span><span class="p">,</span>
+    <span class="n">engine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"whisper"</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">block_ms</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
     <span class="n">realtime</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -435,7 +457,9 @@
 <span class="sd">    Args:</span>
 <span class="sd">        path: stream this audio FILE through the live loop (great for a demo /</span>
 <span class="sd">            no hardware). Omit to capture from an audio DEVICE instead.</span>
-<span class="sd">        model: whisper model size for the streaming STT.</span>
+<span class="sd">        engine: STT engine (same choices as `transcribe --engine`); engines</span>
+<span class="sd">            without native streaming are fed VAD-segmented utterances.</span>
+<span class="sd">        model: STT model override (omit for the engine's default).</span>
 <span class="sd">        device: audio device index/name for live capture (an Aggregate Device</span>
 <span class="sd">            with mic + BlackHole; see the hearing-audio-capture skill).</span>
 <span class="sd">        block_ms: streaming block size in milliseconds.</span>
@@ -445,10 +469,10 @@
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.capture</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeviceCapture</span><span class="p">,</span> <span class="n">StreamingFileCapture</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">live_transcribe</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.stt</span><span class="w"> </span><span class="kn">import</span> <span class="n">FasterWhisperSTT</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.stt</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_engine</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">_ms_to_clock</span>
 
-    <span class="n">engine</span> <span class="o">=</span> <span class="n">FasterWhisperSTT</span><span class="p">(</span><span class="n">model_size</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">stt</span> <span class="o">=</span> <span class="n">get_engine</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">model_size</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">path</span><span class="p">:</span>
         <span class="n">source</span> <span class="o">=</span> <span class="n">StreamingFileCapture</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">block_ms</span><span class="o">=</span><span class="n">block_ms</span><span class="p">,</span> <span class="n">realtime</span><span class="o">=</span><span class="n">realtime</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -456,7 +480,7 @@
         <span class="nb">print</span><span class="p">(</span><span class="s2">"Listening (Ctrl+C to stop)…"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_run</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">async</span> <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">live_transcribe</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="n">engine</span><span class="p">):</span>
+        <span class="k">async</span> <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">live_transcribe</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="n">stt</span><span class="p">):</span>
             <span class="n">who</span> <span class="o">=</span> <span class="n">seg</span><span class="o">.</span><span class="n">speaker</span> <span class="ow">or</span> <span class="n">seg</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">value</span>
             <span class="nb">print</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">_ms_to_clock</span><span class="p">(</span><span class="n">seg</span><span class="o">.</span><span class="n">span</span><span class="o">.</span><span class="n">start_ms</span><span class="p">)</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">who</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">seg</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
@@ -525,14 +549,24 @@
     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
         <span class="n">_check</span><span class="p">(</span><span class="s2">"faster_whisper"</span><span class="p">,</span> <span class="s2">"default local STT engine  [hearing[whisper]]"</span><span class="p">)</span>
     <span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_check</span><span class="p">(</span><span class="s2">"openai"</span><span class="p">,</span> <span class="s2">"cloud STT: OpenAI             [hearing[openai]]"</span><span class="p">))</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="n">_check</span><span class="p">(</span><span class="s2">"deepgram"</span><span class="p">,</span> <span class="s2">"cloud STT: Deepgram Nova-3    [hearing[deepgram]]"</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_check</span><span class="p">(</span><span class="s2">"mlx_whisper"</span><span class="p">,</span> <span class="s2">"Apple-Silicon STT (Whisper)   [hearing[mlx]]"</span><span class="p">))</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_check</span><span class="p">(</span><span class="s2">"parakeet_mlx"</span><span class="p">,</span> <span class="s2">"Apple-Silicon STT (Parakeet)  [hearing[mlx]]"</span><span class="p">))</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="n">_check</span><span class="p">(</span><span class="s2">"whisperx"</span><span class="p">,</span> <span class="s2">"WhisperX STT (align+diarize)  [hearing[whisperx]]"</span><span class="p">)</span>
+    <span class="p">)</span>
     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_check</span><span class="p">(</span><span class="s2">"anthropic"</span><span class="p">,</span> <span class="s2">"Claude agent backend          [hearing[agents]]"</span><span class="p">))</span>
     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
         <span class="n">_check</span><span class="p">(</span><span class="s2">"pyannote.audio"</span><span class="p">,</span> <span class="s2">"speaker diarization          [hearing[diarize]]"</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
-    <span class="n">key</span> <span class="o">=</span> <span class="s2">"set"</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"ANTHROPIC_API_KEY"</span><span class="p">)</span> <span class="k">else</span> <span class="s2">"NOT set"</span>
-    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  ANTHROPIC_API_KEY: </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">env_var</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"ANTHROPIC_API_KEY"</span><span class="p">,</span> <span class="s2">"OPENAI_API_KEY"</span><span class="p">,</span> <span class="s2">"DEEPGRAM_API_KEY"</span><span class="p">):</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="s2">"set"</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="n">env_var</span><span class="p">)</span> <span class="k">else</span> <span class="s2">"NOT set"</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">env_var</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"  (system-audio capture on macOS needs BlackHole or Core Audio"</span><span class="p">)</span>
     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"   taps — see the hearing-audio-capture skill.)"</span><span class="p">)</span>
     <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
@@ -610,7 +644,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=1d1a88ea"></script>
+</div><script src="../../_static/documentation_options.js?v=b45afc8c"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

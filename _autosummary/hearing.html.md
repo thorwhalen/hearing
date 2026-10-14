@@ -232,15 +232,16 @@ file is multi-channel, and the free “me vs them” channel-trick diarizer.
 
 ### Modules
 
-| [`agents`](hearing.agents.html.md#module-hearing.agents)         | The agent / "copilot" layer — the actual point of the hearing project.          |
-|---------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
-| [`capture`](hearing.capture.html.md#module-hearing.capture)       | Audio capture and channel handling for the hearing pipeline.                    |
-| [`cli`](hearing.cli.html.md#module-hearing.cli)               | Command-line interface for hearing, dispatched with `cw`.                       |
-| [`context`](hearing.context.html.md#module-hearing.context)       | Context stores and retrieval (RAG) for context-connected agents.                |
-| [`diarize`](hearing.diarize.html.md#module-hearing.diarize)       | Diarization and speaker labelling for the hearing pipeline.                     |
-| [`interfaces`](hearing.interfaces.html.md#module-hearing.interfaces) | Facade Protocols for the four pipeline concerns.                                |
-| [`pipeline`](hearing.pipeline.html.md#module-hearing.pipeline)     | Pipeline assembly — compose the four concerns by dependency injection.          |
-| [`storage`](hearing.storage.html.md#module-hearing.storage)       | Transcript persistence via key-value stores (python-storage / `dol`).           |
-| [`stt`](hearing.stt.html.md#module-hearing.stt)               | Speech-to-text for hearing — now backed by the scribed transcription façade.    |
-| [`types`](hearing.types.html.md#module-hearing.types)           | Shared data model for the hearing pipeline.                                     |
-| [`vad`](hearing.vad.html.md#module-hearing.vad)               | Voice-activity detection and utterance segmentation — re-exported from scribed. |
+| [`agents`](hearing.agents.html.md#module-hearing.agents)         | The agent / "copilot" layer — the actual point of the hearing project.           |
+|---------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
+| [`backends`](hearing.backends.html.md#module-hearing.backends)     | Extra scribed backends that hearing contributes: Apple-Silicon MLX and WhisperX. |
+| [`capture`](hearing.capture.html.md#module-hearing.capture)       | Audio capture and channel handling for the hearing pipeline.                     |
+| [`cli`](hearing.cli.html.md#module-hearing.cli)               | Command-line interface for hearing, dispatched with `cw`.                        |
+| [`context`](hearing.context.html.md#module-hearing.context)       | Context stores and retrieval (RAG) for context-connected agents.                 |
+| [`diarize`](hearing.diarize.html.md#module-hearing.diarize)       | Diarization and speaker labelling for the hearing pipeline.                      |
+| [`interfaces`](hearing.interfaces.html.md#module-hearing.interfaces) | Facade Protocols for the four pipeline concerns.                                 |
+| [`pipeline`](hearing.pipeline.html.md#module-hearing.pipeline)     | Pipeline assembly — compose the four concerns by dependency injection.           |
+| [`storage`](hearing.storage.html.md#module-hearing.storage)       | Transcript persistence via key-value stores (python-storage / `dol`).            |
+| [`stt`](hearing.stt.html.md#module-hearing.stt)               | Speech-to-text for hearing — now backed by the scribed transcription façade.     |
+| [`types`](hearing.types.html.md#module-hearing.types)           | Shared data model for the hearing pipeline.                                      |
+| [`vad`](hearing.vad.html.md#module-hearing.vad)               | Voice-activity detection and utterance segmentation — re-exported from scribed.  |
