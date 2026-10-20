@@ -16,6 +16,7 @@ hearing.context
    
       build_embedding_retriever
       build_retriever
+      meeting_retriever
       openai_embedder
    
    .. rubric:: Classes
@@ -24,6 +25,7 @@ hearing.context
    
       CallableWebSearch
       Chunk
+      CombinedRetriever
       EmbeddingRetriever
       KeywordRetriever
       Retriever

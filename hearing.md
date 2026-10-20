@@ -1,4 +1,4 @@
-> built 2026-10-20 13:13 UTC from 605b6f0 (main) · hearing 0.0.9. Details: build_info.json
+> built 2026-10-20 13:17 UTC from 730d513 (main) · hearing 0.0.10. Details: build_info.json
 
 # index.html.md
 
@@ -325,16 +325,18 @@ Return a deterministic extractive summary of the window.
 * **Return type:**
   [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
 
-### hearing.agents.build_default_agent(, context=None, model=None, prefer='auto', retriever=None, web_search=None)
+### hearing.agents.build_default_agent(, context=None, model=None, prefer='auto', retriever=None, web_search=None, history=None)
 
 Pick the best available agent.
 
 `prefer="claude"` forces Claude; `"extractive"` forces the offline
 fallback; `"auto"` (default) uses Claude when the anthropic SDK and an API
 key are available, otherwise the dependency-free [`ExtractiveAgent`](_autosummary/hearing.agents.html.md#hearing.agents.ExtractiveAgent).
-A `retriever`/`web_search` make the Claude agent context-connected.
+A `retriever`/`web_search` make the Claude agent context-connected;
+`history` (a [`MeetingStore`](_autosummary/hearing.storage.html.md#hearing.storage.MeetingStore) or the mapping
+`transcribe(record=...)` fills) adds prior meetings’ takeaways to the retriever.
 
-### hearing.agents.summarize_transcript(transcript, , agent=None, context=None, model=None, retriever=None, web_search=None)
+### hearing.agents.summarize_transcript(transcript, , agent=None, context=None, model=None, retriever=None, web_search=None, history=None)
 
 Synchronous facade: run a (batch) agent over a transcript, return notes.
 
@@ -1038,6 +1040,7 @@ Protocol when you need semantic recall.
 | [`build_embedding_retriever`](_autosummary/hearing.context.html.md#hearing.context.build_embedding_retriever)(source, \*[, embed])   | Build an [`EmbeddingRetriever`](_autosummary/hearing.context.html.md#hearing.context.EmbeddingRetriever) (default embedder: OpenAI) from a dict, a list, or a folder of `.md`/`.txt` docs (same source forms as [`build_retriever()`](_autosummary/hearing.context.html.md#hearing.context.build_retriever)).   |
 |---------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [`build_retriever`](_autosummary/hearing.context.html.md#hearing.context.build_retriever)(source)                          | Build a [`KeywordRetriever`](_autosummary/hearing.context.html.md#hearing.context.KeywordRetriever) from a dict, a list, or a folder/file.                                                                                                                                           |
+| [`meeting_retriever`](_autosummary/hearing.context.html.md#hearing.context.meeting_retriever)(meetings, \*[, exclude, ...])  | Prior meetings' takeaways as a [`Retriever`](_autosummary/hearing.context.html.md#hearing.context.Retriever): the memory a meeting agent draws on.                                                                                                                            |
 | [`openai_embedder`](_autosummary/hearing.context.html.md#hearing.context.openai_embedder)(\*[, model, api_key, client])    | Return an [`EmbedFn`](_autosummary/hearing.context.html.md#hearing.context.EmbedFn) backed by the OpenAI embeddings API.                                                                                                                                                    |
 
 ### Classes
@@ -1045,6 +1048,7 @@ Protocol when you need semantic recall.
 | [`CallableWebSearch`](_autosummary/hearing.context.html.md#hearing.context.CallableWebSearch)(fn)                   | Adapt any callable into a [`WebSearch`](_autosummary/hearing.context.html.md#hearing.context.WebSearch) (for custom backends/tests).    |
 |------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
 | [`Chunk`](_autosummary/hearing.context.html.md#hearing.context.Chunk)(text[, title, source, score])     | A retrieved piece of context: the text plus where it came from.                                                      |
+| [`CombinedRetriever`](_autosummary/hearing.context.html.md#hearing.context.CombinedRetriever)(\*retrievers)         | Several retrievers searched together; their chunks merged by score.                                                  |
 | [`EmbeddingRetriever`](_autosummary/hearing.context.html.md#hearing.context.EmbeddingRetriever)(docs, \*, embed)     | Semantic retriever: ranks chunks by cosine similarity of embeddings.                                                 |
 | [`KeywordRetriever`](_autosummary/hearing.context.html.md#hearing.context.KeywordRetriever)(docs)                  | Dependency-free TF-IDF retriever over a small in-memory corpus.                                                      |
 | [`Retriever`](_autosummary/hearing.context.html.md#hearing.context.Retriever)(\*args, \*\*kwargs)           | Retrieves project/meeting context relevant to a query (RAG).                                                         |
@@ -1065,6 +1069,19 @@ sync or async.
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 A retrieved piece of context: the text plus where it came from.
+
+### *class* hearing.context.CombinedRetriever(\*retrievers)
+
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+
+Several retrievers searched together; their chunks merged by score.
+
+```pycon
+>>> import asyncio
+>>> both = CombinedRetriever(KeywordRetriever({"a": "postgres"}), KeywordRetriever({"b": "postgres too"}))
+>>> sorted(c.title for c in asyncio.run(both.search("postgres")))
+['a', 'b']
+```
 
 ### hearing.context.EmbedFn
 
@@ -1191,6 +1208,31 @@ path to a single file indexes that file; a Mapping/Sequence is used directly.
 
 * **Return type:**
   [`KeywordRetriever`](_autosummary/hearing.context.html.md#hearing.context.KeywordRetriever)
+
+### hearing.context.meeting_retriever(meetings, \*, exclude=(), transcripts=False, make=<class 'hearing.context.KeywordRetriever'>)
+
+Prior meetings’ takeaways as a [`Retriever`](_autosummary/hearing.context.html.md#hearing.context.Retriever): the memory a meeting agent draws on.
+
+`meetings` is a [`MeetingStore`](_autosummary/hearing.storage.html.md#hearing.storage.MeetingStore) or the mapping one wraps
+(what `transcribe(record=...)` writes). Each meeting’s takeaways are the agent
+insight stored with its transcript (`meta['insight']`); `transcripts=True`
+indexes the transcript text too. `exclude` leaves out meetings by id (the one in
+progress). `make` builds the retriever from the chunks (default
+[`KeywordRetriever`](_autosummary/hearing.context.html.md#hearing.context.KeywordRetriever); e.g. `lambda c: EmbeddingRetriever(c, embed=...)`).
+
+```pycon
+>>> import asyncio
+>>> from hearing.storage import MeetingStore
+>>> from hearing.types import TimeSpan, Transcript, TranscriptSegment
+>>> store = MeetingStore({})
+>>> t = Transcript([TranscriptSegment("we pick postgres", TimeSpan(0, 500))])
+>>> _ = store.save("2026-05-12", t.with_meta(insight="Decision: Postgres."))
+>>> [c.source for c in asyncio.run(meeting_retriever(store).search("postgres decision"))]
+['meeting:2026-05-12']
+```
+
+* **Return type:**
+  [`Retriever`](_autosummary/hearing.context.html.md#hearing.context.Retriever)
 
 ### hearing.context.openai_embedder(, model='text-embedding-3-small', api_key=None, client=None)
 
@@ -1506,8 +1548,11 @@ file is multi-channel, and the free “me vs them” channel-trick diarizer.
   * **language** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – force a language code (e.g. “en”); `None` = auto-detect.
   * **split** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – split mic/system channels when the source is multi-channel.
   * **system_channels** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`int`](https://docs.python.org/3/builtins/functions.html#int)]) – column indices for the channel split.
-  * **record** – optional `MutableMapping` store (e.g. a dol store) to persist
-    the transcript JSON under key `"<source>.transcript.json"`.
+  * **record** – optional `MutableMapping` store (e.g. a dol store) or
+    [`MeetingStore`](_autosummary/hearing.storage.html.md#hearing.storage.MeetingStore) to persist the transcript JSON
+    (with the agent’s insight) under key `"<source>.transcript.json"`,
+    i.e. meeting id `<source file name>`; `hearing.context.meeting_retriever`
+    reads those back as the next meeting’s context.
 * **Return type:**
   [`Transcript`](_autosummary/hearing.types.html.md#hearing.types.Transcript)
 * **Returns:**
@@ -1717,8 +1762,11 @@ file is multi-channel, and the free “me vs them” channel-trick diarizer.
   * **language** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – force a language code (e.g. “en”); `None` = auto-detect.
   * **split** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – split mic/system channels when the source is multi-channel.
   * **system_channels** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`int`](https://docs.python.org/3/builtins/functions.html#int)]) – column indices for the channel split.
-  * **record** – optional `MutableMapping` store (e.g. a dol store) to persist
-    the transcript JSON under key `"<source>.transcript.json"`.
+  * **record** – optional `MutableMapping` store (e.g. a dol store) or
+    [`MeetingStore`](_autosummary/hearing.storage.html.md#hearing.storage.MeetingStore) to persist the transcript JSON
+    (with the agent’s insight) under key `"<source>.transcript.json"`,
+    i.e. meeting id `<source file name>`; `hearing.context.meeting_retriever`
+    reads those back as the next meeting’s context.
 * **Return type:**
   [`Transcript`](_autosummary/hearing.types.html.md#hearing.types.Transcript)
 * **Returns:**
@@ -2249,16 +2297,18 @@ rate of the incoming blocks (used only for the ms arithmetic).
 
 # About this build
 
-This documentation was built on **2026-10-20 13:13 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/605b6f084a51c2f00c2b7d5dd9340a3b89dc0290"><code>605b6f0</code></a> on branch <code>main</code>, for **hearing 0.0.9** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-20 13:17 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/730d513d112fe11f030a2f9110dd5503b1e085aa"><code>730d513</code></a> on branch <code>main</code>, for **hearing 0.0.10** (from <code>pyproject.toml</code>).
 
-#### NOTE
-Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
+#### WARNING
+The documentation and the package may be misaligned:
+
+- The documented version (0.0.10) is behind the latest release on PyPI (0.0.11): `pip install hearing` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                           |
 |---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/605b6f084a51c2f00c2b7d5dd9340a3b89dc0290"><code>605b6f084a51c2f00c2b7d5dd9340a3b89dc0290</code></a> |
+| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/730d513d112fe11f030a2f9110dd5503b1e085aa"><code>730d513d112fe11f030a2f9110dd5503b1e085aa</code></a> |
 | Branch              | <code>main</code>                                                                                                                                         |
 | Tags at this commit | none                                                                                                                                                      |
 | Working tree        | clean                                                                                                                                                     |
@@ -2269,9 +2319,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>thorwhalen/hearing</code>                                                            |
-| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/39428387876">39428387876</a>   |
+| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/39428821427">39428821427</a>   |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>605b6f084a51c2f00c2b7d5dd9340a3b89dc0290</code> (in the history of the built commit) |
+| Event commit | <code>730d513d112fe11f030a2f9110dd5503b1e085aa</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -2296,13 +2346,13 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/hearing/0.0.9/">0.0.9</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/hearing/0.0.11/">0.0.11</a>, newer than the documented version (0.0.10).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/thorwhalen/hearing && cd hearing
-git checkout 605b6f084a51c2f00c2b7d5dd9340a3b89dc0290
+git checkout 730d513d112fe11f030a2f9110dd5503b1e085aa
 pip install "epythet==0.2.20"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

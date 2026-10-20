@@ -380,7 +380,9 @@
     <span class="n">web_search</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">"WebSearch"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># bring outside info in</span>
     <span class="n">retrieve_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span>
     <span class="n">web_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
-    <span class="n">client</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># an injected client (anything with .messages.create), e.g. a fake</span>
+    <span class="n">client</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="kc">None</span>  <span class="c1"># an injected client (anything with .messages.create), e.g. a fake</span>
+    <span class="p">)</span>
     <span class="n">tool_use</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># let Claude query the retriever / web search itself</span>
     <span class="n">max_tool_rounds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_MAX_TOOL_ROUNDS</span>
     <span class="n">_tool_cache</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -463,14 +465,19 @@
             <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_k</span> <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"search_context"</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">web_k</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">chunks</span> <span class="o">=</span> <span class="k">await</span> <span class="n">backend</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># a failed lookup is the model's to handle, not a crash</span>
+            <span class="k">except</span> <span class="p">(</span>
+                <span class="ne">Exception</span>
+            <span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># a failed lookup is the model's to handle, not a crash</span>
                 <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> failed: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="kc">True</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_tool_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">title</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">source</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'result'</span><span class="si">}</span><span class="s2">]"</span>
-                <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">source</span><span class="si">}</span><span class="s2">)"</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">source</span> <span class="ow">and</span> <span class="n">c</span><span class="o">.</span><span class="n">title</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
-                <span class="o">+</span> <span class="sa">f</span><span class="s2">" </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
-                <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">chunks</span>
-            <span class="p">)</span> <span class="ow">or</span> <span class="s2">"no results"</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_tool_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">title</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">source</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'result'</span><span class="si">}</span><span class="s2">]"</span>
+                    <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">source</span><span class="si">}</span><span class="s2">)"</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">source</span> <span class="ow">and</span> <span class="n">c</span><span class="o">.</span><span class="n">title</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
+                    <span class="o">+</span> <span class="sa">f</span><span class="s2">" </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">chunks</span>
+                <span class="p">)</span>
+                <span class="ow">or</span> <span class="s2">"no results"</span>
+            <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tool_cache</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="kc">False</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_analyze_with_tools</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transcript_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -492,7 +499,9 @@
             <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="s2">"stop_reason"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">"tool_use"</span> <span class="ow">or</span> <span class="n">last</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">_text_of</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
             <span class="n">calls</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">message</span><span class="o">.</span><span class="n">content</span> <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"tool_use"</span><span class="p">]</span>
-            <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_run_tool</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">input</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">calls</span><span class="p">))</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span>
+                <span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_run_tool</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">input</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">calls</span><span class="p">)</span>
+            <span class="p">)</span>
             <span class="n">messages</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"assistant"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">})</span>
             <span class="n">messages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">{</span>
@@ -643,14 +652,21 @@
     <span class="n">prefer</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"auto"</span><span class="p">,</span>
     <span class="n">retriever</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">"Retriever"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">web_search</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">"WebSearch"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">history</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Pick the best available agent.</span>
 
 <span class="sd">    ``prefer="claude"`` forces Claude; ``"extractive"`` forces the offline</span>
 <span class="sd">    fallback; ``"auto"`` (default) uses Claude when the anthropic SDK and an API</span>
 <span class="sd">    key are available, otherwise the dependency-free :class:`ExtractiveAgent`.</span>
-<span class="sd">    A ``retriever``/``web_search`` make the Claude agent context-connected.</span>
+<span class="sd">    A ``retriever``/``web_search`` make the Claude agent context-connected;</span>
+<span class="sd">    ``history`` (a :class:`~hearing.storage.MeetingStore` or the mapping</span>
+<span class="sd">    ``transcribe(record=...)`` fills) adds prior meetings' takeaways to the retriever.</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">history</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">CombinedRetriever</span><span class="p">,</span> <span class="n">meeting_retriever</span>
+
+        <span class="n">retriever</span> <span class="o">=</span> <span class="n">CombinedRetriever</span><span class="p">(</span><span class="n">retriever</span><span class="p">,</span> <span class="n">meeting_retriever</span><span class="p">(</span><span class="n">history</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">prefer</span> <span class="o">==</span> <span class="s2">"extractive"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">ExtractiveAgent</span><span class="p">()</span>
     <span class="n">has_claude</span> <span class="o">=</span> <span class="n">_anthropic_available</span><span class="p">()</span> <span class="ow">and</span> <span class="nb">bool</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"ANTHROPIC_API_KEY"</span><span class="p">))</span>
@@ -675,6 +691,7 @@
     <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">retriever</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">"Retriever"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">web_search</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">"WebSearch"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">history</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Synchronous facade: run a (batch) agent over a transcript, return notes.</span>
 
@@ -684,7 +701,11 @@
 <span class="sd">    """</span>
     <span class="n">window</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">transcript</span><span class="p">)</span>
     <span class="n">agent</span> <span class="o">=</span> <span class="n">agent</span> <span class="ow">or</span> <span class="n">build_default_agent</span><span class="p">(</span>
-        <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">retriever</span><span class="o">=</span><span class="n">retriever</span><span class="p">,</span> <span class="n">web_search</span><span class="o">=</span><span class="n">web_search</span>
+        <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">retriever</span><span class="o">=</span><span class="n">retriever</span><span class="p">,</span>
+        <span class="n">web_search</span><span class="o">=</span><span class="n">web_search</span><span class="p">,</span>
+        <span class="n">history</span><span class="o">=</span><span class="n">history</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">agent</span><span class="o">.</span><span class="n">on_window</span><span class="p">(</span><span class="n">window</span><span class="p">))</span></div>
 
@@ -726,7 +747,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=bf6d79ad"></script>
+</div><script src="../../_static/documentation_options.js?v=4bb83394"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

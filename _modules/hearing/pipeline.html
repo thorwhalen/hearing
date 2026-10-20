@@ -326,8 +326,11 @@
 <span class="sd">        language: force a language code (e.g. "en"); ``None`` = auto-detect.</span>
 <span class="sd">        split: split mic/system channels when the source is multi-channel.</span>
 <span class="sd">        mic_channels / system_channels: column indices for the channel split.</span>
-<span class="sd">        record: optional ``MutableMapping`` store (e.g. a dol store) to persist</span>
-<span class="sd">            the transcript JSON under key ``"&lt;source&gt;.transcript.json"``.</span>
+<span class="sd">        record: optional ``MutableMapping`` store (e.g. a dol store) or</span>
+<span class="sd">            :class:`~hearing.storage.MeetingStore` to persist the transcript JSON</span>
+<span class="sd">            (with the agent's insight) under key ``"&lt;source&gt;.transcript.json"``,</span>
+<span class="sd">            i.e. meeting id ``&lt;source file name&gt;``; ``hearing.context.meeting_retriever``</span>
+<span class="sd">            reads those back as the next meeting's context.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A :class:`Transcript` (iterable/len-able, so it stands in for a sequence</span>
@@ -539,14 +542,19 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_persist</span><span class="p">(</span><span class="n">transcript</span><span class="p">:</span> <span class="n">Transcript</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">record</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Store the transcript JSON in a MutableMapping (e.g. a dol store)."""</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="w">    </span><span class="sd">"""Store the transcript JSON in a MeetingStore or a MutableMapping (e.g. a dol store)."""</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s2">"path"</span><span class="p">,</span> <span class="n">source</span><span class="p">)))</span><span class="o">.</span><span class="n">name</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="s2">"save"</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="s2">"meeting_ids"</span><span class="p">):</span>  <span class="c1"># a MeetingStore</span>
+        <span class="n">record</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">transcript</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">transcript_to_json</span>
 
-    <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">Path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span><span class="w"> </span><span class="s1">'path'</span><span class="p">,</span><span class="w"> </span><span class="n">source</span><span class="p">)))</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.transcript.json"</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.transcript.json"</span>
+    <span class="c1"># The round-trippable form, meta (the agent's insight) included.</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">record</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">transcript</span><span class="o">.</span><span class="n">to_jsonable</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">record</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">transcript_to_json</span><span class="p">(</span><span class="n">transcript</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># pragma: no cover - store may want bytes</span>
-        <span class="n">record</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">transcript</span><span class="o">.</span><span class="n">to_jsonable</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+        <span class="n">record</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">transcript_to_json</span><span class="p">(</span><span class="n">transcript</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
 </pre></div>
         </article>
       </div>
@@ -575,7 +583,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=bf6d79ad"></script>
+</div><script src="../../_static/documentation_options.js?v=4bb83394"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

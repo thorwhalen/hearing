@@ -24,6 +24,7 @@ Protocol when you need semantic recall.
 | [`build_embedding_retriever`](#hearing.context.build_embedding_retriever)(source, \*[, embed])   | Build an [`EmbeddingRetriever`](#hearing.context.EmbeddingRetriever) (default embedder: OpenAI) from a dict, a list, or a folder of `.md`/`.txt` docs (same source forms as [`build_retriever()`](#hearing.context.build_retriever)).   |
 |---------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [`build_retriever`](#hearing.context.build_retriever)(source)                          | Build a [`KeywordRetriever`](#hearing.context.KeywordRetriever) from a dict, a list, or a folder/file.                                                                                                                                           |
+| [`meeting_retriever`](#hearing.context.meeting_retriever)(meetings, \*[, exclude, ...])  | Prior meetings' takeaways as a [`Retriever`](#hearing.context.Retriever): the memory a meeting agent draws on.                                                                                                                            |
 | [`openai_embedder`](#hearing.context.openai_embedder)(\*[, model, api_key, client])    | Return an [`EmbedFn`](#hearing.context.EmbedFn) backed by the OpenAI embeddings API.                                                                                                                                                    |
 
 ### Classes
@@ -31,6 +32,7 @@ Protocol when you need semantic recall.
 | [`CallableWebSearch`](#hearing.context.CallableWebSearch)(fn)                   | Adapt any callable into a [`WebSearch`](#hearing.context.WebSearch) (for custom backends/tests).    |
 |------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
 | [`Chunk`](#hearing.context.Chunk)(text[, title, source, score])     | A retrieved piece of context: the text plus where it came from.                                                      |
+| [`CombinedRetriever`](#hearing.context.CombinedRetriever)(\*retrievers)         | Several retrievers searched together; their chunks merged by score.                                                  |
 | [`EmbeddingRetriever`](#hearing.context.EmbeddingRetriever)(docs, \*, embed)     | Semantic retriever: ranks chunks by cosine similarity of embeddings.                                                 |
 | [`KeywordRetriever`](#hearing.context.KeywordRetriever)(docs)                  | Dependency-free TF-IDF retriever over a small in-memory corpus.                                                      |
 | [`Retriever`](#hearing.context.Retriever)(\*args, \*\*kwargs)           | Retrieves project/meeting context relevant to a query (RAG).                                                         |
@@ -51,6 +53,19 @@ sync or async.
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 A retrieved piece of context: the text plus where it came from.
+
+### *class* hearing.context.CombinedRetriever(\*retrievers)
+
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+
+Several retrievers searched together; their chunks merged by score.
+
+```pycon
+>>> import asyncio
+>>> both = CombinedRetriever(KeywordRetriever({"a": "postgres"}), KeywordRetriever({"b": "postgres too"}))
+>>> sorted(c.title for c in asyncio.run(both.search("postgres")))
+['a', 'b']
+```
 
 ### hearing.context.EmbedFn
 
@@ -177,6 +192,31 @@ path to a single file indexes that file; a Mapping/Sequence is used directly.
 
 * **Return type:**
   [`KeywordRetriever`](#hearing.context.KeywordRetriever)
+
+### hearing.context.meeting_retriever(meetings, \*, exclude=(), transcripts=False, make=<class 'hearing.context.KeywordRetriever'>)
+
+Prior meetings’ takeaways as a [`Retriever`](#hearing.context.Retriever): the memory a meeting agent draws on.
+
+`meetings` is a [`MeetingStore`](hearing.storage.html.md#hearing.storage.MeetingStore) or the mapping one wraps
+(what `transcribe(record=...)` writes). Each meeting’s takeaways are the agent
+insight stored with its transcript (`meta['insight']`); `transcripts=True`
+indexes the transcript text too. `exclude` leaves out meetings by id (the one in
+progress). `make` builds the retriever from the chunks (default
+[`KeywordRetriever`](#hearing.context.KeywordRetriever); e.g. `lambda c: EmbeddingRetriever(c, embed=...)`).
+
+```pycon
+>>> import asyncio
+>>> from hearing.storage import MeetingStore
+>>> from hearing.types import TimeSpan, Transcript, TranscriptSegment
+>>> store = MeetingStore({})
+>>> t = Transcript([TranscriptSegment("we pick postgres", TimeSpan(0, 500))])
+>>> _ = store.save("2026-05-12", t.with_meta(insight="Decision: Postgres."))
+>>> [c.source for c in asyncio.run(meeting_retriever(store).search("postgres decision"))]
+['meeting:2026-05-12']
+```
+
+* **Return type:**
+  [`Retriever`](#hearing.context.Retriever)
 
 ### hearing.context.openai_embedder(, model='text-embedding-3-small', api_key=None, client=None)
 

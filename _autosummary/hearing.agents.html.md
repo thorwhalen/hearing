@@ -102,16 +102,18 @@ Return a deterministic extractive summary of the window.
 * **Return type:**
   [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
 
-### hearing.agents.build_default_agent(, context=None, model=None, prefer='auto', retriever=None, web_search=None)
+### hearing.agents.build_default_agent(, context=None, model=None, prefer='auto', retriever=None, web_search=None, history=None)
 
 Pick the best available agent.
 
 `prefer="claude"` forces Claude; `"extractive"` forces the offline
 fallback; `"auto"` (default) uses Claude when the anthropic SDK and an API
 key are available, otherwise the dependency-free [`ExtractiveAgent`](#hearing.agents.ExtractiveAgent).
-A `retriever`/`web_search` make the Claude agent context-connected.
+A `retriever`/`web_search` make the Claude agent context-connected;
+`history` (a [`MeetingStore`](hearing.storage.html.md#hearing.storage.MeetingStore) or the mapping
+`transcribe(record=...)` fills) adds prior meetings’ takeaways to the retriever.
 
-### hearing.agents.summarize_transcript(transcript, , agent=None, context=None, model=None, retriever=None, web_search=None)
+### hearing.agents.summarize_transcript(transcript, , agent=None, context=None, model=None, retriever=None, web_search=None, history=None)
 
 Synchronous facade: run a (batch) agent over a transcript, return notes.
 

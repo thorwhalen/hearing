@@ -222,8 +222,11 @@ file is multi-channel, and the free “me vs them” channel-trick diarizer.
   * **language** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – force a language code (e.g. “en”); `None` = auto-detect.
   * **split** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – split mic/system channels when the source is multi-channel.
   * **system_channels** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`int`](https://docs.python.org/3/builtins/functions.html#int)]) – column indices for the channel split.
-  * **record** – optional `MutableMapping` store (e.g. a dol store) to persist
-    the transcript JSON under key `"<source>.transcript.json"`.
+  * **record** – optional `MutableMapping` store (e.g. a dol store) or
+    [`MeetingStore`](hearing.storage.html.md#hearing.storage.MeetingStore) to persist the transcript JSON
+    (with the agent’s insight) under key `"<source>.transcript.json"`,
+    i.e. meeting id `<source file name>`; `hearing.context.meeting_retriever`
+    reads those back as the next meeting’s context.
 * **Return type:**
   [`Transcript`](hearing.types.html.md#hearing.types.Transcript)
 * **Returns:**

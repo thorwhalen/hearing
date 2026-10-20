@@ -310,7 +310,10 @@ Protocol when you need semantic recall.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#hearing.context.build_retriever" title="hearing.context.build_retriever"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_retriever</span></code></a>(source)</p></td>
 <td><p>Build a <a class="reference internal" href="#hearing.context.KeywordRetriever" title="hearing.context.KeywordRetriever"><code class="xref py py-class docutils literal notranslate"><span class="pre">KeywordRetriever</span></code></a> from a dict, a list, or a folder/file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.context.openai_embedder" title="hearing.context.openai_embedder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">openai_embedder</span></code></a>(*[, model, api_key, client])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.context.meeting_retriever" title="hearing.context.meeting_retriever"><code class="xref py py-obj docutils literal notranslate"><span class="pre">meeting_retriever</span></code></a>(meetings, *[, exclude, ...])</p></td>
+<td><p>Prior meetings' takeaways as a <a class="reference internal" href="#hearing.context.Retriever" title="hearing.context.Retriever"><code class="xref py py-class docutils literal notranslate"><span class="pre">Retriever</span></code></a>: the memory a meeting agent draws on.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hearing.context.openai_embedder" title="hearing.context.openai_embedder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">openai_embedder</span></code></a>(*[, model, api_key, client])</p></td>
 <td><p>Return an <a class="reference internal" href="#hearing.context.EmbedFn" title="hearing.context.EmbedFn"><code class="xref py py-data docutils literal notranslate"><span class="pre">EmbedFn</span></code></a> backed by the OpenAI embeddings API.</p></td>
 </tr>
 </tbody>
@@ -326,19 +329,22 @@ Protocol when you need semantic recall.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#hearing.context.Chunk" title="hearing.context.Chunk"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Chunk</span></code></a>(text[, title, source, score])</p></td>
 <td><p>A retrieved piece of context: the text plus where it came from.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.context.EmbeddingRetriever" title="hearing.context.EmbeddingRetriever"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EmbeddingRetriever</span></code></a>(docs, *, embed)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.context.CombinedRetriever" title="hearing.context.CombinedRetriever"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CombinedRetriever</span></code></a>(*retrievers)</p></td>
+<td><p>Several retrievers searched together; their chunks merged by score.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hearing.context.EmbeddingRetriever" title="hearing.context.EmbeddingRetriever"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EmbeddingRetriever</span></code></a>(docs, *, embed)</p></td>
 <td><p>Semantic retriever: ranks chunks by cosine similarity of embeddings.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#hearing.context.KeywordRetriever" title="hearing.context.KeywordRetriever"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KeywordRetriever</span></code></a>(docs)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.context.KeywordRetriever" title="hearing.context.KeywordRetriever"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KeywordRetriever</span></code></a>(docs)</p></td>
 <td><p>Dependency-free TF-IDF retriever over a small in-memory corpus.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.context.Retriever" title="hearing.context.Retriever"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Retriever</span></code></a>(*args, **kwargs)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#hearing.context.Retriever" title="hearing.context.Retriever"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Retriever</span></code></a>(*args, **kwargs)</p></td>
 <td><p>Retrieves project/meeting context relevant to a query (RAG).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#hearing.context.WebSearch" title="hearing.context.WebSearch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WebSearch</span></code></a>(*args, **kwargs)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.context.WebSearch" title="hearing.context.WebSearch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WebSearch</span></code></a>(*args, **kwargs)</p></td>
 <td><p>Brings outside information in — one targeted query, <code class="docutils literal notranslate"><span class="pre">k</span></code> results.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.context.WikipediaSearch" title="hearing.context.WikipediaSearch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WikipediaSearch</span></code></a>([lang, timeout, fetch])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#hearing.context.WikipediaSearch" title="hearing.context.WikipediaSearch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WikipediaSearch</span></code></a>([lang, timeout, fetch])</p></td>
 <td><p>Key-free, dependency-free <a class="reference internal" href="#hearing.context.WebSearch" title="hearing.context.WebSearch"><code class="xref py py-class docutils literal notranslate"><span class="pre">WebSearch</span></code></a> over Wikipedia (stdlib urllib).</p></td>
 </tr>
 </tbody>
@@ -360,6 +366,21 @@ sync or async.</p>
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.context.</span></span><span class="sig-name descname"><span class="pre">Chunk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/context.html#Chunk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.context.Chunk" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>A retrieved piece of context: the text plus where it came from.</p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hearing.context.CombinedRetriever">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.context.</span></span><span class="sig-name descname"><span class="pre">CombinedRetriever</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">retrievers</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/context.html#CombinedRetriever"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.context.CombinedRetriever" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Several retrievers searched together; their chunks merged by score.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">both</span> <span class="o">=</span> <span class="n">CombinedRetriever</span><span class="p">(</span><span class="n">KeywordRetriever</span><span class="p">({</span><span class="s2">"a"</span><span class="p">:</span> <span class="s2">"postgres"</span><span class="p">}),</span> <span class="n">KeywordRetriever</span><span class="p">({</span><span class="s2">"b"</span><span class="p">:</span> <span class="s2">"postgres too"</span><span class="p">}))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">sorted</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">title</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">both</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">"postgres"</span><span class="p">)))</span>
+<span class="go">['a', 'b']</span>
+</pre></div>
+</div>
 <dl class="field-list simple">
 </dl>
 </dd></dl>
@@ -526,6 +547,33 @@ path to a single file indexes that file; a Mapping/Sequence is used directly.</p
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="hearing.context.meeting_retriever">
+<span class="sig-prename descclassname"><span class="pre">hearing.context.</span></span><span class="sig-name descname"><span class="pre">meeting_retriever</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">meetings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transcripts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'hearing.context.KeywordRetriever'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/context.html#meeting_retriever"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.context.meeting_retriever" title="Link to this definition">¶</a></dt>
+<dd><p>Prior meetings’ takeaways as a <a class="reference internal" href="#hearing.context.Retriever" title="hearing.context.Retriever"><code class="xref py py-class docutils literal notranslate"><span class="pre">Retriever</span></code></a>: the memory a meeting agent draws on.</p>
+<p><code class="docutils literal notranslate"><span class="pre">meetings</span></code> is a <a class="reference internal" href="hearing.storage.html#hearing.storage.MeetingStore" title="hearing.storage.MeetingStore"><code class="xref py py-class docutils literal notranslate"><span class="pre">MeetingStore</span></code></a> or the mapping one wraps
+(what <code class="docutils literal notranslate"><span class="pre">transcribe(record=...)</span></code> writes). Each meeting’s takeaways are the agent
+insight stored with its transcript (<code class="docutils literal notranslate"><span class="pre">meta['insight']</span></code>); <code class="docutils literal notranslate"><span class="pre">transcripts=True</span></code>
+indexes the transcript text too. <code class="docutils literal notranslate"><span class="pre">exclude</span></code> leaves out meetings by id (the one in
+progress). <code class="docutils literal notranslate"><span class="pre">make</span></code> builds the retriever from the chunks (default
+<a class="reference internal" href="#hearing.context.KeywordRetriever" title="hearing.context.KeywordRetriever"><code class="xref py py-class docutils literal notranslate"><span class="pre">KeywordRetriever</span></code></a>; e.g. <code class="docutils literal notranslate"><span class="pre">lambda</span> <span class="pre">c:</span> <span class="pre">EmbeddingRetriever(c,</span> <span class="pre">embed=...)</span></code>).</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">hearing.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeetingStore</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">hearing.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimeSpan</span><span class="p">,</span> <span class="n">Transcript</span><span class="p">,</span> <span class="n">TranscriptSegment</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">store</span> <span class="o">=</span> <span class="n">MeetingStore</span><span class="p">({})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">Transcript</span><span class="p">([</span><span class="n">TranscriptSegment</span><span class="p">(</span><span class="s2">"we pick postgres"</span><span class="p">,</span> <span class="n">TimeSpan</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">500</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"2026-05-12"</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">with_meta</span><span class="p">(</span><span class="n">insight</span><span class="o">=</span><span class="s2">"Decision: Postgres."</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">source</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">meeting_retriever</span><span class="p">(</span><span class="n">store</span><span class="p">)</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">"postgres decision"</span><span class="p">))]</span>
+<span class="go">['meeting:2026-05-12']</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#hearing.context.Retriever" title="hearing.context.Retriever"><code class="xref py py-class docutils literal notranslate"><span class="pre">Retriever</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="hearing.context.openai_embedder">
 <span class="sig-prename descclassname"><span class="pre">hearing.context.</span></span><span class="sig-name descname"><span class="pre">openai_embedder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'text-embedding-3-small'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/context.html#openai_embedder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.context.openai_embedder" title="Link to this definition">¶</a></dt>
 <dd><p>Return an <a class="reference internal" href="#hearing.context.EmbedFn" title="hearing.context.EmbedFn"><code class="xref py py-data docutils literal notranslate"><span class="pre">EmbedFn</span></code></a> backed by the OpenAI embeddings API.</p>
@@ -594,6 +642,7 @@ path to a single file indexes that file; a Mapping/Sequence is used directly.</p
 <li><a class="reference internal" href="#">hearing.context</a><ul>
 <li><a class="reference internal" href="#hearing.context.CallableWebSearch"><code class="docutils literal notranslate"><span class="pre">CallableWebSearch</span></code></a></li>
 <li><a class="reference internal" href="#hearing.context.Chunk"><code class="docutils literal notranslate"><span class="pre">Chunk</span></code></a></li>
+<li><a class="reference internal" href="#hearing.context.CombinedRetriever"><code class="docutils literal notranslate"><span class="pre">CombinedRetriever</span></code></a></li>
 <li><a class="reference internal" href="#hearing.context.EmbedFn"><code class="docutils literal notranslate"><span class="pre">EmbedFn</span></code></a></li>
 <li><a class="reference internal" href="#hearing.context.EmbeddingRetriever"><code class="docutils literal notranslate"><span class="pre">EmbeddingRetriever</span></code></a><ul>
 <li><a class="reference internal" href="#hearing.context.EmbeddingRetriever.search"><code class="docutils literal notranslate"><span class="pre">EmbeddingRetriever.search()</span></code></a></li>
@@ -617,6 +666,7 @@ path to a single file indexes that file; a Mapping/Sequence is used directly.</p
 </li>
 <li><a class="reference internal" href="#hearing.context.build_embedding_retriever"><code class="docutils literal notranslate"><span class="pre">build_embedding_retriever()</span></code></a></li>
 <li><a class="reference internal" href="#hearing.context.build_retriever"><code class="docutils literal notranslate"><span class="pre">build_retriever()</span></code></a></li>
+<li><a class="reference internal" href="#hearing.context.meeting_retriever"><code class="docutils literal notranslate"><span class="pre">meeting_retriever()</span></code></a></li>
 <li><a class="reference internal" href="#hearing.context.openai_embedder"><code class="docutils literal notranslate"><span class="pre">openai_embedder()</span></code></a></li>
 </ul>
 </li>
@@ -629,7 +679,7 @@ path to a single file indexes that file; a Mapping/Sequence is used directly.</p
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=bf6d79ad"></script>
+</div><script src="../_static/documentation_options.js?v=4bb83394"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

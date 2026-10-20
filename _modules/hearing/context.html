@@ -643,6 +643,81 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span></div>
 </div>
 
+
+
+<span class="c1"># ------------------------------------------------------------ meeting memory</span>
+
+
+<div class="viewcode-block" id="CombinedRetriever">
+<a class="viewcode-back" href="../../_autosummary/hearing.context.html#hearing.context.CombinedRetriever">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CombinedRetriever</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Several retrievers searched together; their chunks merged by score.</span>
+
+<span class="sd">    &gt;&gt;&gt; import asyncio</span>
+<span class="sd">    &gt;&gt;&gt; both = CombinedRetriever(KeywordRetriever({"a": "postgres"}), KeywordRetriever({"b": "postgres too"}))</span>
+<span class="sd">    &gt;&gt;&gt; sorted(c.title for c in asyncio.run(both.search("postgres")))</span>
+<span class="sd">    ['a', 'b']</span>
+<span class="sd">    """</span>
+
+    <span class="n">retrievers</span><span class="p">:</span> <span class="nb">tuple</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">retrievers</span><span class="p">:</span> <span class="s2">"Retriever"</span><span class="p">):</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"retrievers"</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">retrievers</span> <span class="k">if</span> <span class="n">r</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">))</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Chunk</span><span class="p">]:</span>
+        <span class="n">found</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrievers</span><span class="p">))</span>
+        <span class="n">merged</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">chunks</span> <span class="ow">in</span> <span class="n">found</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">merged</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">score</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)[:</span><span class="n">k</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="meeting_retriever">
+<a class="viewcode-back" href="../../_autosummary/hearing.context.html#hearing.context.meeting_retriever">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">meeting_retriever</span><span class="p">(</span>
+    <span class="n">meetings</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">exclude</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
+    <span class="n">transcripts</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">make</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">Chunk</span><span class="p">]],</span> <span class="s2">"Retriever"</span><span class="p">]</span> <span class="o">=</span> <span class="n">KeywordRetriever</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Retriever"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Prior meetings' takeaways as a :class:`Retriever`: the memory a meeting agent draws on.</span>
+
+<span class="sd">    ``meetings`` is a :class:`~hearing.storage.MeetingStore` or the mapping one wraps</span>
+<span class="sd">    (what ``transcribe(record=...)`` writes). Each meeting's takeaways are the agent</span>
+<span class="sd">    insight stored with its transcript (``meta['insight']``); ``transcripts=True``</span>
+<span class="sd">    indexes the transcript text too. ``exclude`` leaves out meetings by id (the one in</span>
+<span class="sd">    progress). ``make`` builds the retriever from the chunks (default</span>
+<span class="sd">    :class:`KeywordRetriever`; e.g. ``lambda c: EmbeddingRetriever(c, embed=...)``).</span>
+
+<span class="sd">    &gt;&gt;&gt; import asyncio</span>
+<span class="sd">    &gt;&gt;&gt; from hearing.storage import MeetingStore</span>
+<span class="sd">    &gt;&gt;&gt; from hearing.types import TimeSpan, Transcript, TranscriptSegment</span>
+<span class="sd">    &gt;&gt;&gt; store = MeetingStore({})</span>
+<span class="sd">    &gt;&gt;&gt; t = Transcript([TranscriptSegment("we pick postgres", TimeSpan(0, 500))])</span>
+<span class="sd">    &gt;&gt;&gt; _ = store.save("2026-05-12", t.with_meta(insight="Decision: Postgres."))</span>
+<span class="sd">    &gt;&gt;&gt; [c.source for c in asyncio.run(meeting_retriever(store).search("postgres decision"))]</span>
+<span class="sd">    ['meeting:2026-05-12']</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeetingStore</span>
+
+    <span class="n">store</span> <span class="o">=</span> <span class="n">meetings</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">meetings</span><span class="p">,</span> <span class="n">MeetingStore</span><span class="p">)</span> <span class="k">else</span> <span class="n">MeetingStore</span><span class="p">(</span><span class="n">meetings</span><span class="p">)</span>
+    <span class="n">chunks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Chunk</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">meeting_id</span> <span class="ow">in</span> <span class="n">store</span><span class="o">.</span><span class="n">meeting_ids</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">meeting_id</span> <span class="ow">in</span> <span class="n">exclude</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">transcript</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">meeting_id</span><span class="p">)</span>
+        <span class="n">insight</span> <span class="o">=</span> <span class="p">(</span><span class="n">transcript</span><span class="o">.</span><span class="n">meta</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"insight"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">insight</span><span class="p">:</span>
+            <span class="n">chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Chunk</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">insight</span><span class="p">),</span> <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">"takeaways </span><span class="si">{</span><span class="n">meeting_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="sa">f</span><span class="s2">"meeting:</span><span class="si">{</span><span class="n">meeting_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">transcripts</span> <span class="ow">and</span> <span class="n">transcript</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="n">chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Chunk</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">transcript</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">"transcript </span><span class="si">{</span><span class="n">meeting_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="sa">f</span><span class="s2">"meeting:</span><span class="si">{</span><span class="n">meeting_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">make</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span></div>
+
 </pre></div>
         </article>
       </div>
@@ -671,7 +746,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=bf6d79ad"></script>
+</div><script src="../../_static/documentation_options.js?v=4bb83394"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
