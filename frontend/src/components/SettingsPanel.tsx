@@ -1,7 +1,30 @@
 // Settings modal. Edits the persisted Settings; defaults are the least-expensive
 // options (local STT, no AI). Closing saves to localStorage.
+//
+// The fields are generated from the settings schema (settings.ts) by SchemaForm:
+// this file only says what depends on the current values (the Whisper model is
+// for the whisper engine only) and how the engine options read.
 import { useState } from 'react';
-import { saveSettings, type Settings } from '../settings';
+import { type FormFieldConfig } from '@zodal/ui';
+import { saveSettings, settings as settingsCollection, type Settings } from '../settings';
+import { SchemaForm } from './SchemaForm';
+
+const ENGINE_LABELS: Record<Settings['engine'], string> = {
+  whisper: 'whisper — local, free',
+  openai: 'openai — cloud (needs key)',
+};
+
+function adjust(config: FormFieldConfig, value: Settings): FormFieldConfig {
+  if (config.name === 'model') return { ...config, disabled: value.engine !== 'whisper' };
+  if (config.name === 'engine') {
+    return {
+      ...config,
+      options: config.options?.map((o) => ({ ...o, label: ENGINE_LABELS[o.value as Settings['engine']] ?? o.label })),
+    };
+  }
+  if (config.name === 'apiBase') return { ...config, placeholder: '(same origin — leave blank)' };
+  return config;
+}
 
 interface Props {
   settings: Settings;
@@ -11,9 +34,6 @@ interface Props {
 
 export function SettingsPanel({ settings, onChange, onClose }: Props) {
   const [s, setS] = useState<Settings>(settings);
-
-  const set = <K extends keyof Settings>(key: K, value: Settings[K]) =>
-    setS((prev) => ({ ...prev, [key]: value }));
 
   const close = () => {
     saveSettings(s);
@@ -26,46 +46,7 @@ export function SettingsPanel({ settings, onChange, onClose }: Props) {
       <div className="settings" onClick={(e) => e.stopPropagation()}>
         <h2>Settings</h2>
         <p className="muted">Defaults are the cheapest options — local, on-device, no API calls.</p>
-
-        <label>
-          STT engine
-          <select value={s.engine} onChange={(e) => set('engine', e.target.value as Settings['engine'])}>
-            <option value="whisper">whisper — local, free</option>
-            <option value="openai">openai — cloud (needs key)</option>
-          </select>
-        </label>
-
-        <label>
-          Whisper model
-          <select value={s.model} onChange={(e) => set('model', e.target.value)} disabled={s.engine !== 'whisper'}>
-            {['tiny', 'base', 'small', 'medium', 'large-v3'].map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
-        </label>
-
-        <label className="row">
-          <input type="checkbox" checked={s.aiNotes} onChange={(e) => set('aiNotes', e.target.checked)} />
-          AI notes (Claude — needs API key)
-        </label>
-        <label className="row">
-          <input type="checkbox" checked={s.live} onChange={(e) => set('live', e.target.checked)} />
-          Live stream (segments appear as they finalize)
-        </label>
-
-        <label>
-          API base URL
-          <input
-            type="text"
-            placeholder="(same origin — leave blank)"
-            value={s.apiBase}
-            onChange={(e) => set('apiBase', e.target.value)}
-          />
-          <span className="muted small">
-            Set to http://localhost:8000 to run compute on your own machine while the UI is hosted elsewhere.
-          </span>
-        </label>
-
+        <SchemaForm collection={settingsCollection} value={s} onChange={setS} adjust={adjust} />
         <div className="settings-actions">
           <button onClick={close}>Done</button>
         </div>

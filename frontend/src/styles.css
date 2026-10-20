@@ -495,3 +495,15 @@ header h1 {
 .manual-body a {
   color: var(--me);
 }
+
+/* schema-driven forms (SchemaForm): the zodal-ui-shadcn renderers draw plain HTML */
+.schema-form { display: grid; gap: 12px; }
+.schema-field label { display: grid; gap: 4px; }
+.schema-field select, .schema-field input[type="text"] { font: inherit; padding: 4px 6px; }
+.schema-field p, .schema-field small { color: var(--muted, #6b7280); font-size: 0.85em; margin: 2px 0 0; }
+
+/* the always-on-top copilot overlay (overlay.tsx) */
+.overlay-body { margin: 0; padding: 10px; font-size: 14px; }
+.overlay { display: grid; gap: 8px; }
+.overlay-lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.overlay-lines li { line-height: 1.3; }

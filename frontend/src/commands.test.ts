@@ -52,3 +52,12 @@ describe('command registry (acture pattern)', () => {
     expect(JSON.stringify(exp!.inputSchema)).toContain('format'); // params -> tool schema
   });
 });
+
+describe('copilot overlay command', () => {
+  it('opens the overlay through the context', () => {
+    const cmd = buildCommands().find((c) => c.id === 'copilot.overlay')!;
+    let opened = 0;
+    cmd.run({}, { result: null, focusSearch: () => {}, clear: () => {}, openOverlay: () => (opened += 1) });
+    expect(opened).toBe(1);
+  });
+});

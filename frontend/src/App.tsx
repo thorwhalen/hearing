@@ -12,6 +12,8 @@ import { buildCommands, type CommandContext } from './commands';
 import { type Feedback } from './schema';
 import { DEFAULT_SETTINGS, loadSettings, saveSettings, type Settings } from './settings';
 import { useRecorder } from './useRecorder';
+import { Overlay, useOverlay } from './overlay';
+import { CopilotOverlay } from './components/CopilotOverlay';
 import { BackendBanner } from './components/BackendBanner';
 import { CommandPalette } from './components/CommandPalette';
 import { FeedbackPanel } from './components/FeedbackPanel';
@@ -34,6 +36,7 @@ export function App() {
   const [manualOpen, setManualOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const { recording, error: recError, start, stop } = useRecorder();
+  const overlay = useOverlay();
 
   const backendUrl = resolveApiBase(settings.apiBase) || (typeof location !== 'undefined' ? location.origin : '');
 
@@ -78,6 +81,7 @@ export function App() {
       setResult(null);
       setLiveFeedback([]);
     },
+    openOverlay: overlay.open,
   };
 
   function patch(p: Partial<Settings>) {
@@ -158,6 +162,13 @@ export function App() {
         </span>
         <button className="link-btn" onClick={() => setManualOpen(true)}>Help</button>
         <button className="link-btn" onClick={() => setSettingsOpen(true)}>⚙ Settings</button>
+        <button
+          className="link-btn"
+          onClick={overlay.open}
+          title={overlay.alwaysOnTop ? 'A small window that stays above your meeting app' : 'A popup window (this browser cannot keep it on top)'}
+        >
+          ⧉ Overlay
+        </button>
       </header>
 
       {backendOk === false && (
@@ -201,7 +212,7 @@ export function App() {
         </p>
       )}
       {loading && <p className="status">Transcribing… (first local run downloads the model)</p>}
-      {(error || recError) && <p className="error">{error || recError}</p>}
+      {(error || recError || overlay.error) && <p className="error">{error || recError || overlay.error}</p>}
 
       {result && (
         <>
@@ -216,6 +227,9 @@ export function App() {
         </>
       )}
 
+      <Overlay window={overlay.window}>
+        <CopilotOverlay segments={result?.segments ?? []} feedback={liveFeedback} recording={recording} />
+      </Overlay>
       <CommandPalette commands={commands} ctx={commandCtx} open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       {settingsOpen && (
         <SettingsPanel settings={settings} onChange={setSettings} onClose={() => setSettingsOpen(false)} />

@@ -15,6 +15,7 @@ export interface CommandContext {
   result: TranscribeResponse | null;
   focusSearch: () => void;
   clear: () => void;
+  openOverlay?: () => void; // the always-on-top copilot window (overlay.tsx)
 }
 
 export interface Command {
@@ -102,6 +103,13 @@ export function buildCommands(): Command[] {
       title: 'Clear transcript',
       aiDescription: 'Clear the current transcript and feedback from the view.',
       run: (_args, ctx) => ctx.clear(),
+    },
+    {
+      id: 'copilot.overlay',
+      title: 'Open the copilot overlay',
+      hotkey: 'o',
+      aiDescription: 'Open the small always-on-top window with the latest transcript lines and the copilot feedback.',
+      run: (_args, ctx) => ctx.openOverlay?.(),
     },
   ];
 }

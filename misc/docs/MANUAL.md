@@ -35,6 +35,7 @@ is the source of truth; the same content is shown in the app under **Help / ⌘?
 | **Search** | Filter the transcript. | free |
 | **⌘K** | Command palette (export transcript as md/srt/json, etc.). | free |
 | **⚙ Settings** | Change engine, model, what's on by default, and the API base URL. | — |
+| **⧉ Overlay** | A small window that stays above every other window (your meeting app too) with the latest transcript lines and the copilot's feedback. Chrome and Edge keep it on top; other browsers open it as an ordinary popup. Also in ⌘K ("Open the copilot overlay"). | free |
 | **Help / ⌘?** | This manual. | — |
 
 While recording, a red **● recording…** indicator shows, along with the options

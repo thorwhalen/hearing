@@ -40,3 +40,13 @@ describe('settings', () => {
     expect(s.engine).toBe('whisper'); // default filled in
   });
 });
+
+describe('settings schema', () => {
+  it('drops stored values the schema no longer accepts', () => {
+    globalThis.localStorage.setItem('hearing.settings', JSON.stringify({ engine: 'gone', model: 'small', live: 'yes' }));
+    const s = loadSettings();
+    expect(s.engine).toBe('whisper');
+    expect(s.model).toBe('small');
+    expect(s.live).toBe(false);
+  });
+});
