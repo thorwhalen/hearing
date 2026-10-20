@@ -1,4 +1,4 @@
-> built 2026-10-20 13:20 UTC from 9dae2bc (main) · hearing 0.0.11. Details: build_info.json
+> built 2026-10-20 14:06 UTC from d014ed6 (main) · hearing 0.0.12. Details: build_info.json
 
 # index.html.md
 
@@ -1550,7 +1550,7 @@ when none is injected.
 * **Return type:**
   [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
 
-### hearing.transcribe(source, , engine=None, diarizer=None, agent=None, language=None, split=True, mic_channels=(0,), system_channels=(1,), record=None)
+### hearing.transcribe(source, , engine=None, diarizer=None, agent=None, language=None, split=True, mic_channels=(0,), system_channels=(1,), record=None, record_audio=False)
 
 Transcribe an audio source to a [`Transcript`](_autosummary/hearing.types.html.md#hearing.types.Transcript).
 
@@ -1574,6 +1574,9 @@ file is multi-channel, and the free “me vs them” channel-trick diarizer.
     (with the agent’s insight) under key `"<source>.transcript.json"`,
     i.e. meeting id `<source file name>`; `hearing.context.meeting_retriever`
     reads those back as the next meeting’s context.
+  * **record_audio** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – also keep the source file’s audio bytes, in `record`’s
+    separate recordings store (a [`MeetingStore`](_autosummary/hearing.storage.html.md#hearing.storage.MeetingStore) made
+    with `recordings=`), read back with `record.recording(meeting_id)`.
 * **Return type:**
   [`Transcript`](_autosummary/hearing.types.html.md#hearing.types.Transcript)
 * **Returns:**
@@ -1766,7 +1769,7 @@ when none is injected.
 * **Return type:**
   [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
 
-### hearing.pipeline.transcribe(source, , engine=None, diarizer=None, agent=None, language=None, split=True, mic_channels=(0,), system_channels=(1,), record=None)
+### hearing.pipeline.transcribe(source, , engine=None, diarizer=None, agent=None, language=None, split=True, mic_channels=(0,), system_channels=(1,), record=None, record_audio=False)
 
 Transcribe an audio source to a [`Transcript`](_autosummary/hearing.types.html.md#hearing.types.Transcript).
 
@@ -1790,6 +1793,9 @@ file is multi-channel, and the free “me vs them” channel-trick diarizer.
     (with the agent’s insight) under key `"<source>.transcript.json"`,
     i.e. meeting id `<source file name>`; `hearing.context.meeting_retriever`
     reads those back as the next meeting’s context.
+  * **record_audio** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – also keep the source file’s audio bytes, in `record`’s
+    separate recordings store (a [`MeetingStore`](_autosummary/hearing.storage.html.md#hearing.storage.MeetingStore) made
+    with `recordings=`), read back with `record.recording(meeting_id)`.
 * **Return type:**
   [`Transcript`](_autosummary/hearing.types.html.md#hearing.types.Transcript)
 * **Returns:**
@@ -1808,21 +1814,23 @@ just a rolling window) so post-meeting agents see everything (see the
 `hearing-agents` and `annotation-systems` skills). [`MeetingStore`](_autosummary/hearing.storage.html.md#hearing.storage.MeetingStore)
 saves/loads transcripts as JSON keyed by meeting id, over any
 `MutableMapping` — a plain dict (tests), a `dol` store (e.g. `TextFiles`),
-or the dependency-free filesystem fallback here.
+or the dependency-free filesystem fallback here. Meeting audio, being large binary
+blobs, goes to a *separate* bytes store (`MeetingStore(..., recordings=...)`).
 
 ### Functions
 
-| [`get_store`](_autosummary/hearing.storage.html.md#hearing.storage.get_store)([path])              | Return a string-valued `MutableMapping` for transcripts.                                                      |
+| [`get_bytes_store`](_autosummary/hearing.storage.html.md#hearing.storage.get_bytes_store)([path])        | Return a bytes-valued `MutableMapping` (for recordings).                                                      |
 |---------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| [`get_store`](_autosummary/hearing.storage.html.md#hearing.storage.get_store)([path])              | Return a string-valued `MutableMapping` for transcripts.                                                      |
 | [`transcript_from_json`](_autosummary/hearing.storage.html.md#hearing.storage.transcript_from_json)(s)        | Reconstruct a `Transcript` from [`transcript_to_json()`](_autosummary/hearing.storage.html.md#hearing.storage.transcript_to_json) output. |
 | [`transcript_to_json`](_autosummary/hearing.storage.html.md#hearing.storage.transcript_to_json)(transcript) | Serialize a `Transcript` to a JSON string (round-trippable).                                                  |
 
 ### Classes
 
-| [`MeetingStore`](_autosummary/hearing.storage.html.md#hearing.storage.MeetingStore)([store])   | Save/load transcripts keyed by meeting id, over any text MutableMapping.   |
-|--------------------------------------------------------------------------|----------------------------------------------------------------------------|
+| [`MeetingStore`](_autosummary/hearing.storage.html.md#hearing.storage.MeetingStore)([store, recordings])   | Save/load transcripts keyed by meeting id, over any text MutableMapping.   |
+|--------------------------------------------------------------------------------------|----------------------------------------------------------------------------|
 
-### *class* hearing.storage.MeetingStore(store=None)
+### *class* hearing.storage.MeetingStore(store=None, , recordings=None)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -1836,6 +1844,18 @@ Save/load transcripts keyed by meeting id, over any text MutableMapping.
 'hi'
 >>> list(store)
 ['m1']
+```
+
+Recordings (the meeting audio) live in a separate bytes store, given as
+`recordings` (a `MutableMapping` or a directory), under `<meeting id>` plus
+the audio’s extension when the id does not already end with it:
+
+```pycon
+>>> store = MeetingStore({}, recordings={})
+>>> store.save_recording("m1", b"RIFF...", ext=".wav")
+'m1.wav'
+>>> store.recording("m1")
+b'RIFF...'
 ```
 
 #### load(meeting_id)
@@ -1852,12 +1872,43 @@ Sorted ids of stored meetings.
 * **Return type:**
   [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
 
+#### recording(meeting_id)
+
+The meeting’s audio bytes, as stored by [`save_recording()`](_autosummary/hearing.storage.html.md#hearing.storage.MeetingStore.save_recording).
+
+* **Return type:**
+  [`bytes`](https://docs.python.org/3/builtins/stdtypes.html#bytes)
+
+#### recording_key(meeting_id)
+
+The key of the meeting’s recording (`KeyError` if there is none).
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
 #### save(meeting_id, transcript)
 
 Persist `transcript` under `meeting_id`; return the storage key.
 
 * **Return type:**
   [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+#### save_recording(meeting_id, audio, , ext='')
+
+Store the meeting’s audio bytes; return the key (`<id><ext>`).
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+### hearing.storage.get_bytes_store(path=None)
+
+Return a bytes-valued `MutableMapping` (for recordings).
+
+`None` -> an in-memory dict; a path -> a `dol.Files` store if `dol` is
+installed, else the dependency-free `_FileBytesStore` over that directory.
+
+* **Return type:**
+  [`MutableMapping`](https://docs.python.org/3/library/collections.abc.html#collections.abc.MutableMapping)
 
 ### hearing.storage.get_store(path=None)
 
@@ -2320,18 +2371,16 @@ rate of the incoming blocks (used only for the ms arithmetic).
 
 # About this build
 
-This documentation was built on **2026-10-20 13:20 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/9dae2bc1d5bddaceacad4eb8a84c82e777fa2581"><code>9dae2bc</code></a> on branch <code>main</code>, for **hearing 0.0.11** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-20 14:06 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/d014ed6e878a238db7c9b28b352142b8ca414868"><code>d014ed6</code></a> on branch <code>main</code>, for **hearing 0.0.12** (from <code>pyproject.toml</code>).
 
-#### WARNING
-The documentation and the package may be misaligned:
-
-- The documented version (0.0.11) is behind the latest release on PyPI (0.0.12): `pip install hearing` gives newer code than these docs describe.
+#### NOTE
+Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI (PyPI was not checked).
 
 ## Source
 
 |                     |                                                                                                                                                           |
 |---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/9dae2bc1d5bddaceacad4eb8a84c82e777fa2581"><code>9dae2bc1d5bddaceacad4eb8a84c82e777fa2581</code></a> |
+| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/d014ed6e878a238db7c9b28b352142b8ca414868"><code>d014ed6e878a238db7c9b28b352142b8ca414868</code></a> |
 | Branch              | <code>main</code>                                                                                                                                         |
 | Tags at this commit | none                                                                                                                                                      |
 | Working tree        | clean                                                                                                                                                     |
@@ -2342,9 +2391,9 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>thorwhalen/hearing</code>                                                            |
-| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/39429334036">39429334036</a>   |
+| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/39436041447">39436041447</a>   |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>9dae2bc1d5bddaceacad4eb8a84c82e777fa2581</code> (in the history of the built commit) |
+| Event commit | <code>d014ed6e878a238db7c9b28b352142b8ca414868</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -2369,13 +2418,13 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/hearing/0.0.12/">0.0.12</a>, newer than the documented version (0.0.11).
+Not checked (TimeoutError: no answer within 3s).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/thorwhalen/hearing && cd hearing
-git checkout 9dae2bc1d5bddaceacad4eb8a84c82e777fa2581
+git checkout d014ed6e878a238db7c9b28b352142b8ca414868
 pip install "epythet==0.2.20"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

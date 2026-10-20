@@ -5,19 +5,17 @@ orphan: true
 
 # About this build
 
-This documentation was built on **2026-10-20 13:20 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/9dae2bc1d5bddaceacad4eb8a84c82e777fa2581"><code>9dae2bc</code></a> on branch <code>main</code>, for **hearing 0.0.11** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-20 14:06 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/d014ed6e878a238db7c9b28b352142b8ca414868"><code>d014ed6</code></a> on branch <code>main</code>, for **hearing 0.0.12** (from <code>pyproject.toml</code>).
 
-:::{warning}
-The documentation and the package may be misaligned:
-
-- The documented version (0.0.11) is behind the latest release on PyPI (0.0.12): `pip install hearing` gives newer code than these docs describe.
+:::{note}
+Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI (PyPI was not checked).
 :::
 
 ## Source
 
 | | |
 |---|---|
-| Commit | <a href="https://github.com/thorwhalen/hearing/commit/9dae2bc1d5bddaceacad4eb8a84c82e777fa2581"><code>9dae2bc1d5bddaceacad4eb8a84c82e777fa2581</code></a> |
+| Commit | <a href="https://github.com/thorwhalen/hearing/commit/d014ed6e878a238db7c9b28b352142b8ca414868"><code>d014ed6e878a238db7c9b28b352142b8ca414868</code></a> |
 | Branch | <code>main</code> |
 | Tags at this commit | none |
 | Working tree | clean |
@@ -28,9 +26,9 @@ The documentation and the package may be misaligned:
 | | |
 |---|---|
 | Repository | <code>thorwhalen/hearing</code> |
-| Run | <a href="https://github.com/thorwhalen/hearing/actions/runs/39429334036">39429334036</a> |
+| Run | <a href="https://github.com/thorwhalen/hearing/actions/runs/39436041447">39436041447</a> |
 | Ref | <code>refs/heads/main</code> |
-| Event commit | <code>9dae2bc1d5bddaceacad4eb8a84c82e777fa2581</code> (in the history of the built commit) |
+| Event commit | <code>d014ed6e878a238db7c9b28b352142b8ca414868</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -55,13 +53,13 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/hearing/0.0.12/">0.0.12</a>, newer than the documented version (0.0.11).
+Not checked (TimeoutError: no answer within 3s).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/thorwhalen/hearing && cd hearing
-git checkout 9dae2bc1d5bddaceacad4eb8a84c82e777fa2581
+git checkout d014ed6e878a238db7c9b28b352142b8ca414868
 pip install "epythet==0.2.20"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

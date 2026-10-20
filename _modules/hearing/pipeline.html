@@ -309,6 +309,7 @@
     <span class="n">mic_channels</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,),</span>
     <span class="n">system_channels</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,),</span>
     <span class="n">record</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">record_audio</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Transcript</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Transcribe an audio source to a :class:`~hearing.types.Transcript`.</span>
 
@@ -332,11 +333,16 @@
 <span class="sd">            (with the agent's insight) under key ``"&lt;source&gt;.transcript.json"``,</span>
 <span class="sd">            i.e. meeting id ``&lt;source file name&gt;``; ``hearing.context.meeting_retriever``</span>
 <span class="sd">            reads those back as the next meeting's context.</span>
+<span class="sd">        record_audio: also keep the source file's audio bytes, in ``record``'s</span>
+<span class="sd">            separate recordings store (a :class:`~hearing.storage.MeetingStore` made</span>
+<span class="sd">            with ``recordings=``), read back with ``record.recording(meeting_id)``.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A :class:`Transcript` (iterable/len-able, so it stands in for a sequence</span>
 <span class="sd">        of segments). Segments carry text, span, channel, and speaker.</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">record_audio</span><span class="p">:</span>
+        <span class="n">_check_can_record_audio</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">record</span><span class="p">)</span>
     <span class="n">engine</span> <span class="o">=</span> <span class="n">engine</span> <span class="ow">or</span> <span class="n">_default_engine</span><span class="p">()</span>
     <span class="n">channels</span><span class="p">,</span> <span class="n">native_sr</span> <span class="o">=</span> <span class="n">_source_channels</span><span class="p">(</span>
         <span class="n">source</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="n">split</span><span class="p">,</span> <span class="n">mic_channels</span><span class="o">=</span><span class="n">mic_channels</span><span class="p">,</span> <span class="n">system_channels</span><span class="o">=</span><span class="n">system_channels</span>
@@ -376,6 +382,9 @@
 
     <span class="k">if</span> <span class="n">record</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">_persist</span><span class="p">(</span><span class="n">transcript</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">record</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">record_audio</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s2">"path"</span><span class="p">,</span> <span class="n">source</span><span class="p">)))</span>
+        <span class="n">record</span><span class="o">.</span><span class="n">save_recording</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">(),</span> <span class="n">ext</span><span class="o">=</span><span class="n">path</span><span class="o">.</span><span class="n">suffix</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">transcript</span></div>
 
@@ -439,7 +448,9 @@
             <span class="k">elif</span> <span class="n">channel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Channel</span><span class="o">.</span><span class="n">MIXED</span><span class="p">:</span>
                 <span class="n">seg</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">default_diar</span><span class="o">.</span><span class="n">assign_speakers</span><span class="p">([</span><span class="n">seg</span><span class="p">])))</span>
             <span class="k">if</span> <span class="n">agent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">agent_tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">_safe_on_segment</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="n">seg</span><span class="p">,</span> <span class="n">on_insight</span><span class="p">)))</span>
+                <span class="n">agent_tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">_safe_on_segment</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="n">seg</span><span class="p">,</span> <span class="n">on_insight</span><span class="p">))</span>
+                <span class="p">)</span>
             <span class="k">await</span> <span class="n">seg_q</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">seg</span><span class="p">)</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_router</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -551,6 +562,25 @@
     <span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_can_record_audio</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">record</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Fail before any transcription when ``record_audio`` cannot be honoured."""</span>
+    <span class="k">if</span> <span class="n">record</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="s2">"save_recording"</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"record_audio=True needs record=MeetingStore(..., recordings=...): audio "</span>
+            <span class="s2">"goes to a bytes store kept apart from the transcripts"</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">recordings</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"record_audio=True, but the MeetingStore has no recordings store; make it "</span>
+            <span class="s2">"with MeetingStore(..., recordings=&lt;a bytes MutableMapping or a directory&gt;)"</span>
+        <span class="p">)</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s2">"path"</span><span class="p">,</span> <span class="n">source</span><span class="p">)))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"record_audio=True needs an audio file to keep, and </span><span class="si">{</span><span class="n">source</span><span class="si">!r}</span><span class="s2"> is not one"</span>
+        <span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_persist</span><span class="p">(</span><span class="n">transcript</span><span class="p">:</span> <span class="n">Transcript</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">record</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Store the transcript JSON in a MeetingStore or a MutableMapping (e.g. a dol store)."""</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s2">"path"</span><span class="p">,</span> <span class="n">source</span><span class="p">)))</span><span class="o">.</span><span class="n">name</span>
@@ -593,7 +623,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=e2f847f2"></script>
+</div><script src="../../_static/documentation_options.js?v=c249dd19"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

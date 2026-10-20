@@ -8,6 +8,7 @@ hearing.storage
 
    .. autosummary::
    
+      get_bytes_store
       get_store
       transcript_from_json
       transcript_to_json

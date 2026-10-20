@@ -1,32 +1,32 @@
 {
   "schema_version": 1,
-  "built_at": "2026-10-20T13:20:41Z",
+  "built_at": "2026-10-20T14:06:40Z",
   "package": {
     "name": "hearing",
-    "version": "0.0.11",
+    "version": "0.0.12",
     "display_name": "hearing",
     "source": "pyproject.toml"
   },
   "git": {
     "available": true,
-    "commit": "9dae2bc1d5bddaceacad4eb8a84c82e777fa2581",
-    "short_commit": "9dae2bc",
+    "commit": "d014ed6e878a238db7c9b28b352142b8ca414868",
+    "short_commit": "d014ed6",
     "branch": "main",
     "tags": [],
     "dirty": false,
     "remote_url": "https://github.com/thorwhalen/hearing",
-    "commit_url": "https://github.com/thorwhalen/hearing/commit/9dae2bc1d5bddaceacad4eb8a84c82e777fa2581",
+    "commit_url": "https://github.com/thorwhalen/hearing/commit/d014ed6e878a238db7c9b28b352142b8ca414868",
     "error": null
   },
   "ci": {
     "provider": "github",
     "repository": "thorwhalen/hearing",
-    "sha": "9dae2bc1d5bddaceacad4eb8a84c82e777fa2581",
+    "sha": "d014ed6e878a238db7c9b28b352142b8ca414868",
     "sha_in_history": true,
     "ref": "refs/heads/main",
     "ref_name": "main",
-    "run_id": "39429334036",
-    "run_url": "https://github.com/thorwhalen/hearing/actions/runs/39429334036",
+    "run_id": "39436041447",
+    "run_url": "https://github.com/thorwhalen/hearing/actions/runs/39436041447",
     "server_url": "https://github.com"
   },
   "tools": {
@@ -56,20 +56,20 @@
   },
   "site": {
     "modules_documented": 22,
-    "objects_documented": 158
+    "objects_documented": 162
   },
   "pypi": {
-    "checked": true,
-    "latest": "0.0.12",
-    "relation": "behind",
-    "error": null
+    "checked": false,
+    "latest": null,
+    "relation": "unknown",
+    "error": "TimeoutError: no answer within 3s"
   },
-  "reproduce": "git clone https://github.com/thorwhalen/hearing && cd hearing\ngit checkout 9dae2bc1d5bddaceacad4eb8a84c82e777fa2581\npip install \"epythet==0.2.20\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
-  "warnings": [],
+  "reproduce": "git clone https://github.com/thorwhalen/hearing && cd hearing\ngit checkout d014ed6e878a238db7c9b28b352142b8ca414868\npip install \"epythet==0.2.20\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
+  "warnings": [
+    "pypi: TimeoutError: no answer within 3s"
+  ],
   "alignment": {
-    "aligned": false,
-    "notes": [
-      "The documented version (0.0.11) is behind the latest release on PyPI (0.0.12): `pip install hearing` gives newer code than these docs describe."
-    ]
+    "aligned": true,
+    "notes": []
   }
 }

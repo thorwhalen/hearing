@@ -285,18 +285,22 @@ just a rolling window) so post-meeting agents see everything (see the
 <code class="docutils literal notranslate"><span class="pre">hearing-agents</span></code> and <code class="docutils literal notranslate"><span class="pre">annotation-systems</span></code> skills). <a class="reference internal" href="#hearing.storage.MeetingStore" title="hearing.storage.MeetingStore"><code class="xref py py-class docutils literal notranslate"><span class="pre">MeetingStore</span></code></a>
 saves/loads transcripts as JSON keyed by meeting id, over any
 <code class="docutils literal notranslate"><span class="pre">MutableMapping</span></code> — a plain dict (tests), a <code class="docutils literal notranslate"><span class="pre">dol</span></code> store (e.g. <code class="docutils literal notranslate"><span class="pre">TextFiles</span></code>),
-or the dependency-free filesystem fallback here.</p>
+or the dependency-free filesystem fallback here. Meeting audio, being large binary
+blobs, goes to a <em>separate</em> bytes store (<code class="docutils literal notranslate"><span class="pre">MeetingStore(...,</span> <span class="pre">recordings=...)</span></code>).</p>
 <p class="rubric">Functions</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.storage.get_store" title="hearing.storage.get_store"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_store</span></code></a>([path])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.storage.get_bytes_store" title="hearing.storage.get_bytes_store"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_bytes_store</span></code></a>([path])</p></td>
+<td><p>Return a bytes-valued <code class="docutils literal notranslate"><span class="pre">MutableMapping</span></code> (for recordings).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hearing.storage.get_store" title="hearing.storage.get_store"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_store</span></code></a>([path])</p></td>
 <td><p>Return a string-valued <code class="docutils literal notranslate"><span class="pre">MutableMapping</span></code> for transcripts.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#hearing.storage.transcript_from_json" title="hearing.storage.transcript_from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transcript_from_json</span></code></a>(s)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.storage.transcript_from_json" title="hearing.storage.transcript_from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transcript_from_json</span></code></a>(s)</p></td>
 <td><p>Reconstruct a <code class="xref py py-class docutils literal notranslate"><span class="pre">Transcript</span></code> from <a class="reference internal" href="#hearing.storage.transcript_to_json" title="hearing.storage.transcript_to_json"><code class="xref py py-func docutils literal notranslate"><span class="pre">transcript_to_json()</span></code></a> output.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.storage.transcript_to_json" title="hearing.storage.transcript_to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transcript_to_json</span></code></a>(transcript)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#hearing.storage.transcript_to_json" title="hearing.storage.transcript_to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transcript_to_json</span></code></a>(transcript)</p></td>
 <td><p>Serialize a <code class="xref py py-class docutils literal notranslate"><span class="pre">Transcript</span></code> to a JSON string (round-trippable).</p></td>
 </tr>
 </tbody>
@@ -306,7 +310,7 @@ or the dependency-free filesystem fallback here.</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.storage.MeetingStore" title="hearing.storage.MeetingStore"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MeetingStore</span></code></a>([store])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.storage.MeetingStore" title="hearing.storage.MeetingStore"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MeetingStore</span></code></a>([store, recordings])</p></td>
 <td><p>Save/load transcripts keyed by meeting id, over any text MutableMapping.</p></td>
 </tr>
 </tbody>
@@ -314,7 +318,7 @@ or the dependency-free filesystem fallback here.</p>
 </div>
 <dl class="py class">
 <dt class="sig sig-object py" id="hearing.storage.MeetingStore">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.storage.</span></span><span class="sig-name descname"><span class="pre">MeetingStore</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">store</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/storage.html#MeetingStore"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.storage.MeetingStore" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.storage.</span></span><span class="sig-name descname"><span class="pre">MeetingStore</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">store</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">recordings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/storage.html#MeetingStore"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.storage.MeetingStore" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Save/load transcripts keyed by meeting id, over any text MutableMapping.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">store</span> <span class="o">=</span> <span class="n">MeetingStore</span><span class="p">({})</span>                       <span class="c1"># in-memory</span>
@@ -324,6 +328,16 @@ or the dependency-free filesystem fallback here.</p>
 <span class="go">'hi'</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">list</span><span class="p">(</span><span class="n">store</span><span class="p">)</span>
 <span class="go">['m1']</span>
+</pre></div>
+</div>
+<p>Recordings (the meeting audio) live in a separate bytes store, given as
+<code class="docutils literal notranslate"><span class="pre">recordings</span></code> (a <code class="docutils literal notranslate"><span class="pre">MutableMapping</span></code> or a directory), under <code class="docutils literal notranslate"><span class="pre">&lt;meeting</span> <span class="pre">id&gt;</span></code> plus
+the audio’s extension when the id does not already end with it:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">store</span> <span class="o">=</span> <span class="n">MeetingStore</span><span class="p">({},</span> <span class="n">recordings</span><span class="o">=</span><span class="p">{})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">store</span><span class="o">.</span><span class="n">save_recording</span><span class="p">(</span><span class="s2">"m1"</span><span class="p">,</span> <span class="sa">b</span><span class="s2">"RIFF..."</span><span class="p">,</span> <span class="n">ext</span><span class="o">=</span><span class="s2">".wav"</span><span class="p">)</span>
+<span class="go">'m1.wav'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">store</span><span class="o">.</span><span class="n">recording</span><span class="p">(</span><span class="s2">"m1"</span><span class="p">)</span>
+<span class="go">b'RIFF...'</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
@@ -351,6 +365,28 @@ or the dependency-free filesystem fallback here.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="hearing.storage.MeetingStore.recording">
+<span class="sig-name descname"><span class="pre">recording</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">meeting_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/storage.html#MeetingStore.recording"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.storage.MeetingStore.recording" title="Link to this definition">¶</a></dt>
+<dd><p>The meeting’s audio bytes, as stored by <a class="reference internal" href="#hearing.storage.MeetingStore.save_recording" title="hearing.storage.MeetingStore.save_recording"><code class="xref py py-meth docutils literal notranslate"><span class="pre">save_recording()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#bytes" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.storage.MeetingStore.recording_key">
+<span class="sig-name descname"><span class="pre">recording_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">meeting_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/storage.html#MeetingStore.recording_key"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.storage.MeetingStore.recording_key" title="Link to this definition">¶</a></dt>
+<dd><p>The key of the meeting’s recording (<code class="docutils literal notranslate"><span class="pre">KeyError</span></code> if there is none).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="hearing.storage.MeetingStore.save">
 <span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">meeting_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transcript</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/storage.html#MeetingStore.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.storage.MeetingStore.save" title="Link to this definition">¶</a></dt>
 <dd><p>Persist <code class="docutils literal notranslate"><span class="pre">transcript</span></code> under <code class="docutils literal notranslate"><span class="pre">meeting_id</span></code>; return the storage key.</p>
@@ -361,6 +397,30 @@ or the dependency-free filesystem fallback here.</p>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.storage.MeetingStore.save_recording">
+<span class="sig-name descname"><span class="pre">save_recording</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">meeting_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">audio</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">ext</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/storage.html#MeetingStore.save_recording"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.storage.MeetingStore.save_recording" title="Link to this definition">¶</a></dt>
+<dd><p>Store the meeting’s audio bytes; return the key (<code class="docutils literal notranslate"><span class="pre">&lt;id&gt;&lt;ext&gt;</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hearing.storage.get_bytes_store">
+<span class="sig-prename descclassname"><span class="pre">hearing.storage.</span></span><span class="sig-name descname"><span class="pre">get_bytes_store</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/storage.html#get_bytes_store"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.storage.get_bytes_store" title="Link to this definition">¶</a></dt>
+<dd><p>Return a bytes-valued <code class="docutils literal notranslate"><span class="pre">MutableMapping</span></code> (for recordings).</p>
+<p><code class="docutils literal notranslate"><span class="pre">None</span></code> -&gt; an in-memory dict; a path -&gt; a <code class="docutils literal notranslate"><span class="pre">dol.Files</span></code> store if <code class="docutils literal notranslate"><span class="pre">dol</span></code> is
+installed, else the dependency-free <code class="xref py py-class docutils literal notranslate"><span class="pre">_FileBytesStore</span></code> over that directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.MutableMapping" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MutableMapping</span></code></a></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -456,9 +516,13 @@ is installed (<code class="docutils literal notranslate"><span class="pre">pip</
 <li><a class="reference internal" href="#hearing.storage.MeetingStore"><code class="docutils literal notranslate"><span class="pre">MeetingStore</span></code></a><ul>
 <li><a class="reference internal" href="#hearing.storage.MeetingStore.load"><code class="docutils literal notranslate"><span class="pre">MeetingStore.load()</span></code></a></li>
 <li><a class="reference internal" href="#hearing.storage.MeetingStore.meeting_ids"><code class="docutils literal notranslate"><span class="pre">MeetingStore.meeting_ids()</span></code></a></li>
+<li><a class="reference internal" href="#hearing.storage.MeetingStore.recording"><code class="docutils literal notranslate"><span class="pre">MeetingStore.recording()</span></code></a></li>
+<li><a class="reference internal" href="#hearing.storage.MeetingStore.recording_key"><code class="docutils literal notranslate"><span class="pre">MeetingStore.recording_key()</span></code></a></li>
 <li><a class="reference internal" href="#hearing.storage.MeetingStore.save"><code class="docutils literal notranslate"><span class="pre">MeetingStore.save()</span></code></a></li>
+<li><a class="reference internal" href="#hearing.storage.MeetingStore.save_recording"><code class="docutils literal notranslate"><span class="pre">MeetingStore.save_recording()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#hearing.storage.get_bytes_store"><code class="docutils literal notranslate"><span class="pre">get_bytes_store()</span></code></a></li>
 <li><a class="reference internal" href="#hearing.storage.get_store"><code class="docutils literal notranslate"><span class="pre">get_store()</span></code></a></li>
 <li><a class="reference internal" href="#hearing.storage.transcript_from_json"><code class="docutils literal notranslate"><span class="pre">transcript_from_json()</span></code></a></li>
 <li><a class="reference internal" href="#hearing.storage.transcript_to_json"><code class="docutils literal notranslate"><span class="pre">transcript_to_json()</span></code></a></li>
@@ -473,7 +537,7 @@ is installed (<code class="docutils literal notranslate"><span class="pre">pip</
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=e2f847f2"></script>
+</div><script src="../_static/documentation_options.js?v=c249dd19"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

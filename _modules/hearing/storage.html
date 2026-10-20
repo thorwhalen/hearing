@@ -276,7 +276,8 @@
 <span class="sd">``hearing-agents`` and ``annotation-systems`` skills). :class:`MeetingStore`</span>
 <span class="sd">saves/loads transcripts as JSON keyed by meeting id, over any</span>
 <span class="sd">``MutableMapping`` — a plain dict (tests), a ``dol`` store (e.g. ``TextFiles``),</span>
-<span class="sd">or the dependency-free filesystem fallback here.</span>
+<span class="sd">or the dependency-free filesystem fallback here. Meeting audio, being large binary</span>
+<span class="sd">blobs, goes to a *separate* bytes store (``MeetingStore(..., recordings=...)``).</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -332,6 +333,8 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">_FileTextStore</span><span class="p">(</span><span class="n">MutableMapping</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A tiny ``dol``-less filesystem text store (one file per key in a dir)."""</span>
 
+    <span class="n">binary</span> <span class="o">=</span> <span class="kc">False</span>
+
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -343,9 +346,12 @@
         <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">binary</span> <span class="k">else</span> <span class="n">p</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">binary</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">write_bytes</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+            <span class="k">return</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
             <span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span>
         <span class="p">)</span>
@@ -361,6 +367,32 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_FileBytesStore</span><span class="p">(</span><span class="n">_FileTextStore</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The bytes twin of :class:`_FileTextStore` (one file per key in a dir)."""</span>
+
+    <span class="n">binary</span> <span class="o">=</span> <span class="kc">True</span>
+
+
+<div class="viewcode-block" id="get_bytes_store">
+<a class="viewcode-back" href="../../_autosummary/hearing.storage.html#hearing.storage.get_bytes_store">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_bytes_store</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MutableMapping</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return a bytes-valued ``MutableMapping`` (for recordings).</span>
+
+<span class="sd">    ``None`` -&gt; an in-memory dict; a path -&gt; a ``dol.Files`` store if ``dol`` is</span>
+<span class="sd">    installed, else the dependency-free :class:`_FileBytesStore` over that directory.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">dol</span><span class="w"> </span><span class="kn">import</span> <span class="n">Files</span>
+
+        <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Files</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># dol absent or incompatible — fall back to the local store</span>
+        <span class="k">return</span> <span class="n">_FileBytesStore</span><span class="p">(</span><span class="n">path</span><span class="p">)</span></div>
+
 
 
 <div class="viewcode-block" id="get_store">
@@ -395,15 +427,75 @@
 <span class="sd">    'hi'</span>
 <span class="sd">    &gt;&gt;&gt; list(store)</span>
 <span class="sd">    ['m1']</span>
+
+<span class="sd">    Recordings (the meeting audio) live in a separate bytes store, given as</span>
+<span class="sd">    ``recordings`` (a ``MutableMapping`` or a directory), under ``&lt;meeting id&gt;`` plus</span>
+<span class="sd">    the audio's extension when the id does not already end with it:</span>
+
+<span class="sd">    &gt;&gt;&gt; store = MeetingStore({}, recordings={})</span>
+<span class="sd">    &gt;&gt;&gt; store.save_recording("m1", b"RIFF...", ext=".wav")</span>
+<span class="sd">    'm1.wav'</span>
+<span class="sd">    &gt;&gt;&gt; store.recording("m1")</span>
+<span class="sd">    b'RIFF...'</span>
 <span class="sd">    """</span>
 
     <span class="n">suffix</span> <span class="o">=</span> <span class="s2">".transcript.json"</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">store</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">MutableMapping</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">store</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">MutableMapping</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">recordings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">MutableMapping</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="k">if</span> <span class="n">store</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">)):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="p">:</span> <span class="n">MutableMapping</span> <span class="o">=</span> <span class="n">get_store</span><span class="p">(</span><span class="n">store</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">store</span> <span class="o">=</span> <span class="n">store</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">recordings</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">)):</span>
+            <span class="n">recordings</span> <span class="o">=</span> <span class="n">get_bytes_store</span><span class="p">(</span><span class="n">recordings</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recordings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MutableMapping</span><span class="p">]</span> <span class="o">=</span> <span class="n">recordings</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_recordings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MutableMapping</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">recordings</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"this MeetingStore keeps no recordings: pass recordings=&lt;a bytes "</span>
+                <span class="s2">"MutableMapping or a directory&gt; (kept apart from the transcripts)"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">recordings</span>
+
+<div class="viewcode-block" id="MeetingStore.save_recording">
+<a class="viewcode-back" href="../../_autosummary/hearing.storage.html#hearing.storage.MeetingStore.save_recording">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_recording</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">meeting_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">audio</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ext</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Store the meeting's audio bytes; return the key (``&lt;id&gt;&lt;ext&gt;``)."""</span>
+        <span class="k">if</span> <span class="n">ext</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ext</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"."</span><span class="p">):</span>
+            <span class="n">ext</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">".</span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">meeting_id</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">ext</span> <span class="ow">or</span> <span class="n">meeting_id</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span> <span class="k">else</span> <span class="n">meeting_id</span> <span class="o">+</span> <span class="n">ext</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recordings</span><span class="p">()[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">audio</span>
+        <span class="k">return</span> <span class="n">key</span></div>
+
+
+<div class="viewcode-block" id="MeetingStore.recording_key">
+<a class="viewcode-back" href="../../_autosummary/hearing.storage.html#hearing.storage.MeetingStore.recording_key">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">recording_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">meeting_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The key of the meeting's recording (``KeyError`` if there is none)."""</span>
+        <span class="n">recordings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recordings</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">meeting_id</span> <span class="ow">in</span> <span class="n">recordings</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">meeting_id</span>
+        <span class="n">found</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">recordings</span>
+            <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">meeting_id</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"."</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">)[</span><span class="nb">len</span><span class="p">(</span><span class="n">meeting_id</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no recording for meeting </span><span class="si">{</span><span class="n">meeting_id</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">found</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="MeetingStore.recording">
+<a class="viewcode-back" href="../../_autosummary/hearing.storage.html#hearing.storage.MeetingStore.recording">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">recording</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">meeting_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The meeting's audio bytes, as stored by :meth:`save_recording`."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recordings</span><span class="p">()[</span><span class="bp">self</span><span class="o">.</span><span class="n">recording_key</span><span class="p">(</span><span class="n">meeting_id</span><span class="p">)]</span></div>
+
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">meeting_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">meeting_id</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">suffix</span><span class="si">}</span><span class="s2">"</span>
@@ -469,7 +561,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=e2f847f2"></script>
+</div><script src="../../_static/documentation_options.js?v=c249dd19"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

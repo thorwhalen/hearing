@@ -48,7 +48,7 @@ when none is injected.
 * **Return type:**
   [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
 
-### hearing.pipeline.transcribe(source, , engine=None, diarizer=None, agent=None, language=None, split=True, mic_channels=(0,), system_channels=(1,), record=None)
+### hearing.pipeline.transcribe(source, , engine=None, diarizer=None, agent=None, language=None, split=True, mic_channels=(0,), system_channels=(1,), record=None, record_audio=False)
 
 Transcribe an audio source to a [`Transcript`](hearing.types.html.md#hearing.types.Transcript).
 
@@ -72,6 +72,9 @@ file is multi-channel, and the free “me vs them” channel-trick diarizer.
     (with the agent’s insight) under key `"<source>.transcript.json"`,
     i.e. meeting id `<source file name>`; `hearing.context.meeting_retriever`
     reads those back as the next meeting’s context.
+  * **record_audio** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – also keep the source file’s audio bytes, in `record`’s
+    separate recordings store (a [`MeetingStore`](hearing.storage.html.md#hearing.storage.MeetingStore) made
+    with `recordings=`), read back with `record.recording(meeting_id)`.
 * **Return type:**
   [`Transcript`](hearing.types.html.md#hearing.types.Transcript)
 * **Returns:**

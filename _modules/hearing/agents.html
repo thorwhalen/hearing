@@ -465,7 +465,11 @@
         <span class="k">return</span> <span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_analyze_sync</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">transcript_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context_text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">system</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">transcript_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">context_text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">system</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Blocking Claude call; ``on_window`` runs this off the event loop."""</span>
         <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="p">()</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
@@ -611,7 +615,10 @@
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">reply</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_analyze_sync</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">context_text</span><span class="p">,</span> <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_live_system_prompt</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_analyze_sync</span><span class="p">,</span>
+                    <span class="n">window</span><span class="p">,</span>
+                    <span class="n">context_text</span><span class="p">,</span>
+                    <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_live_system_prompt</span><span class="p">(),</span>
                 <span class="p">)</span>
         <span class="k">finally</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_live_busy</span> <span class="o">=</span> <span class="kc">False</span>
@@ -823,7 +830,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=e2f847f2"></script>
+</div><script src="../../_static/documentation_options.js?v=c249dd19"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
