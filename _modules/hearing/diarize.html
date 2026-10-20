@@ -6,10 +6,11 @@
 <link rel="alternate" type="text/markdown" href="diarize.html.md">
 <link rel="describedby" href="../../llms.txt" type="text/markdown"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>hearing.diarize - hearing</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx_autodoc_typehints.css?v=057ac668" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -292,7 +293,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
@@ -347,19 +348,28 @@
 <span class="w">    </span><span class="sd">"""Acoustic diarization via ``pyannote.audio`` (the upgrade path).</span>
 
 <span class="sd">    Runs the pretrained pipeline over the audio, then assigns each segment the</span>
-<span class="sd">    speaker whose diarized turn overlaps it most. Intended to run on the</span>
-<span class="sd">    *system* channel only (the mic channel is already known to be "me").</span>
+<span class="sd">    speaker whose diarized turn overlaps it most. It runs on the *system* channel</span>
+<span class="sd">    only: ``MIC`` segments are labelled ``me_label`` for free (the channel trick),</span>
+<span class="sd">    and the model is not run at all when there is nothing left to diarize. Pass</span>
+<span class="sd">    the system-channel audio as ``audio`` (``transcribe`` does).</span>
 
 <span class="sd">    Requires ``pip install hearing[diarize]`` and a Hugging Face token with the</span>
-<span class="sd">    pyannote model licenses accepted. This implementation is provided for the</span>
-<span class="sd">    diarization milestone; it is import-guarded so the package works without it.</span>
+<span class="sd">    pyannote model licenses accepted. The import is guarded so the package works</span>
+<span class="sd">    without it. ``pipeline`` is the seam: any callable</span>
+<span class="sd">    ``({"waveform", "sample_rate"}) -&gt; annotation`` (an object with</span>
+<span class="sd">    ``itertracks(yield_label=True)``) replaces the pretrained model, which is how</span>
+<span class="sd">    this is tested without a model or a token.</span>
 <span class="sd">    """</span>
 
     <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"pyannote/speaker-diarization-3.1"</span>
     <span class="n">hf_token</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">speaker_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"spk_"</span>
+    <span class="n">me_label</span><span class="p">:</span> <span class="n">SpeakerLabel</span> <span class="o">=</span> <span class="n">ME</span>
+    <span class="n">pipeline</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">dict</span><span class="p">],</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">pyannote.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pipeline</span>
         <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pragma: no cover - guidance path</span>
@@ -373,7 +383,10 @@
 <span class="w">        </span><span class="kn">import</span> <span class="n">os</span>
 
         <span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hf_token</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"HUGGINGFACE_TOKEN"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"HF_TOKEN"</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">Pipeline</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">use_auth_token</span><span class="o">=</span><span class="n">token</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>  <span class="c1"># pyannote.audio &gt;= 4 renamed the argument</span>
+            <span class="k">return</span> <span class="n">Pipeline</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - older pyannote</span>
+            <span class="k">return</span> <span class="n">Pipeline</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">use_auth_token</span><span class="o">=</span><span class="n">token</span><span class="p">)</span>
 
 <div class="viewcode-block" id="PyannoteDiarizer.assign_speakers">
 <a class="viewcode-back" href="../../_autosummary/hearing.diarize.html#hearing.diarize.PyannoteDiarizer.assign_speakers">[docs]</a>
@@ -383,16 +396,21 @@
         <span class="o">*</span><span class="p">,</span>
         <span class="n">audio</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">sample_rate</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">]:</span>  <span class="c1"># pragma: no cover - needs model + token</span>
-<span class="w">        </span><span class="sd">"""Yield segments labelled with the most-overlapping diarized speaker."""</span>
-        <span class="n">segments</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">segments</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">audio</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">sample_rate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># Nothing to run on; fall back to the channel trick.</span>
-            <span class="k">yield from</span> <span class="n">ChannelTrickDiarizer</span><span class="p">()</span><span class="o">.</span><span class="n">assign_speakers</span><span class="p">(</span><span class="n">segments</span><span class="p">)</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">TranscriptSegment</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Yield segments labelled: mic -&gt; me, others -&gt; most-overlapping diarized speaker."""</span>
+        <span class="n">segments</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">with_speaker</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">me_label</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">speaker</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">channel</span> <span class="ow">is</span> <span class="n">Channel</span><span class="o">.</span><span class="n">MIC</span>
+            <span class="k">else</span> <span class="n">s</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">segments</span>
+        <span class="p">]</span>
+        <span class="n">todo</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">segments</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">speaker</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">todo</span> <span class="ow">or</span> <span class="n">audio</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">sample_rate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Nothing to diarize, or nothing to run on: the channel trick for the rest.</span>
+            <span class="k">yield from</span> <span class="n">ChannelTrickDiarizer</span><span class="p">(</span><span class="n">me_label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">me_label</span><span class="p">)</span><span class="o">.</span><span class="n">assign_speakers</span><span class="p">(</span><span class="n">segments</span><span class="p">)</span>
             <span class="k">return</span>
 
-        <span class="n">pipeline</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="p">()</span>
-        <span class="n">diarization</span> <span class="o">=</span> <span class="n">pipeline</span><span class="p">(</span>
+        <span class="n">diarization</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="p">()(</span>
             <span class="p">{</span><span class="s2">"waveform"</span><span class="p">:</span> <span class="n">_as_torch</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span> <span class="s2">"sample_rate"</span><span class="p">:</span> <span class="n">sample_rate</span><span class="p">}</span>
         <span class="p">)</span>
         <span class="n">turns</span> <span class="o">=</span> <span class="p">[</span>
@@ -409,11 +427,18 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_as_torch</span><span class="p">(</span><span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>  <span class="c1"># pragma: no cover - needs torch</span>
-<span class="w">    </span><span class="sd">"""Shape a mono float array as the ``(1, n)`` torch tensor pyannote wants."""</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_as_torch</span><span class="p">(</span><span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Shape a mono float array as the ``(1, n)`` waveform pyannote wants.</span>
 
-    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ascontiguousarray</span><span class="p">(</span><span class="n">audio</span><span class="p">))</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="sd">    A torch tensor when torch is installed (it is, with ``hearing[diarize]``), else the</span>
+<span class="sd">    equivalent numpy array, so an injected ``pipeline`` can run without torch.</span>
+<span class="sd">    """</span>
+    <span class="n">wave</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ascontiguousarray</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">wave</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">wave</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_best_overlap</span><span class="p">(</span>
@@ -454,7 +479,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=b45afc8c"></script>
+</div><script src="../../_static/documentation_options.js?v=162d0dcb"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

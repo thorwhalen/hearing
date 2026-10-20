@@ -59,7 +59,7 @@ Build a span from float seconds (e.g. from an STT engine).
 * **Return type:**
   [`TimeSpan`](#hearing.types.TimeSpan)
 
-### *class* hearing.types.Transcript(segments=(), sample_rate=None, meta=<factory>)
+### *class* hearing.types.Transcript(segments=(), sample_rate=None, meta=dict())
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -113,7 +113,7 @@ Return a copy with extra metadata merged in.
 * **Return type:**
   [`Transcript`](#hearing.types.Transcript)
 
-### *class* hearing.types.TranscriptSegment(text, span, channel=Channel.MIXED, speaker=None, confidence=None, words=(), meta=<factory>)
+### *class* hearing.types.TranscriptSegment(text, span, channel=Channel.MIXED, speaker=None, confidence=None, words=(), meta=dict())
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 

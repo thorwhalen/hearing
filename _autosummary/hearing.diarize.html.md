@@ -46,23 +46,28 @@ Yield segments with `.speaker` set from their `.channel`.
 * **Return type:**
   [`Iterable`](https://docs.python.org/3/library/typing.html#typing.Iterable)[[`TranscriptSegment`](hearing.types.html.md#hearing.types.TranscriptSegment)]
 
-### *class* hearing.diarize.PyannoteDiarizer(model='pyannote/speaker-diarization-3.1', hf_token=None, speaker_prefix='spk_')
+### *class* hearing.diarize.PyannoteDiarizer(model='pyannote/speaker-diarization-3.1', hf_token=None, speaker_prefix='spk_', me_label='me', pipeline=None)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 Acoustic diarization via `pyannote.audio` (the upgrade path).
 
 Runs the pretrained pipeline over the audio, then assigns each segment the
-speaker whose diarized turn overlaps it most. Intended to run on the
-*system* channel only (the mic channel is already known to be “me”).
+speaker whose diarized turn overlaps it most. It runs on the *system* channel
+only: `MIC` segments are labelled `me_label` for free (the channel trick),
+and the model is not run at all when there is nothing left to diarize. Pass
+the system-channel audio as `audio` (`transcribe` does).
 
 Requires `pip install hearing[diarize]` and a Hugging Face token with the
-pyannote model licenses accepted. This implementation is provided for the
-diarization milestone; it is import-guarded so the package works without it.
+pyannote model licenses accepted. The import is guarded so the package works
+without it. `pipeline` is the seam: any callable
+`({"waveform", "sample_rate"}) -> annotation` (an object with
+`itertracks(yield_label=True)`) replaces the pretrained model, which is how
+this is tested without a model or a token.
 
 #### assign_speakers(segments, , audio=None, sample_rate=None)
 
-Yield segments labelled with the most-overlapping diarized speaker.
+Yield segments labelled: mic -> me, others -> most-overlapping diarized speaker.
 
 * **Return type:**
   [`Iterable`](https://docs.python.org/3/library/typing.html#typing.Iterable)[[`TranscriptSegment`](hearing.types.html.md#hearing.types.TranscriptSegment)]

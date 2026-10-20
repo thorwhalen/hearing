@@ -100,7 +100,7 @@ Backward-compatible constructor for the OpenAI engine (returns a `ScribedSTT`).
 * **Return type:**
   [`ScribedSTT`](#hearing.stt.ScribedSTT)
 
-### *class* hearing.stt.ScribedSTT(backend='faster-whisper', model_size=None, language=None, vad=None, options=<factory>)
+### *class* hearing.stt.ScribedSTT(backend='faster-whisper', model_size=None, language=None, vad=None, options=dict())
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -160,10 +160,10 @@ Build a scribed-backed STT engine by friendly name (see [`ENGINE_ALIASES`](#hear
 mlx-whisper, `"parakeet"` -> parakeet-mlx, `"whisperx"`. Any other
 registered scribed backend id works too. `kwargs` go to [`ScribedSTT`](#hearing.stt.ScribedSTT).
 
-* **Return type:**
-  [`ScribedSTT`](#hearing.stt.ScribedSTT)
-
 ```pycon
 >>> get_engine("mlx").backend
 'mlx-whisper'
 ```
+
+* **Return type:**
+  [`ScribedSTT`](#hearing.stt.ScribedSTT)

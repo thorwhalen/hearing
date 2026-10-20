@@ -46,9 +46,6 @@ How a bare Whisper size maps to an `mlx-community` repo id.
 
 Resolve a model name to a Hugging Face repo id for `mlx_whisper`.
 
-* **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
-
 ```pycon
 >>> resolve_model_repo("base")
 'mlx-community/whisper-base-mlx'
@@ -57,3 +54,6 @@ Resolve a model name to a Hugging Face repo id for `mlx_whisper`.
 >>> resolve_model_repo("someone/custom-whisper")
 'someone/custom-whisper'
 ```
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)

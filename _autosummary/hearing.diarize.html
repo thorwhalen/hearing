@@ -9,10 +9,11 @@
 <link rel="alternate" type="text/markdown" href="hearing.diarize.html.md">
 <link rel="describedby" href="llms.txt"><link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="hearing.interfaces" href="hearing.interfaces.html"><link rel="prev" title="hearing.context" href="hearing.context.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>hearing.diarize - hearing</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_autodoc_typehints.css?v=057ac668" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -339,21 +340,26 @@ replace it by) <a class="reference internal" href="#hearing.diarize.PyannoteDiar
 
 <dl class="py class">
 <dt class="sig sig-object py" id="hearing.diarize.PyannoteDiarizer">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.diarize.</span></span><span class="sig-name descname"><span class="pre">PyannoteDiarizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pyannote/speaker-diarization-3.1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hf_token</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">speaker_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spk_'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/diarize.html#PyannoteDiarizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.diarize.PyannoteDiarizer" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.diarize.</span></span><span class="sig-name descname"><span class="pre">PyannoteDiarizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pyannote/speaker-diarization-3.1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hf_token</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">speaker_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spk_'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">me_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'me'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pipeline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/diarize.html#PyannoteDiarizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.diarize.PyannoteDiarizer" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Acoustic diarization via <code class="docutils literal notranslate"><span class="pre">pyannote.audio</span></code> (the upgrade path).</p>
 <p>Runs the pretrained pipeline over the audio, then assigns each segment the
-speaker whose diarized turn overlaps it most. Intended to run on the
-<em>system</em> channel only (the mic channel is already known to be “me”).</p>
+speaker whose diarized turn overlaps it most. It runs on the <em>system</em> channel
+only: <code class="docutils literal notranslate"><span class="pre">MIC</span></code> segments are labelled <code class="docutils literal notranslate"><span class="pre">me_label</span></code> for free (the channel trick),
+and the model is not run at all when there is nothing left to diarize. Pass
+the system-channel audio as <code class="docutils literal notranslate"><span class="pre">audio</span></code> (<code class="docutils literal notranslate"><span class="pre">transcribe</span></code> does).</p>
 <p>Requires <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">hearing[diarize]</span></code> and a Hugging Face token with the
-pyannote model licenses accepted. This implementation is provided for the
-diarization milestone; it is import-guarded so the package works without it.</p>
+pyannote model licenses accepted. The import is guarded so the package works
+without it. <code class="docutils literal notranslate"><span class="pre">pipeline</span></code> is the seam: any callable
+<code class="docutils literal notranslate"><span class="pre">({&quot;waveform&quot;,</span> <span class="pre">&quot;sample_rate&quot;})</span> <span class="pre">-&gt;</span> <span class="pre">annotation</span></code> (an object with
+<code class="docutils literal notranslate"><span class="pre">itertracks(yield_label=True)</span></code>) replaces the pretrained model, which is how
+this is tested without a model or a token.</p>
 <dl class="field-list simple">
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="hearing.diarize.PyannoteDiarizer.assign_speakers">
 <span class="sig-name descname"><span class="pre">assign_speakers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">segments</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">audio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/diarize.html#PyannoteDiarizer.assign_speakers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.diarize.PyannoteDiarizer.assign_speakers" title="Link to this definition">¶</a></dt>
-<dd><p>Yield segments labelled with the most-overlapping diarized speaker.</p>
+<dd><p>Yield segments labelled: mic -&gt; me, others -&gt; most-overlapping diarized speaker.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<a class="reference internal" href="hearing.types.html#hearing.types.TranscriptSegment" title="hearing.types.TranscriptSegment"><code class="xref py py-class docutils literal notranslate"><span class="pre">TranscriptSegment</span></code></a>]</span></p>
@@ -436,7 +442,7 @@ diarization milestone; it is import-guarded so the package works without it.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=b45afc8c"></script>
+</div><script src="../_static/documentation_options.js?v=162d0dcb"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

@@ -9,10 +9,11 @@
 <link rel="alternate" type="text/markdown" href="hearing.backends.html.md">
 <link rel="describedby" href="llms.txt"><link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="hearing.backends.mlx_whisper" href="hearing.backends.mlx_whisper.html"><link rel="prev" title="hearing.agents" href="hearing.agents.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>hearing.backends - hearing</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_autodoc_typehints.css?v=057ac668" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -402,7 +403,7 @@ The adapter itself is loaded lazily by scribed (from <code class="docutils liter
 <dd><p>Raise an informative <code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code> unless running on Apple Silicon.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><span class="highlight sphinx_autodoc_typehints-value"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="kc"><span class="pre">None</span></span></code></a></span></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -437,11 +438,6 @@ ffmpeg-based file loading (hearing hands utterances over as WAV bytes).</p>
 <dd><p>Build scribed <code class="docutils literal notranslate"><span class="pre">Segment</span></code>s from an openai-whisper-style result dict.</p>
 <p>Handles both mlx-whisper (word <code class="docutils literal notranslate"><span class="pre">probability</span></code>) and WhisperX (word <code class="docutils literal notranslate"><span class="pre">score</span></code>,
 optional <code class="docutils literal notranslate"><span class="pre">speaker</span></code> on segments and words). Times are float seconds.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a></span></p>
-</dd>
-</dl>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">segs</span> <span class="o">=</span> <span class="n">whisper_result_to_segments</span><span class="p">({</span><span class="s2">"segments"</span><span class="p">:</span> <span class="p">[</span>
 <span class="gp">... </span>    <span class="p">{</span><span class="s2">"start"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">"end"</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="s2">" hi there"</span><span class="p">,</span>
 <span class="gp">... </span>     <span class="s2">"words"</span><span class="p">:</span> <span class="p">[{</span><span class="s2">"word"</span><span class="p">:</span> <span class="s2">" hi"</span><span class="p">,</span> <span class="s2">"start"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">"end"</span><span class="p">:</span> <span class="mf">0.4</span><span class="p">,</span> <span class="s2">"probability"</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">}]}</span>
@@ -450,6 +446,11 @@ optional <code class="docutils literal notranslate"><span class="pre">speaker</s
 <span class="go">('hi there', 1500, 'hi')</span>
 </pre></div>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <p class="rubric">Modules</p>
@@ -542,7 +543,7 @@ optional <code class="docutils literal notranslate"><span class="pre">speaker</s
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=b45afc8c"></script>
+</div><script src="../_static/documentation_options.js?v=162d0dcb"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

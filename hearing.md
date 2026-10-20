@@ -1,4 +1,4 @@
-> built 2026-10-14 05:27 UTC from e6ef523 (main) · hearing 0.0.7. Details: build_info.json
+> built 2026-10-20 11:41 UTC from 412b79a (main) · hearing 0.0.8. Details: build_info.json
 
 # index.html.md
 
@@ -260,7 +260,7 @@ and the batch≡live unification.
 |------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------|
 | [`ExtractiveAgent`](_autosummary/hearing.agents.html.md#hearing.agents.ExtractiveAgent)([max_key_points, action_cues])      | Deterministic, dependency-free fallback agent (no API, no network). |
 
-### *class* hearing.agents.ClaudeAgent(model='claude-sonnet-4-6', context=None, system_prompt='You are a meeting assistant. Given a (speaker-labelled) transcript, produce a concise, well-structured analysis with these sections, omitting any that don\\\\'t apply: \\\\n\\\\n## Summary\\\\n2-4 sentences capturing what the meeting was about and its outcome.\\\\n\\\\n## Decisions\\\\nBullet points of decisions that were made.\\\\n\\\\n## Action items\\\\nBullet points as "- [owner] action" when an owner is identifiable, else "- action".\\\\n\\\\n## Open questions / follow-ups\\\\nBullet points of unresolved questions or things worth researching afterwards.\\\\n\\\\nBe faithful to the transcript; do not invent facts. Speakers labelled "me" are the local user; "them"/"spk_\*" are remote participants.', max_tokens=1024, api_key=None, retriever=None, web_search=None, retrieve_k=4, web_k=3)
+### *class* hearing.agents.ClaudeAgent(model='claude-sonnet-4-6', context=None, system_prompt='You are a meeting assistant. Given a (speaker-labelled) transcript, produce a concise, well-structured analysis with these sections, omitting any that don\\'t apply:\\n\\n## Summary\\n2-4 sentences capturing what the meeting was about and its outcome.\\n\\n## Decisions\\nBullet points of decisions that were made.\\n\\n## Action items\\nBullet points as "- [owner] action" when an owner is identifiable, else "- action".\\n\\n## Open questions / follow-ups\\nBullet points of unresolved questions or things worth researching afterwards.\\n\\nBe faithful to the transcript; do not invent facts. Speakers labelled "me" are the local user; "them"/"spk_\*" are remote participants.', max_tokens=1024, api_key=None, retriever=None, web_search=None, retrieve_k=4, web_k=3)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -453,9 +453,6 @@ Build scribed `Segment`s from an openai-whisper-style result dict.
 Handles both mlx-whisper (word `probability`) and WhisperX (word `score`,
 optional `speaker` on segments and words). Times are float seconds.
 
-* **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)
-
 ```pycon
 >>> segs = whisper_result_to_segments({"segments": [
 ...     {"start": 0.0, "end": 1.5, "text": " hi there",
@@ -464,6 +461,9 @@ optional `speaker` on segments and words). Times are float seconds.
 >>> segs[0].text, segs[0].span.end_ms, segs[0].words[0].text
 ('hi there', 1500, 'hi')
 ```
+
+* **Return type:**
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)
 
 ### Modules
 
@@ -523,9 +523,6 @@ How a bare Whisper size maps to an `mlx-community` repo id.
 
 Resolve a model name to a Hugging Face repo id for `mlx_whisper`.
 
-* **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
-
 ```pycon
 >>> resolve_model_repo("base")
 'mlx-community/whisper-base-mlx'
@@ -534,6 +531,9 @@ Resolve a model name to a Hugging Face repo id for `mlx_whisper`.
 >>> resolve_model_repo("someone/custom-whisper")
 'someone/custom-whisper'
 ```
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
 
 # _autosummary/hearing.backends.mlx_whisper.config.html.md
@@ -1248,23 +1248,28 @@ Yield segments with `.speaker` set from their `.channel`.
 * **Return type:**
   [`Iterable`](https://docs.python.org/3/library/typing.html#typing.Iterable)[[`TranscriptSegment`](_autosummary/hearing.types.html.md#hearing.types.TranscriptSegment)]
 
-### *class* hearing.diarize.PyannoteDiarizer(model='pyannote/speaker-diarization-3.1', hf_token=None, speaker_prefix='spk_')
+### *class* hearing.diarize.PyannoteDiarizer(model='pyannote/speaker-diarization-3.1', hf_token=None, speaker_prefix='spk_', me_label='me', pipeline=None)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 Acoustic diarization via `pyannote.audio` (the upgrade path).
 
 Runs the pretrained pipeline over the audio, then assigns each segment the
-speaker whose diarized turn overlaps it most. Intended to run on the
-*system* channel only (the mic channel is already known to be “me”).
+speaker whose diarized turn overlaps it most. It runs on the *system* channel
+only: `MIC` segments are labelled `me_label` for free (the channel trick),
+and the model is not run at all when there is nothing left to diarize. Pass
+the system-channel audio as `audio` (`transcribe` does).
 
 Requires `pip install hearing[diarize]` and a Hugging Face token with the
-pyannote model licenses accepted. This implementation is provided for the
-diarization milestone; it is import-guarded so the package works without it.
+pyannote model licenses accepted. The import is guarded so the package works
+without it. `pipeline` is the seam: any callable
+`({"waveform", "sample_rate"}) -> annotation` (an object with
+`itertracks(yield_label=True)`) replaces the pretrained model, which is how
+this is tested without a model or a token.
 
 #### assign_speakers(segments, , audio=None, sample_rate=None)
 
-Yield segments labelled with the most-overlapping diarized speaker.
+Yield segments labelled: mic -> me, others -> most-overlapping diarized speaker.
 
 * **Return type:**
   [`Iterable`](https://docs.python.org/3/library/typing.html#typing.Iterable)[[`TranscriptSegment`](_autosummary/hearing.types.html.md#hearing.types.TranscriptSegment)]
@@ -1352,7 +1357,7 @@ Build a span from float seconds (e.g. from an STT engine).
 * **Return type:**
   [`TimeSpan`](_autosummary/hearing.types.html.md#hearing.types.TimeSpan)
 
-### *class* hearing.Transcript(segments=(), sample_rate=None, meta=<factory>)
+### *class* hearing.Transcript(segments=(), sample_rate=None, meta=dict())
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -1406,7 +1411,7 @@ Return a copy with extra metadata merged in.
 * **Return type:**
   [`Transcript`](_autosummary/hearing.types.html.md#hearing.types.Transcript)
 
-### *class* hearing.TranscriptSegment(text, span, channel=Channel.MIXED, speaker=None, confidence=None, words=(), meta=<factory>)
+### *class* hearing.TranscriptSegment(text, span, channel=Channel.MIXED, speaker=None, confidence=None, words=(), meta=dict())
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -1908,7 +1913,7 @@ Backward-compatible constructor for the OpenAI engine (returns a `ScribedSTT`).
 * **Return type:**
   [`ScribedSTT`](_autosummary/hearing.stt.html.md#hearing.stt.ScribedSTT)
 
-### *class* hearing.stt.ScribedSTT(backend='faster-whisper', model_size=None, language=None, vad=None, options=<factory>)
+### *class* hearing.stt.ScribedSTT(backend='faster-whisper', model_size=None, language=None, vad=None, options=dict())
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -1968,13 +1973,13 @@ Build a scribed-backed STT engine by friendly name (see [`ENGINE_ALIASES`](_auto
 mlx-whisper, `"parakeet"` -> parakeet-mlx, `"whisperx"`. Any other
 registered scribed backend id works too. `kwargs` go to [`ScribedSTT`](_autosummary/hearing.stt.html.md#hearing.stt.ScribedSTT).
 
-* **Return type:**
-  [`ScribedSTT`](_autosummary/hearing.stt.html.md#hearing.stt.ScribedSTT)
-
 ```pycon
 >>> get_engine("mlx").backend
 'mlx-whisper'
 ```
+
+* **Return type:**
+  [`ScribedSTT`](_autosummary/hearing.stt.html.md#hearing.stt.ScribedSTT)
 
 
 # _autosummary/hearing.types.html.md
@@ -2040,7 +2045,7 @@ Build a span from float seconds (e.g. from an STT engine).
 * **Return type:**
   [`TimeSpan`](_autosummary/hearing.types.html.md#hearing.types.TimeSpan)
 
-### *class* hearing.types.Transcript(segments=(), sample_rate=None, meta=<factory>)
+### *class* hearing.types.Transcript(segments=(), sample_rate=None, meta=dict())
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -2094,7 +2099,7 @@ Return a copy with extra metadata merged in.
 * **Return type:**
   [`Transcript`](_autosummary/hearing.types.html.md#hearing.types.Transcript)
 
-### *class* hearing.types.TranscriptSegment(text, span, channel=Channel.MIXED, speaker=None, confidence=None, words=(), meta=<factory>)
+### *class* hearing.types.TranscriptSegment(text, span, channel=Channel.MIXED, speaker=None, confidence=None, words=(), meta=dict())
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -2239,16 +2244,18 @@ rate of the incoming blocks (used only for the ms arithmetic).
 
 # About this build
 
-This documentation was built on **2026-10-14 05:27 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/e6ef5233da0d2217bf626bdba9d05c3831b07e0a"><code>e6ef523</code></a> on branch <code>main</code>, for **hearing 0.0.7** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-20 11:41 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/412b79aef1f15a05be14c597bd7d3e1a92a550ca"><code>412b79a</code></a> on branch <code>main</code>, for **hearing 0.0.8** (from <code>pyproject.toml</code>).
 
-#### NOTE
-Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
+#### WARNING
+The documentation and the package may be misaligned:
+
+- The documented version (0.0.8) is behind the latest release on PyPI (0.0.9): `pip install hearing` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                           |
 |---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/e6ef5233da0d2217bf626bdba9d05c3831b07e0a"><code>e6ef5233da0d2217bf626bdba9d05c3831b07e0a</code></a> |
+| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/412b79aef1f15a05be14c597bd7d3e1a92a550ca"><code>412b79aef1f15a05be14c597bd7d3e1a92a550ca</code></a> |
 | Branch              | <code>main</code>                                                                                                                                         |
 | Tags at this commit | none                                                                                                                                                      |
 | Working tree        | clean                                                                                                                                                     |
@@ -2259,16 +2266,16 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>thorwhalen/hearing</code>                                                            |
-| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/38516604881">38516604881</a>   |
+| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/39416564261">39416564261</a>   |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>e6ef5233da0d2217bf626bdba9d05c3831b07e0a</code> (in the history of the built commit) |
+| Event commit | <code>412b79aef1f15a05be14c597bd7d3e1a92a550ca</code> (in the history of the built commit) |
 
 ## Tools
 
 |          |         |
 |----------|---------|
-| epythet  | 0.2.17  |
-| Sphinx   | 9.1.0   |
+| epythet  | 0.2.19  |
+| Sphinx   | 9.1.1   |
 | docutils | 0.22.4  |
 | Python   | 3.12.15 |
 
@@ -2286,14 +2293,14 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/hearing/0.0.7/">0.0.7</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/hearing/0.0.9/">0.0.9</a>, newer than the documented version (0.0.8).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/thorwhalen/hearing && cd hearing
-git checkout e6ef5233da0d2217bf626bdba9d05c3831b07e0a
-pip install "epythet==0.2.17"
+git checkout 412b79aef1f15a05be14c597bd7d3e1a92a550ca
+pip install "epythet==0.2.19"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
 

@@ -108,9 +108,6 @@ Build scribed `Segment`s from an openai-whisper-style result dict.
 Handles both mlx-whisper (word `probability`) and WhisperX (word `score`,
 optional `speaker` on segments and words). Times are float seconds.
 
-* **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)
-
 ```pycon
 >>> segs = whisper_result_to_segments({"segments": [
 ...     {"start": 0.0, "end": 1.5, "text": " hi there",
@@ -119,6 +116,9 @@ optional `speaker` on segments and words). Times are float seconds.
 >>> segs[0].text, segs[0].span.end_ms, segs[0].words[0].text
 ('hi there', 1500, 'hi')
 ```
+
+* **Return type:**
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)
 
 ### Modules
 
