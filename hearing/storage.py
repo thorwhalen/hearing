@@ -192,8 +192,10 @@ class MeetingStore:
         if meeting_id in recordings:
             return meeting_id
         found = sorted(
-            k for k in recordings
-            if str(k).startswith(f"{meeting_id}.") and "." not in str(k)[len(meeting_id) + 1:]
+            k
+            for k in recordings
+            if str(k).startswith(f"{meeting_id}.")
+            and "." not in str(k)[len(meeting_id) + 1 :]
         )
         if not found:
             raise KeyError(f"no recording for meeting {meeting_id!r}")
