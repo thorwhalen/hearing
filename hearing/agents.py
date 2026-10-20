@@ -352,14 +352,21 @@ def build_default_agent(
     prefer: str = "auto",
     retriever: Optional["Retriever"] = None,
     web_search: Optional["WebSearch"] = None,
+    history=None,
 ):
     """Pick the best available agent.
 
     ``prefer="claude"`` forces Claude; ``"extractive"`` forces the offline
     fallback; ``"auto"`` (default) uses Claude when the anthropic SDK and an API
     key are available, otherwise the dependency-free :class:`ExtractiveAgent`.
-    A ``retriever``/``web_search`` make the Claude agent context-connected.
+    A ``retriever``/``web_search`` make the Claude agent context-connected;
+    ``history`` (a :class:`~hearing.storage.MeetingStore` or the mapping
+    ``transcribe(record=...)`` fills) adds prior meetings' takeaways to the retriever.
     """
+    if history is not None:
+        from hearing.context import CombinedRetriever, meeting_retriever
+
+        retriever = CombinedRetriever(retriever, meeting_retriever(history))
     if prefer == "extractive":
         return ExtractiveAgent()
     has_claude = _anthropic_available() and bool(os.getenv("ANTHROPIC_API_KEY"))
@@ -381,6 +388,7 @@ def summarize_transcript(
     model: Optional[str] = None,
     retriever: Optional["Retriever"] = None,
     web_search: Optional["WebSearch"] = None,
+    history=None,
 ) -> Optional[str]:
     """Synchronous facade: run a (batch) agent over a transcript, return notes.
 
@@ -390,7 +398,11 @@ def summarize_transcript(
     """
     window = tuple(transcript)
     agent = agent or build_default_agent(
-        context=context, model=model, retriever=retriever, web_search=web_search
+        context=context,
+        model=model,
+        retriever=retriever,
+        web_search=web_search,
+        history=history,
     )
     return asyncio.run(agent.on_window(window))
 

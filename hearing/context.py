@@ -327,3 +327,72 @@ class WikipediaSearch:
         fetch = self.fetch or self._default_fetch
         raw = await asyncio.to_thread(fetch, self._query_url(query, k))
         return self._parse(raw, k)
+
+
+# ------------------------------------------------------------ meeting memory
+
+
+@dataclass(frozen=True)
+class CombinedRetriever:
+    """Several retrievers searched together; their chunks merged by score.
+
+    >>> import asyncio
+    >>> both = CombinedRetriever(KeywordRetriever({"a": "postgres"}), KeywordRetriever({"b": "postgres too"}))
+    >>> sorted(c.title for c in asyncio.run(both.search("postgres")))
+    ['a', 'b']
+    """
+
+    retrievers: tuple
+
+    def __init__(self, *retrievers: "Retriever"):
+        object.__setattr__(self, "retrievers", tuple(r for r in retrievers if r is not None))
+
+    async def search(self, query: str, *, k: int = 4) -> list[Chunk]:
+        found = await asyncio.gather(*(r.search(query, k=k) for r in self.retrievers))
+        merged = [c for chunks in found for c in chunks]
+        return sorted(merged, key=lambda c: c.score, reverse=True)[:k]
+
+
+def meeting_retriever(
+    meetings,
+    *,
+    exclude: Sequence[str] = (),
+    transcripts: bool = False,
+    make: Callable[[Sequence[Chunk]], "Retriever"] = KeywordRetriever,
+) -> "Retriever":
+    """Prior meetings' takeaways as a :class:`Retriever`: the memory a meeting agent draws on.
+
+    ``meetings`` is a :class:`~hearing.storage.MeetingStore` or the mapping one wraps
+    (what ``transcribe(record=...)`` writes). Each meeting's takeaways are the agent
+    insight stored with its transcript (``meta['insight']``); ``transcripts=True``
+    indexes the transcript text too. ``exclude`` leaves out meetings by id (the one in
+    progress). ``make`` builds the retriever from the chunks (default
+    :class:`KeywordRetriever`; e.g. ``lambda c: EmbeddingRetriever(c, embed=...)``).
+
+    >>> import asyncio
+    >>> from hearing.storage import MeetingStore
+    >>> from hearing.types import TimeSpan, Transcript, TranscriptSegment
+    >>> store = MeetingStore({})
+    >>> t = Transcript([TranscriptSegment("we pick postgres", TimeSpan(0, 500))])
+    >>> _ = store.save("2026-05-12", t.with_meta(insight="Decision: Postgres."))
+    >>> [c.source for c in asyncio.run(meeting_retriever(store).search("postgres decision"))]
+    ['meeting:2026-05-12']
+    """
+    from hearing.storage import MeetingStore
+
+    store = meetings if isinstance(meetings, MeetingStore) else MeetingStore(meetings)
+    chunks: list[Chunk] = []
+    for meeting_id in store.meeting_ids():
+        if meeting_id in exclude:
+            continue
+        transcript = store.load(meeting_id)
+        insight = (transcript.meta or {}).get("insight")
+        if insight:
+            chunks.append(
+                Chunk(text=str(insight), title=f"takeaways {meeting_id}", source=f"meeting:{meeting_id}")
+            )
+        if transcripts and transcript.text.strip():
+            chunks.append(
+                Chunk(text=transcript.text, title=f"transcript {meeting_id}", source=f"meeting:{meeting_id}")
+            )
+    return make(chunks)

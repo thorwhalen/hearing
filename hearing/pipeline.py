@@ -53,8 +53,11 @@ def transcribe(
         language: force a language code (e.g. "en"); ``None`` = auto-detect.
         split: split mic/system channels when the source is multi-channel.
         mic_channels / system_channels: column indices for the channel split.
-        record: optional ``MutableMapping`` store (e.g. a dol store) to persist
-            the transcript JSON under key ``"<source>.transcript.json"``.
+        record: optional ``MutableMapping`` store (e.g. a dol store) or
+            :class:`~hearing.storage.MeetingStore` to persist the transcript JSON
+            (with the agent's insight) under key ``"<source>.transcript.json"``,
+            i.e. meeting id ``<source file name>``; ``hearing.context.meeting_retriever``
+            reads those back as the next meeting's context.
 
     Returns:
         A :class:`Transcript` (iterable/len-able, so it stands in for a sequence
@@ -259,11 +262,16 @@ def _source_channels(
 
 
 def _persist(transcript: Transcript, source, record) -> None:
-    """Store the transcript JSON in a MutableMapping (e.g. a dol store)."""
-    import json
+    """Store the transcript JSON in a MeetingStore or a MutableMapping (e.g. a dol store)."""
+    name = Path(str(getattr(source, "path", source))).name
+    if hasattr(record, "save") and hasattr(record, "meeting_ids"):  # a MeetingStore
+        record.save(name, transcript)
+        return
+    from hearing.storage import transcript_to_json
 
-    key = f"{Path(str(getattr(source, 'path', source))).name}.transcript.json"
+    key = f"{name}.transcript.json"
+    # The round-trippable form, meta (the agent's insight) included.
     try:
-        record[key] = json.dumps(transcript.to_jsonable(), indent=2)
+        record[key] = transcript_to_json(transcript)
     except Exception:  # pragma: no cover - store may want bytes
-        record[key] = json.dumps(transcript.to_jsonable(), indent=2).encode("utf-8")
+        record[key] = transcript_to_json(transcript).encode("utf-8")
