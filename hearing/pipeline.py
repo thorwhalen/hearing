@@ -77,7 +77,12 @@ def transcribe(
     if diarizer is None and any(s.channel is not Channel.MIXED for s in segments):
         diarizer = ChannelTrickDiarizer()
     if diarizer is not None:
-        segments = list(diarizer.assign_speakers(segments, sample_rate=native_sr))
+        # Acoustic diarizers run on the remote side only: hand them the system channel
+        # (or the mixed audio when the source was not split).
+        diar_audio = channels.get(Channel.SYSTEM, channels.get(Channel.MIXED))
+        segments = list(
+            diarizer.assign_speakers(segments, audio=diar_audio, sample_rate=native_sr)
+        )
 
     transcript = Transcript(
         tuple(segments),
