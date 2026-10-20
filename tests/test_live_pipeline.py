@@ -93,3 +93,25 @@ def test_live_without_agent_still_yields_segments(two_turn_stereo):
     source = StreamingFileCapture(two_turn_stereo, block_ms=100)
     segs = _run_live(source, engine=FakeStreamingSTT())
     assert len(segs) == 2
+
+
+class EchoAgent(RecordingAgent):
+    async def on_segment(self, seg):
+        self.segs.append(seg)
+        return f"insight for {seg.text}"
+
+
+def test_live_insights_reach_the_sink_sync_or_async(two_turn_stereo):
+    from hearing.capture import StreamingFileCapture
+
+    got, got_async = [], []
+
+    async def async_sink(insight, seg):
+        got_async.append((insight, seg.speaker))
+
+    for sink in (lambda insight, seg: got.append((insight, seg.speaker)), async_sink):
+        source = StreamingFileCapture(two_turn_stereo, block_ms=100)
+        _run_live(source, engine=FakeStreamingSTT(), agent=EchoAgent(), on_insight=sink)
+    assert len(got) == len(got_async) == 2
+    assert {who for _, who in got} == {ME, THEM}
+    assert all(i.startswith("insight for utt@") for i, _ in got)

@@ -24,6 +24,7 @@ from __future__ import annotations
 import asyncio
 import os
 import re
+from collections import deque
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Optional, Sequence
 
@@ -52,6 +53,24 @@ _TOOL_SPECS = {
         "(follow-up research or a fact-check). One focused query per call.",
     ),
 }
+
+#: What a live ``on_segment`` call can surface, and how each is asked for.
+LIVE_BEHAVIORS = {
+    "notes": "[note] a running note: a decision, commitment or key point just made",
+    "questions": "[question] a question the local user ('me') could usefully ask next",
+    "factcheck": "[fact-check] a factual claim just made that looks wrong or unverified, "
+    "with the correction (use web_search when available)",
+}
+#: The live model's way of saying there is nothing worth surfacing.
+LIVE_NOTHING = "NONE"
+_LIVE_SYSTEM_PROMPT = """\
+You are a live meeting copilot reading the latest finalized utterances of a meeting \
+in progress. Surface only what helps the local user ("me") right now, as at most \
+{max_lines} short lines, each starting with its tag:
+{behaviors}
+Never repeat a line you would have surfaced for earlier utterances. If nothing is \
+worth surfacing, reply exactly {nothing}.\
+"""
 
 _DEFAULT_SYSTEM_PROMPT = """\
 You are a meeting assistant. Given a (speaker-labelled) transcript, produce a \
@@ -113,6 +132,23 @@ class ClaudeAgent:
     tool_use: bool = True  # let Claude query the retriever / web search itself
     max_tool_rounds: int = DEFAULT_MAX_TOOL_ROUNDS
     _tool_cache: dict = field(default_factory=dict, repr=False, compare=False)
+    #: live behaviours ``on_segment`` runs (keys of ``LIVE_BEHAVIORS``); none by
+    #: default, since each live call is a paid request
+    live: Sequence[str] = ()
+    live_every: int = 4  # finalized segments between live calls
+    live_window: int = 12  # recent segments a live call sees
+    live_max_lines: int = 3
+    _recent: deque = field(default_factory=deque, repr=False, compare=False)
+    _since_live: int = field(default=0, repr=False, compare=False)
+    _live_busy: bool = field(default=False, repr=False, compare=False)
+
+    def __post_init__(self):
+        unknown = set(self.live) - set(LIVE_BEHAVIORS)
+        if unknown:
+            raise ValueError(
+                f"unknown live behaviours {sorted(unknown)}; choose from {sorted(LIVE_BEHAVIORS)}"
+            )
+        self._recent = deque(maxlen=max(1, self.live_window))
 
     def _client(self):
         if self.client is not None:
@@ -155,12 +191,14 @@ class ClaudeAgent:
                 parts.append(f"[web: {c.title or 'result'}{src}] {c.text.strip()}")
         return "\n\n".join(parts)
 
-    def _analyze_sync(self, transcript_text: str, context_text: str = "") -> str:
+    def _analyze_sync(
+        self, transcript_text: str, context_text: str = "", *, system: Optional[str] = None
+    ) -> str:
         """Blocking Claude call; ``on_window`` runs this off the event loop."""
         message = self._client().messages.create(
             model=self.model,
             max_tokens=self.max_tokens,
-            system=self.system_prompt,
+            system=system or self.system_prompt,
             messages=[_user_turn(transcript_text, context_text)],
         )
         return _text_of(message)
@@ -207,7 +245,9 @@ class ClaudeAgent:
             )
         return self._tool_cache[key], False
 
-    async def _analyze_with_tools(self, transcript_text: str, context_text: str) -> str:
+    async def _analyze_with_tools(
+        self, transcript_text: str, context_text: str, *, system: Optional[str] = None
+    ) -> str:
         """The manual tool-use loop: Claude may search context / the web, then answers."""
         client, tools = self._client(), self._tools()
         messages: list[dict] = [_user_turn(transcript_text, context_text)]
@@ -216,7 +256,7 @@ class ClaudeAgent:
             kwargs = dict(
                 model=self.model,
                 max_tokens=self.max_tokens,
-                system=self.system_prompt,
+                system=system or self.system_prompt,
                 messages=messages,
                 tools=tools,
             )
@@ -260,9 +300,45 @@ class ClaudeAgent:
         # The SDK call is blocking; keep the event loop free (batch & live).
         return await asyncio.to_thread(self._analyze_sync, text, context_text)
 
+    def _live_system_prompt(self) -> str:
+        return _LIVE_SYSTEM_PROMPT.format(
+            max_lines=self.live_max_lines,
+            behaviors="\n".join(f"- {LIVE_BEHAVIORS[b]}" for b in self.live),
+            nothing=LIVE_NOTHING,
+        )
+
     async def on_segment(self, segment: TranscriptSegment) -> Optional[str]:
-        """Live per-segment hook (milestone 2). No-op in the batch milestone."""
-        return None
+        """Live: every ``live_every`` finalized segments (sooner on a question), the ``live`` behaviours over the recent window.
+
+        Returns tagged lines (``[note]``, ``[question]``, ``[fact-check]``) or None.
+        While a live call is in flight, further ticks are skipped rather than queued,
+        so a slow model never piles up behind the meeting.
+        """
+        if not segment.text.strip():
+            return None
+        self._recent.append(segment)
+        self._since_live += 1
+        if not self.live:
+            return None
+        asked = "questions" in self.live and segment.text.rstrip().endswith("?")
+        if (self._since_live < self.live_every and not asked) or self._live_busy:
+            return None
+        self._live_busy, self._since_live = True, 0
+        try:
+            window = _transcript_text(tuple(self._recent))
+            context_text = await self._assemble_context(window, include_web=False)
+            if self.tool_use and self._tools():
+                reply = await self._analyze_with_tools(
+                    window, context_text, system=self._live_system_prompt()
+                )
+            else:
+                reply = await asyncio.to_thread(
+                    self._analyze_sync, window, context_text, system=self._live_system_prompt()
+                )
+        finally:
+            self._live_busy = False
+        reply = (reply or "").strip()
+        return None if not reply or reply == LIVE_NOTHING else reply
 
 
 @dataclass

@@ -13,6 +13,7 @@ describes; swapping any one component touches only the assembly call.
 from __future__ import annotations
 
 import asyncio
+import inspect
 from pathlib import Path
 from typing import Optional, Sequence
 
@@ -114,6 +115,7 @@ async def live_transcribe(
     agent: Optional[AgentConsumer] = None,
     audio_queue_max: int = 50,
     segment_queue_max: int = 100,
+    on_insight=None,
 ):
     """Stream FINALIZED segments as a meeting unfolds (the live path).
 
@@ -126,7 +128,9 @@ async def live_transcribe(
     ``engine.stream_transcribe`` as an independent async task, so a slow agent
     never stalls capture (backpressure) and the channel "me vs them" label rides
     every segment. Diarization defaults to the free channel trick; the agent's
-    ``on_segment`` is fired fire-and-forget. Yields segments as utterances finalize.
+    ``on_segment`` is fired fire-and-forget; whatever it returns goes to
+    ``on_insight(insight, segment)`` (sync or async), and is dropped without one.
+    Yields segments as utterances finalize.
 
     See the ``hearing-live-pipeline`` skill.
     """
@@ -159,7 +163,7 @@ async def live_transcribe(
             elif channel is not Channel.MIXED:
                 seg = next(iter(default_diar.assign_speakers([seg])))
             if agent is not None:
-                agent_tasks.append(asyncio.create_task(_safe_on_segment(agent, seg)))
+                agent_tasks.append(asyncio.create_task(_safe_on_segment(agent, seg, on_insight)))
             await seg_q.put(seg)
 
     async def _router() -> None:
@@ -194,11 +198,17 @@ async def live_transcribe(
             t.cancel()
 
 
-async def _safe_on_segment(agent: AgentConsumer, seg: TranscriptSegment) -> None:
-    """Run ``agent.on_segment`` without letting a failure crash the stream."""
+async def _safe_on_segment(
+    agent: AgentConsumer, seg: TranscriptSegment, on_insight=None
+) -> None:
+    """Run ``agent.on_segment`` and hand its insight to ``on_insight``, never crashing the stream."""
     try:
-        await agent.on_segment(seg)
-    except Exception:  # noqa: BLE001 - agent/RAG failure must not kill capture
+        insight = await agent.on_segment(seg)
+        if insight and on_insight is not None:
+            delivered = on_insight(insight, seg)
+            if inspect.isawaitable(delivered):
+                await delivered
+    except Exception:  # noqa: BLE001 - agent/RAG/sink failure must not kill capture
         pass
 
 
