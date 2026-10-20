@@ -25,7 +25,7 @@ import asyncio
 import os
 import re
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Optional, Sequence
+from typing import TYPE_CHECKING, Any, Optional, Sequence
 
 from hearing.types import Transcript, TranscriptSegment
 
@@ -35,6 +35,23 @@ if TYPE_CHECKING:  # retrieval backends are injected; avoid importing at module 
 #: A sensible, current default Claude model for meeting analysis. Override via
 #: ``model=`` (e.g. "claude-opus-4-8" for max capability). See claude-api skill.
 DEFAULT_CLAUDE_MODEL: str = "claude-sonnet-4-6"
+
+#: Tool-use rounds a batch analysis may spend before it must answer.
+DEFAULT_MAX_TOOL_ROUNDS = 4
+#: Tools the agent offers Claude, by which injected backend serves them.
+_TOOL_SPECS = {
+    "search_context": (
+        "retriever",
+        "Search the meeting's project context (prior meetings' takeaways, project "
+        "notes, research reports) for passages relevant to a query. Use it to check "
+        "what was decided or known before this meeting.",
+    ),
+    "web_search": (
+        "web_search",
+        "Search the web for a specific fact or entity mentioned in the meeting "
+        "(follow-up research or a fact-check). One focused query per call.",
+    ),
+}
 
 _DEFAULT_SYSTEM_PROMPT = """\
 You are a meeting assistant. Given a (speaker-labelled) transcript, produce a \
@@ -90,8 +107,14 @@ class ClaudeAgent:
     web_search: Optional["WebSearch"] = None  # bring outside info in
     retrieve_k: int = 4
     web_k: int = 3
+    client: Any = None  # an injected client (anything with .messages.create), e.g. a fake
+    tool_use: bool = True  # let Claude query the retriever / web search itself
+    max_tool_rounds: int = DEFAULT_MAX_TOOL_ROUNDS
+    _tool_cache: dict = field(default_factory=dict, repr=False, compare=False)
 
     def _client(self):
+        if self.client is not None:
+            return self.client
         try:
             import anthropic
         except ImportError as e:  # pragma: no cover - guidance path
@@ -109,7 +132,7 @@ class ClaudeAgent:
             )
         return anthropic.Anthropic(api_key=key)
 
-    async def _assemble_context(self, query: str) -> str:
+    async def _assemble_context(self, query: str, *, include_web: bool = True) -> str:
         """Gather the agent's context: static context + RAG + web search.
 
         Retrieval is async and offloaded so it never blocks the stream; results
@@ -123,7 +146,7 @@ class ClaudeAgent:
             for c in chunks:
                 label = c.title or c.source or "context"
                 parts.append(f"[{label}] {c.text.strip()}")
-        if self.web_search is not None:
+        if include_web and self.web_search is not None:
             results = await self.web_search.search(query, k=self.web_k)
             for c in results:
                 src = f" ({c.source})" if c.source else ""
@@ -132,27 +155,98 @@ class ClaudeAgent:
 
     def _analyze_sync(self, transcript_text: str, context_text: str = "") -> str:
         """Blocking Claude call; ``on_window`` runs this off the event loop."""
-        user_parts = []
-        if context_text:
-            user_parts.append(f"Relevant context:\n{context_text}\n")
-        user_parts.append(f"Transcript:\n{transcript_text}")
         message = self._client().messages.create(
             model=self.model,
             max_tokens=self.max_tokens,
             system=self.system_prompt,
-            messages=[{"role": "user", "content": "\n".join(user_parts)}],
+            messages=[_user_turn(transcript_text, context_text)],
         )
-        return "".join(
-            block.text
-            for block in message.content
-            if getattr(block, "type", "") == "text"
-        ).strip()
+        return _text_of(message)
+
+    def _tools(self) -> list[dict]:
+        """The tool definitions for the backends this agent was given."""
+        return [
+            {
+                "name": name,
+                "description": description,
+                "input_schema": {
+                    "type": "object",
+                    "properties": {"query": {"type": "string"}},
+                    "required": ["query"],
+                },
+            }
+            for name, (backend, description) in _TOOL_SPECS.items()
+            if getattr(self, backend) is not None
+        ]
+
+    async def _run_tool(self, name: str, tool_input: dict) -> tuple[str, bool]:
+        """One tool call, answered from the cache when the same query recurs; ``(text, is_error)``."""
+        query = str((tool_input or {}).get("query") or "").strip()
+        if name not in _TOOL_SPECS or not query:
+            return f"unknown tool or empty query: {name}", True
+        key = (name, query.lower())
+        if key not in self._tool_cache:
+            backend = getattr(self, _TOOL_SPECS[name][0])
+            k = self.retrieve_k if name == "search_context" else self.web_k
+            try:
+                chunks = await backend.search(query, k=k)
+            except Exception as e:  # a failed lookup is the model's to handle, not a crash
+                return f"{name} failed: {type(e).__name__}: {e}", True
+            self._tool_cache[key] = "\n\n".join(
+                f"[{c.title or c.source or 'result'}]"
+                + (f" ({c.source})" if c.source and c.title else "")
+                + f" {c.text.strip()}"
+                for c in chunks
+            ) or "no results"
+        return self._tool_cache[key], False
+
+    async def _analyze_with_tools(self, transcript_text: str, context_text: str) -> str:
+        """The manual tool-use loop: Claude may search context / the web, then answers."""
+        client, tools = self._client(), self._tools()
+        messages: list[dict] = [_user_turn(transcript_text, context_text)]
+        for round_ in range(self.max_tool_rounds + 1):
+            last = round_ == self.max_tool_rounds
+            kwargs = dict(
+                model=self.model,
+                max_tokens=self.max_tokens,
+                system=self.system_prompt,
+                messages=messages,
+                tools=tools,
+            )
+            if last:  # out of rounds: answer with what has been gathered
+                kwargs["tool_choice"] = {"type": "none"}
+            message = await asyncio.to_thread(client.messages.create, **kwargs)
+            if getattr(message, "stop_reason", None) != "tool_use" or last:
+                return _text_of(message)
+            calls = [b for b in message.content if getattr(b, "type", "") == "tool_use"]
+            results = await asyncio.gather(*(self._run_tool(b.name, b.input) for b in calls))
+            messages.append({"role": "assistant", "content": message.content})
+            messages.append(
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": b.id,
+                            "content": text,
+                            **({"is_error": True} if error else {}),
+                        }
+                        for b, (text, error) in zip(calls, results)
+                    ],
+                }
+            )
+        return ""  # pragma: no cover - the last round always returns
 
     async def on_window(self, window: Sequence[TranscriptSegment]) -> Optional[str]:
         """Analyze a whole transcript (batch) and return structured notes."""
         text = _transcript_text(window)
         if not text:
             return None
+        if self.tool_use and self._tools():
+            # Claude asks for what it needs; the static context and a first
+            # retrieval still go in up front, the web only on request.
+            context_text = await self._assemble_context(text, include_web=False)
+            return await self._analyze_with_tools(text, context_text) or None
         context_text = await self._assemble_context(text)
         # The SDK call is blocking; keep the event loop free (batch & live).
         return await asyncio.to_thread(self._analyze_sync, text, context_text)
@@ -235,6 +329,20 @@ class ExtractiveAgent:
         if any(cue in low for cue in self.action_cues):
             return f"Possible action item ({who}): {text}"
         return None
+
+
+def _user_turn(transcript_text: str, context_text: str = "") -> dict:
+    parts = []
+    if context_text:
+        parts.append(f"Relevant context:\n{context_text}\n")
+    parts.append(f"Transcript:\n{transcript_text}")
+    return {"role": "user", "content": "\n".join(parts)}
+
+
+def _text_of(message) -> str:
+    return "".join(
+        block.text for block in message.content if getattr(block, "type", "") == "text"
+    ).strip()
 
 
 def build_default_agent(
