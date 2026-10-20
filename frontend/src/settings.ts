@@ -10,6 +10,8 @@
 // line in the schema plus, if wanted, a label and help text in `settings`.
 import { z } from 'zod';
 import { defineCollection } from '@zodal/core';
+import type { DataProvider } from '@zodal/store';
+import { createLocalStorageProvider } from '@zodal/store-localstorage';
 
 export const WHISPER_MODELS = ['tiny', 'base', 'small', 'medium', 'large-v3'] as const;
 
@@ -38,31 +40,72 @@ export const settings = defineCollection(SettingsSchema, {
   },
 });
 
-const KEY = 'hearing.settings';
+// Where settings live: any zodal DataProvider. The default keeps them in this
+// browser (localStorage); moving them to a server is passing another provider
+// (e.g. @zodal/store-http) to createSettingsStore, with no other change.
+// The settings are one record, with id SETTINGS_ID, in that provider.
+export const SETTINGS_ID = 'settings';
+export const STORAGE_KEY = 'hearing.settings.store';
+const LEGACY_KEY = 'hearing.settings'; // the plain-object format before the store
 
-// Read stored settings, keeping each stored field that is still valid and
-// falling back to its default otherwise (a renamed option never breaks the app).
-export function loadSettings(): Settings {
-  let stored: Record<string, unknown> = {};
-  try {
-    const raw = globalThis.localStorage?.getItem(KEY);
-    const parsed: unknown = raw ? JSON.parse(raw) : {};
-    if (parsed && typeof parsed === 'object') stored = parsed as Record<string, unknown>;
-  } catch {
-    return { ...DEFAULT_SETTINGS };
-  }
+type SettingsRecord = Settings & { id: string };
+
+export interface SettingsStore {
+  load(): Promise<Settings>;
+  save(value: Settings): Promise<void>;
+}
+
+// Keep each stored field that is still valid and fall back to its default
+// otherwise (a renamed option never breaks the app).
+export function sanitizeSettings(stored: unknown): Settings {
+  const record = stored && typeof stored === 'object' ? (stored as Record<string, unknown>) : {};
   const out: Record<string, unknown> = { ...DEFAULT_SETTINGS };
   for (const [name, field] of Object.entries(SettingsSchema.shape)) {
-    const checked = field.safeParse(stored[name]);
-    if (checked.success && name in stored) out[name] = checked.data;
+    const checked = field.safeParse(record[name]);
+    if (checked.success && name in record) out[name] = checked.data;
   }
   return out as Settings;
 }
 
-export function saveSettings(value: Settings): void {
+// Settings stored by earlier versions (one JSON object under LEGACY_KEY), if any.
+function readLegacySettings(): unknown {
   try {
-    globalThis.localStorage?.setItem(KEY, JSON.stringify(value));
+    const raw = globalThis.localStorage?.getItem(LEGACY_KEY);
+    return raw ? JSON.parse(raw) : undefined;
   } catch {
-    /* storage unavailable (e.g. private mode) — settings just won't persist */
+    return undefined;
   }
 }
+
+export function createSettingsStore(
+  provider: DataProvider<SettingsRecord> = createLocalStorageProvider<SettingsRecord>({
+    storageKey: STORAGE_KEY,
+  }),
+): SettingsStore {
+  return {
+    async load() {
+      try {
+        return sanitizeSettings(await provider.getOne(SETTINGS_ID));
+      } catch {
+        // Nothing stored yet (or storage unavailable): start from what an earlier
+        // version stored, else the defaults.
+        return sanitizeSettings(readLegacySettings());
+      }
+    },
+    async save(value) {
+      const record = { ...value, id: SETTINGS_ID };
+      try {
+        if (provider.upsert) await provider.upsert(record);
+        else
+          await provider.update(SETTINGS_ID, record).catch(() => provider.create(record));
+      } catch {
+        /* storage unavailable (e.g. private mode): settings just won't persist */
+      }
+    },
+  };
+}
+
+// The app's store. Tests and other hosts make their own with createSettingsStore.
+export const settingsStore: SettingsStore = createSettingsStore();
+export const loadSettings = (): Promise<Settings> => settingsStore.load();
+export const saveSettings = (value: Settings): Promise<void> => settingsStore.save(value);

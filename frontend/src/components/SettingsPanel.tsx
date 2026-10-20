@@ -36,7 +36,7 @@ export function SettingsPanel({ settings, onChange, onClose }: Props) {
   const [s, setS] = useState<Settings>(settings);
 
   const close = () => {
-    saveSettings(s);
+    void saveSettings(s);
     onChange(s);
     onClose();
   };

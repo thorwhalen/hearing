@@ -23,7 +23,16 @@ import { SummaryPanel } from './components/SummaryPanel';
 import { TranscriptView } from './components/TranscriptView';
 
 export function App() {
-  const [settings, setSettings] = useState<Settings>(() => loadSettings() ?? DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  // Stored settings come from an async store (see settings.ts): start from the
+  // defaults and switch to the stored ones once read.
+  useEffect(() => {
+    let live = true;
+    loadSettings().then((stored) => live && setSettings(stored));
+    return () => {
+      live = false;
+    };
+  }, []);
   const [result, setResult] = useState<TranscribeResponse | null>(null);
   const [liveFeedback, setLiveFeedback] = useState<Feedback[]>([]);
   const [query, setQuery] = useState('');
@@ -87,7 +96,7 @@ export function App() {
   function patch(p: Partial<Settings>) {
     const next = { ...settings, ...p };
     setSettings(next);
-    saveSettings(next);
+    void saveSettings(next);
   }
 
   async function runTranscription(file: File) {

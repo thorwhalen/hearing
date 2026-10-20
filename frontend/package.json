@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@zodal/core": "^0.1.2",
+    "@zodal/store": "^0.1.2",
+    "@zodal/store-localstorage": "^0.1.0",
     "@zodal/ui": "^0.1.2",
     "@zodal/ui-shadcn": "^0.1.0",
     "marked": "^14.1.4",
