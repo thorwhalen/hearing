@@ -107,7 +107,9 @@ class ClaudeAgent:
     web_search: Optional["WebSearch"] = None  # bring outside info in
     retrieve_k: int = 4
     web_k: int = 3
-    client: Any = None  # an injected client (anything with .messages.create), e.g. a fake
+    client: Any = (
+        None  # an injected client (anything with .messages.create), e.g. a fake
+    )
     tool_use: bool = True  # let Claude query the retriever / web search itself
     max_tool_rounds: int = DEFAULT_MAX_TOOL_ROUNDS
     _tool_cache: dict = field(default_factory=dict, repr=False, compare=False)
@@ -190,14 +192,19 @@ class ClaudeAgent:
             k = self.retrieve_k if name == "search_context" else self.web_k
             try:
                 chunks = await backend.search(query, k=k)
-            except Exception as e:  # a failed lookup is the model's to handle, not a crash
+            except (
+                Exception
+            ) as e:  # a failed lookup is the model's to handle, not a crash
                 return f"{name} failed: {type(e).__name__}: {e}", True
-            self._tool_cache[key] = "\n\n".join(
-                f"[{c.title or c.source or 'result'}]"
-                + (f" ({c.source})" if c.source and c.title else "")
-                + f" {c.text.strip()}"
-                for c in chunks
-            ) or "no results"
+            self._tool_cache[key] = (
+                "\n\n".join(
+                    f"[{c.title or c.source or 'result'}]"
+                    + (f" ({c.source})" if c.source and c.title else "")
+                    + f" {c.text.strip()}"
+                    for c in chunks
+                )
+                or "no results"
+            )
         return self._tool_cache[key], False
 
     async def _analyze_with_tools(self, transcript_text: str, context_text: str) -> str:
@@ -219,7 +226,9 @@ class ClaudeAgent:
             if getattr(message, "stop_reason", None) != "tool_use" or last:
                 return _text_of(message)
             calls = [b for b in message.content if getattr(b, "type", "") == "tool_use"]
-            results = await asyncio.gather(*(self._run_tool(b.name, b.input) for b in calls))
+            results = await asyncio.gather(
+                *(self._run_tool(b.name, b.input) for b in calls)
+            )
             messages.append({"role": "assistant", "content": message.content})
             messages.append(
                 {
