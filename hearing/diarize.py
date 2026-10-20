@@ -126,7 +126,9 @@ class PyannoteDiarizer:
         todo = [s for s in segments if s.speaker is None]
         if not todo or audio is None or sample_rate is None:
             # Nothing to diarize, or nothing to run on: the channel trick for the rest.
-            yield from ChannelTrickDiarizer(me_label=self.me_label).assign_speakers(segments)
+            yield from ChannelTrickDiarizer(me_label=self.me_label).assign_speakers(
+                segments
+            )
             return
 
         diarization = self._pipeline()(
