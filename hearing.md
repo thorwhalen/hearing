@@ -1,4 +1,4 @@
-> built 2026-10-20 11:41 UTC from 412b79a (main) · hearing 0.0.8. Details: build_info.json
+> built 2026-10-20 13:13 UTC from 605b6f0 (main) · hearing 0.0.9. Details: build_info.json
 
 # index.html.md
 
@@ -245,8 +245,9 @@ and the batch≡live unification.
 
 ### Module Attributes
 
-| [`DEFAULT_CLAUDE_MODEL`](_autosummary/hearing.agents.html.md#hearing.agents.DEFAULT_CLAUDE_MODEL)   | A sensible, current default Claude model for meeting analysis.   |
-|-------------------------------------------------------------------------|------------------------------------------------------------------|
+| [`DEFAULT_CLAUDE_MODEL`](_autosummary/hearing.agents.html.md#hearing.agents.DEFAULT_CLAUDE_MODEL)    | A sensible, current default Claude model for meeting analysis.    |
+|--------------------------------------------------------------------------|-------------------------------------------------------------------|
+| [`DEFAULT_MAX_TOOL_ROUNDS`](_autosummary/hearing.agents.html.md#hearing.agents.DEFAULT_MAX_TOOL_ROUNDS) | Tool-use rounds a batch analysis may spend before it must answer. |
 
 ### Functions
 
@@ -260,7 +261,7 @@ and the batch≡live unification.
 |------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------|
 | [`ExtractiveAgent`](_autosummary/hearing.agents.html.md#hearing.agents.ExtractiveAgent)([max_key_points, action_cues])      | Deterministic, dependency-free fallback agent (no API, no network). |
 
-### *class* hearing.agents.ClaudeAgent(model='claude-sonnet-4-6', context=None, system_prompt='You are a meeting assistant. Given a (speaker-labelled) transcript, produce a concise, well-structured analysis with these sections, omitting any that don\\'t apply:\\n\\n## Summary\\n2-4 sentences capturing what the meeting was about and its outcome.\\n\\n## Decisions\\nBullet points of decisions that were made.\\n\\n## Action items\\nBullet points as "- [owner] action" when an owner is identifiable, else "- action".\\n\\n## Open questions / follow-ups\\nBullet points of unresolved questions or things worth researching afterwards.\\n\\nBe faithful to the transcript; do not invent facts. Speakers labelled "me" are the local user; "them"/"spk_\*" are remote participants.', max_tokens=1024, api_key=None, retriever=None, web_search=None, retrieve_k=4, web_k=3)
+### *class* hearing.agents.ClaudeAgent(model='claude-sonnet-4-6', context=None, system_prompt='You are a meeting assistant. Given a (speaker-labelled) transcript, produce a concise, well-structured analysis with these sections, omitting any that don\\'t apply:\\n\\n## Summary\\n2-4 sentences capturing what the meeting was about and its outcome.\\n\\n## Decisions\\nBullet points of decisions that were made.\\n\\n## Action items\\nBullet points as "- [owner] action" when an owner is identifiable, else "- action".\\n\\n## Open questions / follow-ups\\nBullet points of unresolved questions or things worth researching afterwards.\\n\\nBe faithful to the transcript; do not invent facts. Speakers labelled "me" are the local user; "them"/"spk_\*" are remote participants.', max_tokens=1024, api_key=None, retriever=None, web_search=None, retrieve_k=4, web_k=3, client=None, tool_use=True, max_tool_rounds=4, \_tool_cache=dict())
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -291,6 +292,10 @@ Analyze a whole transcript (batch) and return structured notes.
 
 A sensible, current default Claude model for meeting analysis. Override via
 `model=` (e.g. “claude-opus-4-8” for max capability). See claude-api skill.
+
+### hearing.agents.DEFAULT_MAX_TOOL_ROUNDS *= 4*
+
+Tool-use rounds a batch analysis may spend before it must answer.
 
 ### *class* hearing.agents.ExtractiveAgent(max_key_points=5, action_cues=("let's", 'we should', "i'll", "we'll", 'need to', 'action', 'todo', 'to do', 'follow up', 'next step', 'assign', 'by friday', 'by monday', 'deadline'))
 
@@ -2244,18 +2249,16 @@ rate of the incoming blocks (used only for the ms arithmetic).
 
 # About this build
 
-This documentation was built on **2026-10-20 11:41 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/412b79aef1f15a05be14c597bd7d3e1a92a550ca"><code>412b79a</code></a> on branch <code>main</code>, for **hearing 0.0.8** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-20 13:13 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/605b6f084a51c2f00c2b7d5dd9340a3b89dc0290"><code>605b6f0</code></a> on branch <code>main</code>, for **hearing 0.0.9** (from <code>pyproject.toml</code>).
 
-#### WARNING
-The documentation and the package may be misaligned:
-
-- The documented version (0.0.8) is behind the latest release on PyPI (0.0.9): `pip install hearing` gives newer code than these docs describe.
+#### NOTE
+Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
 
 ## Source
 
 |                     |                                                                                                                                                           |
 |---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/412b79aef1f15a05be14c597bd7d3e1a92a550ca"><code>412b79aef1f15a05be14c597bd7d3e1a92a550ca</code></a> |
+| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/605b6f084a51c2f00c2b7d5dd9340a3b89dc0290"><code>605b6f084a51c2f00c2b7d5dd9340a3b89dc0290</code></a> |
 | Branch              | <code>main</code>                                                                                                                                         |
 | Tags at this commit | none                                                                                                                                                      |
 | Working tree        | clean                                                                                                                                                     |
@@ -2266,15 +2269,15 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>thorwhalen/hearing</code>                                                            |
-| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/39416564261">39416564261</a>   |
+| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/39428387876">39428387876</a>   |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>412b79aef1f15a05be14c597bd7d3e1a92a550ca</code> (in the history of the built commit) |
+| Event commit | <code>605b6f084a51c2f00c2b7d5dd9340a3b89dc0290</code> (in the history of the built commit) |
 
 ## Tools
 
 |          |         |
 |----------|---------|
-| epythet  | 0.2.19  |
+| epythet  | 0.2.20  |
 | Sphinx   | 9.1.1   |
 | docutils | 0.22.4  |
 | Python   | 3.12.15 |
@@ -2293,14 +2296,14 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/hearing/0.0.9/">0.0.9</a>, newer than the documented version (0.0.8).
+Latest release: <a href="https://pypi.org/project/hearing/0.0.9/">0.0.9</a>, the same as the documented version.
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/thorwhalen/hearing && cd hearing
-git checkout 412b79aef1f15a05be14c597bd7d3e1a92a550ca
-pip install "epythet==0.2.19"
+git checkout 605b6f084a51c2f00c2b7d5dd9340a3b89dc0290
+pip install "epythet==0.2.20"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
 

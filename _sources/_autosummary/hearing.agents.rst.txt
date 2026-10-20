@@ -9,6 +9,7 @@ hearing.agents
    .. autosummary::
    
       DEFAULT_CLAUDE_MODEL
+      DEFAULT_MAX_TOOL_ROUNDS
    
    .. rubric:: Functions
 

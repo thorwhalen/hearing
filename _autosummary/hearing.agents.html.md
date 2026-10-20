@@ -22,8 +22,9 @@ and the batch≡live unification.
 
 ### Module Attributes
 
-| [`DEFAULT_CLAUDE_MODEL`](#hearing.agents.DEFAULT_CLAUDE_MODEL)   | A sensible, current default Claude model for meeting analysis.   |
-|-------------------------------------------------------------------------|------------------------------------------------------------------|
+| [`DEFAULT_CLAUDE_MODEL`](#hearing.agents.DEFAULT_CLAUDE_MODEL)    | A sensible, current default Claude model for meeting analysis.    |
+|--------------------------------------------------------------------------|-------------------------------------------------------------------|
+| [`DEFAULT_MAX_TOOL_ROUNDS`](#hearing.agents.DEFAULT_MAX_TOOL_ROUNDS) | Tool-use rounds a batch analysis may spend before it must answer. |
 
 ### Functions
 
@@ -37,7 +38,7 @@ and the batch≡live unification.
 |------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------|
 | [`ExtractiveAgent`](#hearing.agents.ExtractiveAgent)([max_key_points, action_cues])      | Deterministic, dependency-free fallback agent (no API, no network). |
 
-### *class* hearing.agents.ClaudeAgent(model='claude-sonnet-4-6', context=None, system_prompt='You are a meeting assistant. Given a (speaker-labelled) transcript, produce a concise, well-structured analysis with these sections, omitting any that don\\'t apply:\\n\\n## Summary\\n2-4 sentences capturing what the meeting was about and its outcome.\\n\\n## Decisions\\nBullet points of decisions that were made.\\n\\n## Action items\\nBullet points as "- [owner] action" when an owner is identifiable, else "- action".\\n\\n## Open questions / follow-ups\\nBullet points of unresolved questions or things worth researching afterwards.\\n\\nBe faithful to the transcript; do not invent facts. Speakers labelled "me" are the local user; "them"/"spk_\*" are remote participants.', max_tokens=1024, api_key=None, retriever=None, web_search=None, retrieve_k=4, web_k=3)
+### *class* hearing.agents.ClaudeAgent(model='claude-sonnet-4-6', context=None, system_prompt='You are a meeting assistant. Given a (speaker-labelled) transcript, produce a concise, well-structured analysis with these sections, omitting any that don\\'t apply:\\n\\n## Summary\\n2-4 sentences capturing what the meeting was about and its outcome.\\n\\n## Decisions\\nBullet points of decisions that were made.\\n\\n## Action items\\nBullet points as "- [owner] action" when an owner is identifiable, else "- action".\\n\\n## Open questions / follow-ups\\nBullet points of unresolved questions or things worth researching afterwards.\\n\\nBe faithful to the transcript; do not invent facts. Speakers labelled "me" are the local user; "them"/"spk_\*" are remote participants.', max_tokens=1024, api_key=None, retriever=None, web_search=None, retrieve_k=4, web_k=3, client=None, tool_use=True, max_tool_rounds=4, \_tool_cache=dict())
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -68,6 +69,10 @@ Analyze a whole transcript (batch) and return structured notes.
 
 A sensible, current default Claude model for meeting analysis. Override via
 `model=` (e.g. “claude-opus-4-8” for max capability). See claude-api skill.
+
+### hearing.agents.DEFAULT_MAX_TOOL_ROUNDS *= 4*
+
+Tool-use rounds a batch analysis may spend before it must answer.
 
 ### *class* hearing.agents.ExtractiveAgent(max_key_points=5, action_cues=("let's", 'we should', "i'll", "we'll", 'need to', 'action', 'todo', 'to do', 'follow up', 'next step', 'assign', 'by friday', 'by monday', 'deadline'))
 
