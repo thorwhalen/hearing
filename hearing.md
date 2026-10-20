@@ -1,4 +1,4 @@
-> built 2026-10-20 14:06 UTC from d014ed6 (main) · hearing 0.0.12. Details: build_info.json
+> built 2026-10-20 15:38 UTC from 70c63bf (main) · hearing 0.0.13. Details: build_info.json
 
 # index.html.md
 
@@ -2371,16 +2371,16 @@ rate of the incoming blocks (used only for the ms arithmetic).
 
 # About this build
 
-This documentation was built on **2026-10-20 14:06 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/d014ed6e878a238db7c9b28b352142b8ca414868"><code>d014ed6</code></a> on branch <code>main</code>, for **hearing 0.0.12** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-20 15:38 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/70c63bfb3e53e3d8ed83e02832fa4f76910cd3ff"><code>70c63bf</code></a> on branch <code>main</code>, for **hearing 0.0.13** (from <code>pyproject.toml</code>).
 
 #### NOTE
-Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI (PyPI was not checked).
+Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
 
 ## Source
 
 |                     |                                                                                                                                                           |
 |---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/d014ed6e878a238db7c9b28b352142b8ca414868"><code>d014ed6e878a238db7c9b28b352142b8ca414868</code></a> |
+| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/70c63bfb3e53e3d8ed83e02832fa4f76910cd3ff"><code>70c63bfb3e53e3d8ed83e02832fa4f76910cd3ff</code></a> |
 | Branch              | <code>main</code>                                                                                                                                         |
 | Tags at this commit | none                                                                                                                                                      |
 | Working tree        | clean                                                                                                                                                     |
@@ -2391,15 +2391,15 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>thorwhalen/hearing</code>                                                            |
-| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/39436041447">39436041447</a>   |
+| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/39449997913">39449997913</a>   |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>d014ed6e878a238db7c9b28b352142b8ca414868</code> (in the history of the built commit) |
+| Event commit | <code>70c63bfb3e53e3d8ed83e02832fa4f76910cd3ff</code> (in the history of the built commit) |
 
 ## Tools
 
 |          |         |
 |----------|---------|
-| epythet  | 0.2.20  |
+| epythet  | 0.2.21  |
 | Sphinx   | 9.1.1   |
 | docutils | 0.22.4  |
 | Python   | 3.12.15 |
@@ -2418,14 +2418,14 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Not checked (TimeoutError: no answer within 3s).
+Latest release: <a href="https://pypi.org/project/hearing/0.0.13/">0.0.13</a>, the same as the documented version.
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/thorwhalen/hearing && cd hearing
-git checkout d014ed6e878a238db7c9b28b352142b8ca414868
-pip install "epythet==0.2.20"
+git checkout 70c63bfb3e53e3d8ed83e02832fa4f76910cd3ff
+pip install "epythet==0.2.21"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
 

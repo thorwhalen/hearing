@@ -1,36 +1,36 @@
 {
   "schema_version": 1,
-  "built_at": "2026-10-20T14:06:40Z",
+  "built_at": "2026-10-20T15:38:20Z",
   "package": {
     "name": "hearing",
-    "version": "0.0.12",
+    "version": "0.0.13",
     "display_name": "hearing",
     "source": "pyproject.toml"
   },
   "git": {
     "available": true,
-    "commit": "d014ed6e878a238db7c9b28b352142b8ca414868",
-    "short_commit": "d014ed6",
+    "commit": "70c63bfb3e53e3d8ed83e02832fa4f76910cd3ff",
+    "short_commit": "70c63bf",
     "branch": "main",
     "tags": [],
     "dirty": false,
     "remote_url": "https://github.com/thorwhalen/hearing",
-    "commit_url": "https://github.com/thorwhalen/hearing/commit/d014ed6e878a238db7c9b28b352142b8ca414868",
+    "commit_url": "https://github.com/thorwhalen/hearing/commit/70c63bfb3e53e3d8ed83e02832fa4f76910cd3ff",
     "error": null
   },
   "ci": {
     "provider": "github",
     "repository": "thorwhalen/hearing",
-    "sha": "d014ed6e878a238db7c9b28b352142b8ca414868",
+    "sha": "70c63bfb3e53e3d8ed83e02832fa4f76910cd3ff",
     "sha_in_history": true,
     "ref": "refs/heads/main",
     "ref_name": "main",
-    "run_id": "39436041447",
-    "run_url": "https://github.com/thorwhalen/hearing/actions/runs/39436041447",
+    "run_id": "39449997913",
+    "run_url": "https://github.com/thorwhalen/hearing/actions/runs/39449997913",
     "server_url": "https://github.com"
   },
   "tools": {
-    "epythet": "0.2.20",
+    "epythet": "0.2.21",
     "sphinx": "9.1.1",
     "docutils": "0.22.4",
     "python": "3.12.15"
@@ -59,15 +59,13 @@
     "objects_documented": 162
   },
   "pypi": {
-    "checked": false,
-    "latest": null,
-    "relation": "unknown",
-    "error": "TimeoutError: no answer within 3s"
+    "checked": true,
+    "latest": "0.0.13",
+    "relation": "same",
+    "error": null
   },
-  "reproduce": "git clone https://github.com/thorwhalen/hearing && cd hearing\ngit checkout d014ed6e878a238db7c9b28b352142b8ca414868\npip install \"epythet==0.2.20\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
-  "warnings": [
-    "pypi: TimeoutError: no answer within 3s"
-  ],
+  "reproduce": "git clone https://github.com/thorwhalen/hearing && cd hearing\ngit checkout 70c63bfb3e53e3d8ed83e02832fa4f76910cd3ff\npip install \"epythet==0.2.21\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
+  "warnings": [],
   "alignment": {
     "aligned": true,
     "notes": []
