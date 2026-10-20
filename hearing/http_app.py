@@ -113,6 +113,13 @@ def transcript_to_payload(
     }
 
 
+def _form_flag(value: Optional[str], *, default: bool) -> bool:
+    """A form value as a bool: absent -> ``default``; 0/false/no/off -> False."""
+    if value is None:
+        return default
+    return value.strip().lower() not in {"0", "false", "no", "off", ""}
+
+
 def create_app(
     *, engine=None, agent=None, cors_origins: Optional[list] = None
 ) -> FastAPI:
@@ -166,7 +173,9 @@ def create_app(
         file: UploadFile = File(...),
         title: str = Form("Untitled meeting"),
         language: Optional[str] = Form(None),
-        split: bool = Form(True),
+        # A str, not a bool: recent FastAPI reads an absent ``bool`` form field as False
+        # (an unchecked checkbox), which would turn splitting off by default.
+        split: Optional[str] = Form(None),
         summarize: bool = Form(False),
         engine: str = Form("whisper"),
         model: str = Form("base"),
@@ -184,7 +193,7 @@ def create_app(
                 audio_path,
                 engine=_engine(engine, model),
                 language=language,
-                split=split,
+                split=_form_flag(split, default=True),
             )
 
         meeting_id = str(uuid.uuid4())
