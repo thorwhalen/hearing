@@ -163,7 +163,9 @@ async def live_transcribe(
             elif channel is not Channel.MIXED:
                 seg = next(iter(default_diar.assign_speakers([seg])))
             if agent is not None:
-                agent_tasks.append(asyncio.create_task(_safe_on_segment(agent, seg, on_insight)))
+                agent_tasks.append(
+                    asyncio.create_task(_safe_on_segment(agent, seg, on_insight))
+                )
             await seg_q.put(seg)
 
     async def _router() -> None:

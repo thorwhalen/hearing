@@ -192,7 +192,11 @@ class ClaudeAgent:
         return "\n\n".join(parts)
 
     def _analyze_sync(
-        self, transcript_text: str, context_text: str = "", *, system: Optional[str] = None
+        self,
+        transcript_text: str,
+        context_text: str = "",
+        *,
+        system: Optional[str] = None,
     ) -> str:
         """Blocking Claude call; ``on_window`` runs this off the event loop."""
         message = self._client().messages.create(
@@ -333,7 +337,10 @@ class ClaudeAgent:
                 )
             else:
                 reply = await asyncio.to_thread(
-                    self._analyze_sync, window, context_text, system=self._live_system_prompt()
+                    self._analyze_sync,
+                    window,
+                    context_text,
+                    system=self._live_system_prompt(),
                 )
         finally:
             self._live_busy = False
