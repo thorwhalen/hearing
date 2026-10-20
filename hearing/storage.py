@@ -35,6 +35,8 @@ def transcript_from_json(s: Union[str, bytes]) -> Transcript:
     if isinstance(s, bytes):
         s = s.decode("utf-8")
     d = json.loads(s)
+    if isinstance(d, list):  # records written before the meta was kept: segments only
+        d = {"segments": d}
     segments = tuple(
         TranscriptSegment(
             text=x["text"],
