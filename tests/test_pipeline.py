@@ -73,3 +73,15 @@ def test_transcribe_runs_agent_and_stores_insight(stereo_file):
 
     t = transcribe(stereo_file, engine=FakeSTT(), agent=FakeAgent())
     assert t.meta["insight"] == "2 segments analyzed"
+
+
+def test_transcribe_hands_the_system_channel_to_an_acoustic_diarizer(stereo_file):
+    seen = {}
+
+    class Spy:
+        def assign_speakers(self, segments, *, audio=None, sample_rate=None):
+            seen["rms"] = float(np.sqrt(np.mean(np.square(audio))))
+            return segments
+
+    transcribe(stereo_file, engine=FakeSTT(), diarizer=Spy())
+    assert seen["rms"] == pytest.approx(0.1, abs=1e-3)  # the quiet system channel, not the mic

@@ -22,7 +22,7 @@ vs WhisperX vs SpeechBrain, DER numbers, enrollment).
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, Optional
+from typing import Any, Callable, Iterable, Optional
 
 import numpy as np
 
@@ -69,19 +69,28 @@ class PyannoteDiarizer:
     """Acoustic diarization via ``pyannote.audio`` (the upgrade path).
 
     Runs the pretrained pipeline over the audio, then assigns each segment the
-    speaker whose diarized turn overlaps it most. Intended to run on the
-    *system* channel only (the mic channel is already known to be "me").
+    speaker whose diarized turn overlaps it most. It runs on the *system* channel
+    only: ``MIC`` segments are labelled ``me_label`` for free (the channel trick),
+    and the model is not run at all when there is nothing left to diarize. Pass
+    the system-channel audio as ``audio`` (``transcribe`` does).
 
     Requires ``pip install hearing[diarize]`` and a Hugging Face token with the
-    pyannote model licenses accepted. This implementation is provided for the
-    diarization milestone; it is import-guarded so the package works without it.
+    pyannote model licenses accepted. The import is guarded so the package works
+    without it. ``pipeline`` is the seam: any callable
+    ``({"waveform", "sample_rate"}) -> annotation`` (an object with
+    ``itertracks(yield_label=True)``) replaces the pretrained model, which is how
+    this is tested without a model or a token.
     """
 
     model: str = "pyannote/speaker-diarization-3.1"
     hf_token: Optional[str] = None
     speaker_prefix: str = "spk_"
+    me_label: SpeakerLabel = ME
+    pipeline: Optional[Callable[[dict], Any]] = None
 
     def _pipeline(self):
+        if self.pipeline is not None:
+            return self.pipeline
         try:
             from pyannote.audio import Pipeline
         except ImportError as e:  # pragma: no cover - guidance path
@@ -95,7 +104,10 @@ class PyannoteDiarizer:
         import os
 
         token = self.hf_token or os.getenv("HUGGINGFACE_TOKEN") or os.getenv("HF_TOKEN")
-        return Pipeline.from_pretrained(self.model, use_auth_token=token)
+        try:  # pyannote.audio >= 4 renamed the argument
+            return Pipeline.from_pretrained(self.model, token=token)
+        except TypeError:  # pragma: no cover - older pyannote
+            return Pipeline.from_pretrained(self.model, use_auth_token=token)
 
     def assign_speakers(
         self,
@@ -103,16 +115,21 @@ class PyannoteDiarizer:
         *,
         audio: Optional[np.ndarray] = None,
         sample_rate: Optional[int] = None,
-    ) -> Iterable[TranscriptSegment]:  # pragma: no cover - needs model + token
-        """Yield segments labelled with the most-overlapping diarized speaker."""
-        segments = list(segments)
-        if audio is None or sample_rate is None:
-            # Nothing to run on; fall back to the channel trick.
-            yield from ChannelTrickDiarizer().assign_speakers(segments)
+    ) -> Iterable[TranscriptSegment]:
+        """Yield segments labelled: mic -> me, others -> most-overlapping diarized speaker."""
+        segments = [
+            s.with_speaker(self.me_label)
+            if s.speaker is None and s.channel is Channel.MIC
+            else s
+            for s in segments
+        ]
+        todo = [s for s in segments if s.speaker is None]
+        if not todo or audio is None or sample_rate is None:
+            # Nothing to diarize, or nothing to run on: the channel trick for the rest.
+            yield from ChannelTrickDiarizer(me_label=self.me_label).assign_speakers(segments)
             return
 
-        pipeline = self._pipeline()
-        diarization = pipeline(
+        diarization = self._pipeline()(
             {"waveform": _as_torch(audio), "sample_rate": sample_rate}
         )
         turns = [
@@ -127,11 +144,18 @@ class PyannoteDiarizer:
             yield seg.with_speaker(label) if label else seg
 
 
-def _as_torch(audio: np.ndarray):  # pragma: no cover - needs torch
-    """Shape a mono float array as the ``(1, n)`` torch tensor pyannote wants."""
-    import torch
+def _as_torch(audio: np.ndarray):
+    """Shape a mono float array as the ``(1, n)`` waveform pyannote wants.
 
-    return torch.from_numpy(np.ascontiguousarray(audio)).float().unsqueeze(0)
+    A torch tensor when torch is installed (it is, with ``hearing[diarize]``), else the
+    equivalent numpy array, so an injected ``pipeline`` can run without torch.
+    """
+    wave = np.ascontiguousarray(audio, dtype=np.float32)[None, :]
+    try:
+        import torch
+    except ImportError:
+        return wave
+    return torch.from_numpy(wave)
 
 
 def _best_overlap(

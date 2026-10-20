@@ -124,3 +124,11 @@ def test_transcript_to_payload_unit():
     seg = payload["segments"][0]
     assert seg["side"] == "me" and seg["meetingId"] == "m1" and seg["isFinal"] is True
     assert payload["meeting"]["durationMs"] == 1000
+
+
+def test_split_form_field_defaults_on_and_can_be_turned_off():
+    client = TestClient(create_app(engine=FakeSTT()))
+    files = {"file": ("meeting.wav", _stereo_wav_bytes(), "audio/wav")}
+    on = client.post("/api/transcribe", files=files).json()
+    off = client.post("/api/transcribe", files=files, data={"split": "false"}).json()
+    assert on["meeting"]["segmentCount"] == 2 and off["meeting"]["segmentCount"] == 1
