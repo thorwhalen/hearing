@@ -175,7 +175,7 @@ Optional word-level timing (WhisperX / `word_timestamps=True`).
 Lets an agent trigger on a keyword mid-utterance instead of waiting for the
 end of a turn. Purely optional metadata on a [`TranscriptSegment`](#hearing.TranscriptSegment).
 
-### *async* hearing.live_transcribe(, source, engine=None, diarizer=None, agent=None, audio_queue_max=50, segment_queue_max=100)
+### *async* hearing.live_transcribe(, source, engine=None, diarizer=None, agent=None, audio_queue_max=50, segment_queue_max=100, on_insight=None)
 
 Stream FINALIZED segments as a meeting unfolds (the live path).
 
@@ -188,7 +188,9 @@ Each channel is demuxed onto its own bounded queue and driven through
 `engine.stream_transcribe` as an independent async task, so a slow agent
 never stalls capture (backpressure) and the channel “me vs them” label rides
 every segment. Diarization defaults to the free channel trick; the agent’s
-`on_segment` is fired fire-and-forget. Yields segments as utterances finalize.
+`on_segment` is fired fire-and-forget; whatever it returns goes to
+`on_insight(insight, segment)` (sync or async), and is dropped without one.
+Yields segments as utterances finalize.
 
 See the `hearing-live-pipeline` skill.
 

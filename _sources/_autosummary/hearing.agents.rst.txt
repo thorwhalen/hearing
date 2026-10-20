@@ -10,6 +10,8 @@ hearing.agents
    
       DEFAULT_CLAUDE_MODEL
       DEFAULT_MAX_TOOL_ROUNDS
+      LIVE_BEHAVIORS
+      LIVE_NOTHING
    
    .. rubric:: Functions
 

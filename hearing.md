@@ -1,4 +1,4 @@
-> built 2026-10-20 13:17 UTC from 730d513 (main) · hearing 0.0.10. Details: build_info.json
+> built 2026-10-20 13:20 UTC from 9dae2bc (main) · hearing 0.0.11. Details: build_info.json
 
 # index.html.md
 
@@ -245,9 +245,11 @@ and the batch≡live unification.
 
 ### Module Attributes
 
-| [`DEFAULT_CLAUDE_MODEL`](_autosummary/hearing.agents.html.md#hearing.agents.DEFAULT_CLAUDE_MODEL)    | A sensible, current default Claude model for meeting analysis.    |
-|--------------------------------------------------------------------------|-------------------------------------------------------------------|
-| [`DEFAULT_MAX_TOOL_ROUNDS`](_autosummary/hearing.agents.html.md#hearing.agents.DEFAULT_MAX_TOOL_ROUNDS) | Tool-use rounds a batch analysis may spend before it must answer. |
+| [`DEFAULT_CLAUDE_MODEL`](_autosummary/hearing.agents.html.md#hearing.agents.DEFAULT_CLAUDE_MODEL)    | A sensible, current default Claude model for meeting analysis.        |
+|--------------------------------------------------------------------------|-----------------------------------------------------------------------|
+| [`DEFAULT_MAX_TOOL_ROUNDS`](_autosummary/hearing.agents.html.md#hearing.agents.DEFAULT_MAX_TOOL_ROUNDS) | Tool-use rounds a batch analysis may spend before it must answer.     |
+| [`LIVE_BEHAVIORS`](_autosummary/hearing.agents.html.md#hearing.agents.LIVE_BEHAVIORS)          | What a live `on_segment` call can surface, and how each is asked for. |
+| [`LIVE_NOTHING`](_autosummary/hearing.agents.html.md#hearing.agents.LIVE_NOTHING)            | The live model's way of saying there is nothing worth surfacing.      |
 
 ### Functions
 
@@ -261,7 +263,7 @@ and the batch≡live unification.
 |------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------|
 | [`ExtractiveAgent`](_autosummary/hearing.agents.html.md#hearing.agents.ExtractiveAgent)([max_key_points, action_cues])      | Deterministic, dependency-free fallback agent (no API, no network). |
 
-### *class* hearing.agents.ClaudeAgent(model='claude-sonnet-4-6', context=None, system_prompt='You are a meeting assistant. Given a (speaker-labelled) transcript, produce a concise, well-structured analysis with these sections, omitting any that don\\'t apply:\\n\\n## Summary\\n2-4 sentences capturing what the meeting was about and its outcome.\\n\\n## Decisions\\nBullet points of decisions that were made.\\n\\n## Action items\\nBullet points as "- [owner] action" when an owner is identifiable, else "- action".\\n\\n## Open questions / follow-ups\\nBullet points of unresolved questions or things worth researching afterwards.\\n\\nBe faithful to the transcript; do not invent facts. Speakers labelled "me" are the local user; "them"/"spk_\*" are remote participants.', max_tokens=1024, api_key=None, retriever=None, web_search=None, retrieve_k=4, web_k=3, client=None, tool_use=True, max_tool_rounds=4, \_tool_cache=dict())
+### *class* hearing.agents.ClaudeAgent(model='claude-sonnet-4-6', context=None, system_prompt='You are a meeting assistant. Given a (speaker-labelled) transcript, produce a concise, well-structured analysis with these sections, omitting any that don\\'t apply:\\n\\n## Summary\\n2-4 sentences capturing what the meeting was about and its outcome.\\n\\n## Decisions\\nBullet points of decisions that were made.\\n\\n## Action items\\nBullet points as "- [owner] action" when an owner is identifiable, else "- action".\\n\\n## Open questions / follow-ups\\nBullet points of unresolved questions or things worth researching afterwards.\\n\\nBe faithful to the transcript; do not invent facts. Speakers labelled "me" are the local user; "them"/"spk_\*" are remote participants.', max_tokens=1024, api_key=None, retriever=None, web_search=None, retrieve_k=4, web_k=3, client=None, tool_use=True, max_tool_rounds=4, \_tool_cache=dict(), live=(), live_every=4, live_window=12, live_max_lines=3, \_recent=deque(), \_since_live=0, \_live_busy=False)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -274,9 +276,18 @@ Context-connected meeting agent backed by Claude (the default).
   * **system_prompt** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – override the default meeting-assistant instructions.
   * **max_tokens** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – output cap.
 
+#### live *: [Sequence](https://docs.python.org/3/library/typing.html#typing.Sequence)[[str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= ()*
+
+live behaviours `on_segment` runs (keys of `LIVE_BEHAVIORS`); none by
+default, since each live call is a paid request
+
 #### *async* on_segment(segment)
 
-Live per-segment hook (milestone 2). No-op in the batch milestone.
+Live: every `live_every` finalized segments (sooner on a question), the `live` behaviours over the recent window.
+
+Returns tagged lines (`[note]`, `[question]`, `[fact-check]`) or None.
+While a live call is in flight, further ticks are skipped rather than queued,
+so a slow model never piles up behind the meeting.
 
 * **Return type:**
   [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
@@ -324,6 +335,14 @@ Return a deterministic extractive summary of the window.
 
 * **Return type:**
   [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+
+### hearing.agents.LIVE_BEHAVIORS *= {'factcheck': '[fact-check] a factual claim just made that looks wrong or unverified, with the correction (use web_search when available)', 'notes': '[note] a running note: a decision, commitment or key point just made', 'questions': "[question] a question the local user ('me') could usefully ask next"}*
+
+What a live `on_segment` call can surface, and how each is asked for.
+
+### hearing.agents.LIVE_NOTHING *= 'NONE'*
+
+The live model’s way of saying there is nothing worth surfacing.
 
 ### hearing.agents.build_default_agent(, context=None, model=None, prefer='auto', retriever=None, web_search=None, history=None)
 
@@ -1501,7 +1520,7 @@ Optional word-level timing (WhisperX / `word_timestamps=True`).
 Lets an agent trigger on a keyword mid-utterance instead of waiting for the
 end of a turn. Purely optional metadata on a [`TranscriptSegment`](_autosummary/hearing.html.md#hearing.TranscriptSegment).
 
-### *async* hearing.live_transcribe(, source, engine=None, diarizer=None, agent=None, audio_queue_max=50, segment_queue_max=100)
+### *async* hearing.live_transcribe(, source, engine=None, diarizer=None, agent=None, audio_queue_max=50, segment_queue_max=100, on_insight=None)
 
 Stream FINALIZED segments as a meeting unfolds (the live path).
 
@@ -1514,7 +1533,9 @@ Each channel is demuxed onto its own bounded queue and driven through
 `engine.stream_transcribe` as an independent async task, so a slow agent
 never stalls capture (backpressure) and the channel “me vs them” label rides
 every segment. Diarization defaults to the free channel trick; the agent’s
-`on_segment` is fired fire-and-forget. Yields segments as utterances finalize.
+`on_segment` is fired fire-and-forget; whatever it returns goes to
+`on_insight(insight, segment)` (sync or async), and is dropped without one.
+Yields segments as utterances finalize.
 
 See the `hearing-live-pipeline` skill.
 
@@ -1715,7 +1736,7 @@ describes; swapping any one component touches only the assembly call.
 | [`summarize`](_autosummary/hearing.pipeline.html.md#hearing.pipeline.summarize)(source, \*[, agent, context, model])  | Transcribe (if needed) then run an agent to produce meeting notes.                                                    |
 | [`transcribe`](_autosummary/hearing.pipeline.html.md#hearing.pipeline.transcribe)(source, \*[, engine, diarizer, ...]) | Transcribe an audio source to a [`Transcript`](_autosummary/hearing.types.html.md#hearing.types.Transcript). |
 
-### *async* hearing.pipeline.live_transcribe(, source, engine=None, diarizer=None, agent=None, audio_queue_max=50, segment_queue_max=100)
+### *async* hearing.pipeline.live_transcribe(, source, engine=None, diarizer=None, agent=None, audio_queue_max=50, segment_queue_max=100, on_insight=None)
 
 Stream FINALIZED segments as a meeting unfolds (the live path).
 
@@ -1728,7 +1749,9 @@ Each channel is demuxed onto its own bounded queue and driven through
 `engine.stream_transcribe` as an independent async task, so a slow agent
 never stalls capture (backpressure) and the channel “me vs them” label rides
 every segment. Diarization defaults to the free channel trick; the agent’s
-`on_segment` is fired fire-and-forget. Yields segments as utterances finalize.
+`on_segment` is fired fire-and-forget; whatever it returns goes to
+`on_insight(insight, segment)` (sync or async), and is dropped without one.
+Yields segments as utterances finalize.
 
 See the `hearing-live-pipeline` skill.
 
@@ -2297,18 +2320,18 @@ rate of the incoming blocks (used only for the ms arithmetic).
 
 # About this build
 
-This documentation was built on **2026-10-20 13:17 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/730d513d112fe11f030a2f9110dd5503b1e085aa"><code>730d513</code></a> on branch <code>main</code>, for **hearing 0.0.10** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-20 13:20 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/9dae2bc1d5bddaceacad4eb8a84c82e777fa2581"><code>9dae2bc</code></a> on branch <code>main</code>, for **hearing 0.0.11** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.0.10) is behind the latest release on PyPI (0.0.11): `pip install hearing` gives newer code than these docs describe.
+- The documented version (0.0.11) is behind the latest release on PyPI (0.0.12): `pip install hearing` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                           |
 |---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/730d513d112fe11f030a2f9110dd5503b1e085aa"><code>730d513d112fe11f030a2f9110dd5503b1e085aa</code></a> |
+| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/9dae2bc1d5bddaceacad4eb8a84c82e777fa2581"><code>9dae2bc1d5bddaceacad4eb8a84c82e777fa2581</code></a> |
 | Branch              | <code>main</code>                                                                                                                                         |
 | Tags at this commit | none                                                                                                                                                      |
 | Working tree        | clean                                                                                                                                                     |
@@ -2319,9 +2342,9 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>thorwhalen/hearing</code>                                                            |
-| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/39428821427">39428821427</a>   |
+| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/39429334036">39429334036</a>   |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>730d513d112fe11f030a2f9110dd5503b1e085aa</code> (in the history of the built commit) |
+| Event commit | <code>9dae2bc1d5bddaceacad4eb8a84c82e777fa2581</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -2346,13 +2369,13 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/hearing/0.0.11/">0.0.11</a>, newer than the documented version (0.0.10).
+Latest release: <a href="https://pypi.org/project/hearing/0.0.12/">0.0.12</a>, newer than the documented version (0.0.11).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/thorwhalen/hearing && cd hearing
-git checkout 730d513d112fe11f030a2f9110dd5503b1e085aa
+git checkout 9dae2bc1d5bddaceacad4eb8a84c82e777fa2581
 pip install "epythet==0.2.20"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

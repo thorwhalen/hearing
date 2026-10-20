@@ -22,9 +22,11 @@ and the batch≡live unification.
 
 ### Module Attributes
 
-| [`DEFAULT_CLAUDE_MODEL`](#hearing.agents.DEFAULT_CLAUDE_MODEL)    | A sensible, current default Claude model for meeting analysis.    |
-|--------------------------------------------------------------------------|-------------------------------------------------------------------|
-| [`DEFAULT_MAX_TOOL_ROUNDS`](#hearing.agents.DEFAULT_MAX_TOOL_ROUNDS) | Tool-use rounds a batch analysis may spend before it must answer. |
+| [`DEFAULT_CLAUDE_MODEL`](#hearing.agents.DEFAULT_CLAUDE_MODEL)    | A sensible, current default Claude model for meeting analysis.        |
+|--------------------------------------------------------------------------|-----------------------------------------------------------------------|
+| [`DEFAULT_MAX_TOOL_ROUNDS`](#hearing.agents.DEFAULT_MAX_TOOL_ROUNDS) | Tool-use rounds a batch analysis may spend before it must answer.     |
+| [`LIVE_BEHAVIORS`](#hearing.agents.LIVE_BEHAVIORS)          | What a live `on_segment` call can surface, and how each is asked for. |
+| [`LIVE_NOTHING`](#hearing.agents.LIVE_NOTHING)            | The live model's way of saying there is nothing worth surfacing.      |
 
 ### Functions
 
@@ -38,7 +40,7 @@ and the batch≡live unification.
 |------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------|
 | [`ExtractiveAgent`](#hearing.agents.ExtractiveAgent)([max_key_points, action_cues])      | Deterministic, dependency-free fallback agent (no API, no network). |
 
-### *class* hearing.agents.ClaudeAgent(model='claude-sonnet-4-6', context=None, system_prompt='You are a meeting assistant. Given a (speaker-labelled) transcript, produce a concise, well-structured analysis with these sections, omitting any that don\\'t apply:\\n\\n## Summary\\n2-4 sentences capturing what the meeting was about and its outcome.\\n\\n## Decisions\\nBullet points of decisions that were made.\\n\\n## Action items\\nBullet points as "- [owner] action" when an owner is identifiable, else "- action".\\n\\n## Open questions / follow-ups\\nBullet points of unresolved questions or things worth researching afterwards.\\n\\nBe faithful to the transcript; do not invent facts. Speakers labelled "me" are the local user; "them"/"spk_\*" are remote participants.', max_tokens=1024, api_key=None, retriever=None, web_search=None, retrieve_k=4, web_k=3, client=None, tool_use=True, max_tool_rounds=4, \_tool_cache=dict())
+### *class* hearing.agents.ClaudeAgent(model='claude-sonnet-4-6', context=None, system_prompt='You are a meeting assistant. Given a (speaker-labelled) transcript, produce a concise, well-structured analysis with these sections, omitting any that don\\'t apply:\\n\\n## Summary\\n2-4 sentences capturing what the meeting was about and its outcome.\\n\\n## Decisions\\nBullet points of decisions that were made.\\n\\n## Action items\\nBullet points as "- [owner] action" when an owner is identifiable, else "- action".\\n\\n## Open questions / follow-ups\\nBullet points of unresolved questions or things worth researching afterwards.\\n\\nBe faithful to the transcript; do not invent facts. Speakers labelled "me" are the local user; "them"/"spk_\*" are remote participants.', max_tokens=1024, api_key=None, retriever=None, web_search=None, retrieve_k=4, web_k=3, client=None, tool_use=True, max_tool_rounds=4, \_tool_cache=dict(), live=(), live_every=4, live_window=12, live_max_lines=3, \_recent=deque(), \_since_live=0, \_live_busy=False)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -51,9 +53,18 @@ Context-connected meeting agent backed by Claude (the default).
   * **system_prompt** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – override the default meeting-assistant instructions.
   * **max_tokens** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – output cap.
 
+#### live *: [Sequence](https://docs.python.org/3/library/typing.html#typing.Sequence)[[str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= ()*
+
+live behaviours `on_segment` runs (keys of `LIVE_BEHAVIORS`); none by
+default, since each live call is a paid request
+
 #### *async* on_segment(segment)
 
-Live per-segment hook (milestone 2). No-op in the batch milestone.
+Live: every `live_every` finalized segments (sooner on a question), the `live` behaviours over the recent window.
+
+Returns tagged lines (`[note]`, `[question]`, `[fact-check]`) or None.
+While a live call is in flight, further ticks are skipped rather than queued,
+so a slow model never piles up behind the meeting.
 
 * **Return type:**
   [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
@@ -101,6 +112,14 @@ Return a deterministic extractive summary of the window.
 
 * **Return type:**
   [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+
+### hearing.agents.LIVE_BEHAVIORS *= {'factcheck': '[fact-check] a factual claim just made that looks wrong or unverified, with the correction (use web_search when available)', 'notes': '[note] a running note: a decision, commitment or key point just made', 'questions': "[question] a question the local user ('me') could usefully ask next"}*
+
+What a live `on_segment` call can surface, and how each is asked for.
+
+### hearing.agents.LIVE_NOTHING *= 'NONE'*
+
+The live model’s way of saying there is nothing worth surfacing.
 
 ### hearing.agents.build_default_agent(, context=None, model=None, prefer='auto', retriever=None, web_search=None, history=None)
 

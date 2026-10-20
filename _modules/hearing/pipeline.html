@@ -284,6 +284,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
@@ -390,6 +391,7 @@
     <span class="n">agent</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AgentConsumer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">audio_queue_max</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
     <span class="n">segment_queue_max</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">on_insight</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Stream FINALIZED segments as a meeting unfolds (the live path).</span>
 
@@ -402,7 +404,9 @@
 <span class="sd">    ``engine.stream_transcribe`` as an independent async task, so a slow agent</span>
 <span class="sd">    never stalls capture (backpressure) and the channel "me vs them" label rides</span>
 <span class="sd">    every segment. Diarization defaults to the free channel trick; the agent's</span>
-<span class="sd">    ``on_segment`` is fired fire-and-forget. Yields segments as utterances finalize.</span>
+<span class="sd">    ``on_segment`` is fired fire-and-forget; whatever it returns goes to</span>
+<span class="sd">    ``on_insight(insight, segment)`` (sync or async), and is dropped without one.</span>
+<span class="sd">    Yields segments as utterances finalize.</span>
 
 <span class="sd">    See the ``hearing-live-pipeline`` skill.</span>
 <span class="sd">    """</span>
@@ -435,7 +439,7 @@
             <span class="k">elif</span> <span class="n">channel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Channel</span><span class="o">.</span><span class="n">MIXED</span><span class="p">:</span>
                 <span class="n">seg</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">default_diar</span><span class="o">.</span><span class="n">assign_speakers</span><span class="p">([</span><span class="n">seg</span><span class="p">])))</span>
             <span class="k">if</span> <span class="n">agent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">agent_tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">_safe_on_segment</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="n">seg</span><span class="p">)))</span>
+                <span class="n">agent_tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">_safe_on_segment</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="n">seg</span><span class="p">,</span> <span class="n">on_insight</span><span class="p">)))</span>
             <span class="k">await</span> <span class="n">seg_q</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">seg</span><span class="p">)</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_router</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -471,11 +475,17 @@
 
 
 
-<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_safe_on_segment</span><span class="p">(</span><span class="n">agent</span><span class="p">:</span> <span class="n">AgentConsumer</span><span class="p">,</span> <span class="n">seg</span><span class="p">:</span> <span class="n">TranscriptSegment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Run ``agent.on_segment`` without letting a failure crash the stream."""</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_safe_on_segment</span><span class="p">(</span>
+    <span class="n">agent</span><span class="p">:</span> <span class="n">AgentConsumer</span><span class="p">,</span> <span class="n">seg</span><span class="p">:</span> <span class="n">TranscriptSegment</span><span class="p">,</span> <span class="n">on_insight</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Run ``agent.on_segment`` and hand its insight to ``on_insight``, never crashing the stream."""</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">await</span> <span class="n">agent</span><span class="o">.</span><span class="n">on_segment</span><span class="p">(</span><span class="n">seg</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - agent/RAG failure must not kill capture</span>
+        <span class="n">insight</span> <span class="o">=</span> <span class="k">await</span> <span class="n">agent</span><span class="o">.</span><span class="n">on_segment</span><span class="p">(</span><span class="n">seg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">insight</span> <span class="ow">and</span> <span class="n">on_insight</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">delivered</span> <span class="o">=</span> <span class="n">on_insight</span><span class="p">(</span><span class="n">insight</span><span class="p">,</span> <span class="n">seg</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isawaitable</span><span class="p">(</span><span class="n">delivered</span><span class="p">):</span>
+                <span class="k">await</span> <span class="n">delivered</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - agent/RAG/sink failure must not kill capture</span>
         <span class="k">pass</span>
 
 
@@ -583,7 +593,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=4bb83394"></script>
+</div><script src="../../_static/documentation_options.js?v=e2f847f2"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

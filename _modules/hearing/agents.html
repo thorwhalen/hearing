@@ -295,6 +295,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">deque</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
@@ -323,6 +324,24 @@
         <span class="s2">"(follow-up research or a fact-check). One focused query per call."</span><span class="p">,</span>
     <span class="p">),</span>
 <span class="p">}</span>
+
+<span class="c1">#: What a live ``on_segment`` call can surface, and how each is asked for.</span>
+<span class="n">LIVE_BEHAVIORS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"notes"</span><span class="p">:</span> <span class="s2">"[note] a running note: a decision, commitment or key point just made"</span><span class="p">,</span>
+    <span class="s2">"questions"</span><span class="p">:</span> <span class="s2">"[question] a question the local user ('me') could usefully ask next"</span><span class="p">,</span>
+    <span class="s2">"factcheck"</span><span class="p">:</span> <span class="s2">"[fact-check] a factual claim just made that looks wrong or unverified, "</span>
+    <span class="s2">"with the correction (use web_search when available)"</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="c1">#: The live model's way of saying there is nothing worth surfacing.</span>
+<span class="n">LIVE_NOTHING</span> <span class="o">=</span> <span class="s2">"NONE"</span>
+<span class="n">_LIVE_SYSTEM_PROMPT</span> <span class="o">=</span> <span class="s2">"""</span><span class="se">\</span>
+<span class="s2">You are a live meeting copilot reading the latest finalized utterances of a meeting </span><span class="se">\</span>
+<span class="s2">in progress. Surface only what helps the local user ("me") right now, as at most </span><span class="se">\</span>
+<span class="si">{max_lines}</span><span class="s2"> short lines, each starting with its tag:</span>
+<span class="si">{behaviors}</span>
+<span class="s2">Never repeat a line you would have surfaced for earlier utterances. If nothing is </span><span class="se">\</span>
+<span class="s2">worth surfacing, reply exactly </span><span class="si">{nothing}</span><span class="s2">.</span><span class="se">\</span>
+<span class="s2">"""</span>
 
 <span class="n">_DEFAULT_SYSTEM_PROMPT</span> <span class="o">=</span> <span class="s2">"""</span><span class="se">\</span>
 <span class="s2">You are a meeting assistant. Given a (speaker-labelled) transcript, produce a </span><span class="se">\</span>
@@ -386,6 +405,23 @@
     <span class="n">tool_use</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># let Claude query the retriever / web search itself</span>
     <span class="n">max_tool_rounds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_MAX_TOOL_ROUNDS</span>
     <span class="n">_tool_cache</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="c1">#: live behaviours ``on_segment`` runs (keys of ``LIVE_BEHAVIORS``); none by</span>
+    <span class="c1">#: default, since each live call is a paid request</span>
+    <span class="n">live</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">live_every</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span>  <span class="c1"># finalized segments between live calls</span>
+    <span class="n">live_window</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">12</span>  <span class="c1"># recent segments a live call sees</span>
+    <span class="n">live_max_lines</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">_recent</span><span class="p">:</span> <span class="n">deque</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">deque</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">_since_live</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">_live_busy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">unknown</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">live</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">LIVE_BEHAVIORS</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"unknown live behaviours </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unknown</span><span class="p">)</span><span class="si">}</span><span class="s2">; choose from </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">LIVE_BEHAVIORS</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recent</span> <span class="o">=</span> <span class="n">deque</span><span class="p">(</span><span class="n">maxlen</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">live_window</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -428,12 +464,14 @@
                 <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[web: </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">title</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'result'</span><span class="si">}{</span><span class="n">src</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">return</span> <span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_analyze_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transcript_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context_text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_analyze_sync</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">transcript_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context_text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">system</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Blocking Claude call; ``on_window`` runs this off the event loop."""</span>
         <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="p">()</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
             <span class="n">max_tokens</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_tokens</span><span class="p">,</span>
-            <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system_prompt</span><span class="p">,</span>
+            <span class="n">system</span><span class="o">=</span><span class="n">system</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">system_prompt</span><span class="p">,</span>
             <span class="n">messages</span><span class="o">=</span><span class="p">[</span><span class="n">_user_turn</span><span class="p">(</span><span class="n">transcript_text</span><span class="p">,</span> <span class="n">context_text</span><span class="p">)],</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">_text_of</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
@@ -480,7 +518,9 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tool_cache</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="kc">False</span>
 
-    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_analyze_with_tools</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transcript_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_analyze_with_tools</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">transcript_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">system</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The manual tool-use loop: Claude may search context / the web, then answers."""</span>
         <span class="n">client</span><span class="p">,</span> <span class="n">tools</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tools</span><span class="p">()</span>
         <span class="n">messages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">_user_turn</span><span class="p">(</span><span class="n">transcript_text</span><span class="p">,</span> <span class="n">context_text</span><span class="p">)]</span>
@@ -489,7 +529,7 @@
             <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
                 <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
                 <span class="n">max_tokens</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_tokens</span><span class="p">,</span>
-                <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system_prompt</span><span class="p">,</span>
+                <span class="n">system</span><span class="o">=</span><span class="n">system</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">system_prompt</span><span class="p">,</span>
                 <span class="n">messages</span><span class="o">=</span><span class="n">messages</span><span class="p">,</span>
                 <span class="n">tools</span><span class="o">=</span><span class="n">tools</span><span class="p">,</span>
             <span class="p">)</span>
@@ -536,11 +576,47 @@
         <span class="k">return</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_analyze_sync</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">context_text</span><span class="p">)</span></div>
 
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_live_system_prompt</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_LIVE_SYSTEM_PROMPT</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">max_lines</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">live_max_lines</span><span class="p">,</span>
+            <span class="n">behaviors</span><span class="o">=</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"- </span><span class="si">{</span><span class="n">LIVE_BEHAVIORS</span><span class="p">[</span><span class="n">b</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">live</span><span class="p">),</span>
+            <span class="n">nothing</span><span class="o">=</span><span class="n">LIVE_NOTHING</span><span class="p">,</span>
+        <span class="p">)</span>
+
 <div class="viewcode-block" id="ClaudeAgent.on_segment">
 <a class="viewcode-back" href="../../_autosummary/hearing.agents.html#hearing.agents.ClaudeAgent.on_segment">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_segment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">segment</span><span class="p">:</span> <span class="n">TranscriptSegment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Live per-segment hook (milestone 2). No-op in the batch milestone."""</span>
-        <span class="k">return</span> <span class="kc">None</span></div>
+<span class="w">        </span><span class="sd">"""Live: every ``live_every`` finalized segments (sooner on a question), the ``live`` behaviours over the recent window.</span>
+
+<span class="sd">        Returns tagged lines (``[note]``, ``[question]``, ``[fact-check]``) or None.</span>
+<span class="sd">        While a live call is in flight, further ticks are skipped rather than queued,</span>
+<span class="sd">        so a slow model never piles up behind the meeting.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">segment</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recent</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">segment</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_since_live</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">live</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">asked</span> <span class="o">=</span> <span class="s2">"questions"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">live</span> <span class="ow">and</span> <span class="n">segment</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"?"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_since_live</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">live_every</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">asked</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_live_busy</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_live_busy</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_since_live</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">window</span> <span class="o">=</span> <span class="n">_transcript_text</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_recent</span><span class="p">))</span>
+            <span class="n">context_text</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_assemble_context</span><span class="p">(</span><span class="n">window</span><span class="p">,</span> <span class="n">include_web</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tool_use</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tools</span><span class="p">():</span>
+                <span class="n">reply</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analyze_with_tools</span><span class="p">(</span>
+                    <span class="n">window</span><span class="p">,</span> <span class="n">context_text</span><span class="p">,</span> <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_live_system_prompt</span><span class="p">()</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">reply</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_analyze_sync</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">context_text</span><span class="p">,</span> <span class="n">system</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_live_system_prompt</span><span class="p">()</span>
+                <span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_live_busy</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">reply</span> <span class="o">=</span> <span class="p">(</span><span class="n">reply</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">reply</span> <span class="ow">or</span> <span class="n">reply</span> <span class="o">==</span> <span class="n">LIVE_NOTHING</span> <span class="k">else</span> <span class="n">reply</span></div>
 </div>
 
 
@@ -747,7 +823,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=4bb83394"></script>
+</div><script src="../../_static/documentation_options.js?v=e2f847f2"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
