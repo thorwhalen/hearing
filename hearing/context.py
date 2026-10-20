@@ -345,7 +345,9 @@ class CombinedRetriever:
     retrievers: tuple
 
     def __init__(self, *retrievers: "Retriever"):
-        object.__setattr__(self, "retrievers", tuple(r for r in retrievers if r is not None))
+        object.__setattr__(
+            self, "retrievers", tuple(r for r in retrievers if r is not None)
+        )
 
     async def search(self, query: str, *, k: int = 4) -> list[Chunk]:
         found = await asyncio.gather(*(r.search(query, k=k) for r in self.retrievers))
@@ -389,10 +391,18 @@ def meeting_retriever(
         insight = (transcript.meta or {}).get("insight")
         if insight:
             chunks.append(
-                Chunk(text=str(insight), title=f"takeaways {meeting_id}", source=f"meeting:{meeting_id}")
+                Chunk(
+                    text=str(insight),
+                    title=f"takeaways {meeting_id}",
+                    source=f"meeting:{meeting_id}",
+                )
             )
         if transcripts and transcript.text.strip():
             chunks.append(
-                Chunk(text=transcript.text, title=f"transcript {meeting_id}", source=f"meeting:{meeting_id}")
+                Chunk(
+                    text=transcript.text,
+                    title=f"transcript {meeting_id}",
+                    source=f"meeting:{meeting_id}",
+                )
             )
     return make(chunks)
