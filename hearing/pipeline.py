@@ -36,6 +36,7 @@ def transcribe(
     mic_channels: Sequence[int] = (0,),
     system_channels: Sequence[int] = (1,),
     record=None,
+    record_audio: bool = False,
 ) -> Transcript:
     """Transcribe an audio source to a :class:`~hearing.types.Transcript`.
 
@@ -59,11 +60,16 @@ def transcribe(
             (with the agent's insight) under key ``"<source>.transcript.json"``,
             i.e. meeting id ``<source file name>``; ``hearing.context.meeting_retriever``
             reads those back as the next meeting's context.
+        record_audio: also keep the source file's audio bytes, in ``record``'s
+            separate recordings store (a :class:`~hearing.storage.MeetingStore` made
+            with ``recordings=``), read back with ``record.recording(meeting_id)``.
 
     Returns:
         A :class:`Transcript` (iterable/len-able, so it stands in for a sequence
         of segments). Segments carry text, span, channel, and speaker.
     """
+    if record_audio:
+        _check_can_record_audio(source, record)
     engine = engine or _default_engine()
     channels, native_sr = _source_channels(
         source, split=split, mic_channels=mic_channels, system_channels=system_channels
@@ -103,6 +109,9 @@ def transcribe(
 
     if record is not None:
         _persist(transcript, source, record)
+    if record_audio:
+        path = Path(str(getattr(source, "path", source)))
+        record.save_recording(path.name, path.read_bytes(), ext=path.suffix)
 
     return transcript
 
@@ -271,6 +280,25 @@ def _source_channels(
     raise TypeError(
         f"Unsupported source {type(source)!r}; pass a file path or a CaptureSource."
     )
+
+
+def _check_can_record_audio(source, record) -> None:
+    """Fail before any transcription when ``record_audio`` cannot be honoured."""
+    if record is None or not hasattr(record, "save_recording"):
+        raise ValueError(
+            "record_audio=True needs record=MeetingStore(..., recordings=...): audio "
+            "goes to a bytes store kept apart from the transcripts"
+        )
+    if record.recordings is None:
+        raise ValueError(
+            "record_audio=True, but the MeetingStore has no recordings store; make it "
+            "with MeetingStore(..., recordings=<a bytes MutableMapping or a directory>)"
+        )
+    path = Path(str(getattr(source, "path", source)))
+    if not path.is_file():
+        raise ValueError(
+            f"record_audio=True needs an audio file to keep, and {source!r} is not one"
+        )
 
 
 def _persist(transcript: Transcript, source, record) -> None:

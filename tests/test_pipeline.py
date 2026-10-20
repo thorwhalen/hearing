@@ -6,6 +6,8 @@ real (heavy) STT model. A real model is exercised in
 ``test_integration_say_whisper.py`` (auto-skipped when unavailable).
 """
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 
@@ -85,3 +87,39 @@ def test_transcribe_hands_the_system_channel_to_an_acoustic_diarizer(stereo_file
 
     transcribe(stereo_file, engine=FakeSTT(), diarizer=Spy())
     assert seen["rms"] == pytest.approx(0.1, abs=1e-3)  # the quiet system channel, not the mic
+
+
+def test_record_audio_keeps_the_recording_beside_the_transcript(stereo_file, tmp_path):
+    """#40: the audio goes to the MeetingStore's separate bytes store."""
+    from hearing.storage import MeetingStore
+
+    store = MeetingStore({}, recordings=tmp_path / "recordings")
+    transcribe(stereo_file, engine=FakeSTT(), record=store, record_audio=True)
+    name = Path(stereo_file).name
+    assert name in store and store.recording(name) == Path(stereo_file).read_bytes()
+    assert list(store.store) == [f"{name}.transcript.json"]  # no audio among the texts
+
+
+def test_record_audio_fails_before_transcribing_without_a_recordings_store(stereo_file):
+    from hearing.storage import MeetingStore
+
+    class Boom(FakeSTT):
+        def transcribe(self, *a, **k):
+            raise AssertionError("must not transcribe")
+
+    for record in (None, {}, MeetingStore({})):
+        with pytest.raises(ValueError, match="recordings"):
+            transcribe(stereo_file, engine=Boom(), record=record, record_audio=True)
+
+
+def test_recording_lookup_by_id_and_extension():
+    from hearing.storage import MeetingStore
+
+    store = MeetingStore({}, recordings={})
+    assert store.save_recording("call.wav", b"a", ext=".wav") == "call.wav"
+    assert store.save_recording("m2", b"b", ext="mp3") == "m2.mp3"
+    assert store.recording("call.wav") == b"a" and store.recording("m2") == b"b"
+    with pytest.raises(KeyError):
+        store.recording("m3")
+    with pytest.raises(ValueError, match="recordings"):
+        MeetingStore({}).recording("m2")
