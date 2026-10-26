@@ -21,7 +21,6 @@ import scribed
 from scribed import registry
 from scribed.testing import speech_silence_stream
 
-import hearing.backends as hb
 from hearing.stt import (
     ENGINE_ALIASES,
     ENGINE_NAMES,
@@ -49,16 +48,10 @@ def fresh(monkeypatch):
     """
 
     def _fresh(backend_id: str) -> None:
-        hb.register_backends()
         monkeypatch.setitem(registry._registry[backend_id], "adapter", None)
         monkeypatch.delitem(scribed.services._handles, backend_id, raising=False)
 
     return _fresh
-
-
-@pytest.fixture
-def apple_silicon(monkeypatch):
-    monkeypatch.setattr(hb, "is_apple_silicon", lambda: True)
 
 
 def _module(name: str, **attrs) -> types.ModuleType:
@@ -109,24 +102,6 @@ def test_constructors_keep_the_model_swappable():
     wx = WhisperXSTT(diarize=True, model="small")
     assert wx.backend == "whisperx" and wx.options == {"diarize": True}
     assert wx._kwargs(None) == {"diarize": True, "model": "small"}
-
-
-def test_register_backends_is_idempotent_and_non_clobbering():
-    calls = []
-    fake_registry = types.SimpleNamespace(
-        list_backends=lambda: ["whisperx"],  # pretend scribed already ships whisperx
-        register_backend=lambda bid, config: calls.append((bid, config)),
-    )
-    added = hb.register_backends(registry=fake_registry)
-    assert added == ["mlx-whisper", "parakeet-mlx"]
-    assert all(c["module_path"].startswith("hearing.backends.") for _, c in calls)
-    assert hb.register_backends(["whisperx"], registry=fake_registry) == []
-
-
-def test_apple_silicon_detection():
-    assert hb.is_apple_silicon(system=lambda: "Darwin", machine=lambda: "arm64")
-    assert not hb.is_apple_silicon(system=lambda: "Darwin", machine=lambda: "x86_64")
-    assert not hb.is_apple_silicon(system=lambda: "Linux", machine=lambda: "aarch64")
 
 
 # ---------------------------------------------------------------------------
@@ -250,217 +225,6 @@ def test_deepgram_missing_key_is_informative(monkeypatch, fake_deepgram):
 
 
 # ---------------------------------------------------------------------------
-# MLX: mlx-whisper (primary) and parakeet-mlx
-# ---------------------------------------------------------------------------
-
-WHISPER_RESULT = {
-    "text": " hi there",
-    "language": "en",
-    "segments": [
-        {
-            "start": 0.0,
-            "end": 1.0,
-            "text": " hi there",
-            "avg_logprob": -0.1,
-            "words": [
-                {"word": " hi", "start": 0.0, "end": 0.4, "probability": 0.9},
-                {"word": " there", "start": 0.4, "end": 1.0, "probability": 0.8},
-            ],
-        }
-    ],
-}
-
-
-@pytest.fixture
-def fake_mlx_whisper(monkeypatch, fresh):
-    calls = []
-
-    def transcribe(audio, **kwargs):
-        calls.append((audio, kwargs))
-        return WHISPER_RESULT
-
-    monkeypatch.setitem(
-        sys.modules, "mlx_whisper", _module("mlx_whisper", transcribe=transcribe)
-    )
-    fresh("mlx-whisper")
-    return calls
-
-
-def test_mlx_refuses_off_apple_silicon(monkeypatch, fake_mlx_whisper):
-    monkeypatch.setattr(hb, "is_apple_silicon", lambda: False)
-    with pytest.raises(RuntimeError, match="Apple Silicon"):
-        MLXSTT().transcribe(ONE_SECOND, sample_rate=SR)
-    assert fake_mlx_whisper == []  # never reached the engine
-
-
-def test_mlx_missing_package_points_to_the_extra(monkeypatch, apple_silicon, fresh):
-    monkeypatch.setitem(sys.modules, "mlx_whisper", None)  # import -> ImportError
-    fresh("mlx-whisper")
-    with pytest.raises(ImportError, match=r"hearing\[mlx\]"):
-        MLXSTT().transcribe(ONE_SECOND, sample_rate=SR)
-
-
-def test_mlx_whisper_batch(apple_silicon, fake_mlx_whisper):
-    segs = MLXSTT(language="en").transcribe(ONE_SECOND, sample_rate=SR)
-    assert [s.text for s in segs] == ["hi there"]
-    assert [w.text for w in segs[0].words] == ["hi", "there"]
-    assert segs[0].span.end_ms == 1000 and 0 < segs[0].confidence < 1
-    audio, kwargs = fake_mlx_whisper[0]
-    assert isinstance(audio, np.ndarray) and audio.dtype == np.float32
-    assert audio.shape == (SR,)  # decoded to 16 kHz mono, no ffmpeg/file path
-    assert kwargs["path_or_hf_repo"] == "mlx-community/whisper-large-v3-turbo"
-    assert kwargs["language"] == "en"
-
-
-def test_mlx_whisper_resolves_bare_sizes(apple_silicon, fake_mlx_whisper):
-    MLXSTT(model="small").transcribe(ONE_SECOND, sample_rate=SR)
-    assert (
-        fake_mlx_whisper[0][1]["path_or_hf_repo"] == "mlx-community/whisper-small-mlx"
-    )
-
-
-def test_mlx_live_path(apple_silicon, fake_mlx_whisper):
-    engine = get_engine("mlx")
-
-    async def run():
-        src = speech_silence_stream(n_utterances=2)
-        return [
-            s async for s in engine.stream_transcribe(src.__aiter__(), sample_rate=SR)
-        ]
-
-    assert [s.text for s in asyncio.run(run())] == ["hi there", "hi there"]
-
-
-def test_parakeet_mlx_batch(monkeypatch, apple_silicon, fresh):
-    loaded, paths = [], []
-
-    class _Model:
-        def transcribe(self, path):
-            paths.append(path)
-            sentence = types.SimpleNamespace(text=" bonjour", start=0.2, end=0.8)
-            return types.SimpleNamespace(text=" bonjour", sentences=[sentence])
-
-    def from_pretrained(repo):
-        loaded.append(repo)
-        return _Model()
-
-    monkeypatch.setitem(
-        sys.modules,
-        "parakeet_mlx",
-        _module("parakeet_mlx", from_pretrained=from_pretrained),
-    )
-    fresh("parakeet-mlx")
-    engine = MLXSTT(mlx_backend="parakeet-mlx")
-    segs = engine.transcribe(ONE_SECOND, sample_rate=SR)
-    engine.transcribe(ONE_SECOND, sample_rate=SR)
-    assert [s.text for s in segs] == ["bonjour"]
-    assert (segs[0].span.start_ms, segs[0].span.end_ms) == (200, 800)
-    assert loaded == ["mlx-community/parakeet-tdt-0.6b-v3"]  # model cached
-    assert all(p.endswith(".wav") for p in paths)
-
-
-# ---------------------------------------------------------------------------
-# WhisperX
-# ---------------------------------------------------------------------------
-
-
-@pytest.fixture
-def fake_whisperx(monkeypatch, fresh):
-    log = {"load_model": [], "align": 0, "diarize": []}
-
-    class _Asr:
-        def transcribe(self, audio, *, batch_size, language):
-            log["audio"] = audio
-            return {
-                "language": "en",
-                "segments": [{"start": 0.0, "end": 1.0, "text": " hi there"}],
-            }
-
-    def load_model(model, device, *, compute_type, language):
-        log["load_model"].append((model, device, compute_type, language))
-        return _Asr()
-
-    def align(segments, model, metadata, audio, device, return_char_alignments):
-        log["align"] += 1
-        return {
-            "segments": [
-                {
-                    **segments[0],
-                    "words": [
-                        {"word": "hi", "start": 0.0, "end": 0.3, "score": 0.9},
-                        {"word": "there", "start": 0.3, "end": 1.0, "score": 0.7},
-                    ],
-                }
-            ]
-        }
-
-    class DiarizationPipeline:
-        def __init__(self, *, use_auth_token, device):
-            log["diarize"].append(use_auth_token)
-
-        def __call__(self, audio, *, min_speakers, max_speakers):
-            return "turns"
-
-    def assign_word_speakers(turns, result):
-        assert turns == "turns"
-        for seg in result["segments"]:
-            seg["speaker"] = "SPEAKER_00"
-        return result
-
-    monkeypatch.setitem(
-        sys.modules,
-        "whisperx",
-        _module(
-            "whisperx",
-            load_model=load_model,
-            load_align_model=lambda language_code, device: ("align-model", {}),
-            align=align,
-            DiarizationPipeline=DiarizationPipeline,
-            assign_word_speakers=assign_word_speakers,
-        ),
-    )
-    monkeypatch.setitem(sys.modules, "torch", None)  # no torch -> cpu
-    fresh("whisperx")
-    return log
-
-
-def test_whisperx_transcribes_and_aligns(fake_whisperx):
-    engine = WhisperXSTT()
-    segs = engine.transcribe(ONE_SECOND, sample_rate=SR)
-    engine.transcribe(ONE_SECOND, sample_rate=SR)
-    assert [s.text for s in segs] == ["hi there"]
-    assert [w.text for w in segs[0].words] == ["hi", "there"]
-    assert segs[0].speaker is None  # diarization off by default
-    assert fake_whisperx["load_model"] == [("large-v3", "cpu", "int8", None)]  # cached
-    assert fake_whisperx["align"] == 2 and fake_whisperx["diarize"] == []
-    assert fake_whisperx["audio"].dtype == np.float32
-
-
-def test_whisperx_diarizes_with_a_token(monkeypatch, fake_whisperx):
-    monkeypatch.setenv("HF_TOKEN", "hf-test")
-    segs = WhisperXSTT(diarize=True).transcribe(ONE_SECOND, sample_rate=SR)
-    assert segs[0].speaker == "SPEAKER_00"
-    assert fake_whisperx["diarize"] == ["hf-test"]
-
-
-def test_whisperx_diarize_without_token_is_informative(monkeypatch, fake_whisperx):
-    import scribed.credentials as creds
-
-    for var in ("HF_TOKEN", "HUGGING_FACE_HUB_TOKEN"):
-        monkeypatch.delenv(var, raising=False)
-    monkeypatch.setattr(creds, "_soft_load_dotenv", lambda: None)
-    with pytest.raises(RuntimeError, match="HF_TOKEN"):
-        WhisperXSTT(diarize=True).transcribe(ONE_SECOND, sample_rate=SR)
-
-
-def test_whisperx_missing_package_points_to_the_extra(monkeypatch, fresh):
-    monkeypatch.setitem(sys.modules, "whisperx", None)
-    fresh("whisperx")
-    with pytest.raises(ImportError, match=r"hearing\[whisperx\]"):
-        WhisperXSTT().transcribe(ONE_SECOND, sample_rate=SR)
-
-
-# ---------------------------------------------------------------------------
 # CLI surface
 # ---------------------------------------------------------------------------
 
@@ -503,30 +267,3 @@ def test_cli_transcribe_routes_engine_and_model(monkeypatch):
     monkeypatch.setattr(hearing, "transcribe", lambda path, **kw: _Transcript())
     assert cli.transcribe("x.wav", engine="deepgram", model="nova-2") == "ok"
     assert seen == {"name": "deepgram", "model_size": "nova-2"}
-
-
-
-# --- review fixes (#33) -------------------------------------------------------
-
-
-@pytest.mark.parametrize("arg", ["use_auth_token", "token"])
-def test_diarization_pipeline_gets_the_token_under_either_whisperx_spelling(arg, monkeypatch):
-    """whisperx <= 3.4 takes ``use_auth_token``; 3.8 takes ``token``."""
-    from types import SimpleNamespace
-
-    from hearing.backends.whisperx.adapter import Adapter
-
-    seen = {}
-    if arg == "token":
-        class Pipeline:
-            def __init__(self, model_name=None, token=None, device="cpu", cache_dir=None):
-                seen.update(token=token, device=device)
-    else:
-        class Pipeline:
-            def __init__(self, model_name=None, use_auth_token=None, device="cpu"):
-                seen.update(token=use_auth_token, device=device)
-
-    monkeypatch.setenv("HF_TOKEN", "hf_fake")
-    adapter = Adapter.__new__(Adapter)
-    adapter._diarization_pipeline(SimpleNamespace(DiarizationPipeline=Pipeline), "cpu")
-    assert seen == {"token": "hf_fake", "device": "cpu"}

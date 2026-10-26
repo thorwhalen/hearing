@@ -20,8 +20,7 @@ CLI's ``--engine``):
 - ``mlx`` / ``parakeet`` — Whisper / Parakeet-TDT on Apple Silicon (``hearing[mlx]``)
 - ``whisperx`` — WhisperX, aligned words + optional diarization (``hearing[whisperx]``)
 
-The last three are scribed backends that hearing itself contributes
-(:mod:`hearing.backends`); they are registered with scribed on first use.
+All of them are scribed backends; hearing only maps friendly names onto them.
 """
 
 from __future__ import annotations
@@ -68,11 +67,7 @@ ENGINE_NAMES = ("whisper", "openai", "deepgram", "mlx", "parakeet", "whisperx")
 
 
 def _service(backend: str):
-    """scribed's service handle for ``backend``, registering hearing's backends first."""
-    from hearing.backends import BACKEND_MODULES, register_backends
-
-    if backend in BACKEND_MODULES:
-        register_backends([backend])
+    """scribed's service handle for ``backend``."""
     return scribed.services[backend]
 
 
@@ -187,11 +182,9 @@ def get_engine(name: str = "whisper", **kwargs) -> ScribedSTT:
     >>> get_engine("mlx").backend
     'mlx-whisper'
     """
-    from hearing.backends import BACKEND_MODULES
-
     key = name.lower()
     backend = ENGINE_ALIASES.get(key)
-    if backend is None and (key in BACKEND_MODULES or key in scribed.list_backends()):
+    if backend is None and key in scribed.list_backends():
         backend = key
     if backend is None:
         raise ValueError(
