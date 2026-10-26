@@ -39,7 +39,7 @@ authors = [
     { name = "Thor Whalen" },
 ]
 dependencies = [
-    "scribed",  # transcription façade: STT engines, VAD, audio conditioning, live streaming
+    "scribed>=0.0.8",  # transcription façade: STT engines, VAD, audio conditioning, live streaming
     "numpy>=1.24",
     "soundfile>=0.12",
     "cw>=0.1.1,<0.2",

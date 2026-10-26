@@ -66,11 +66,6 @@ WHISPER_SIZED_BACKENDS = frozenset({"faster-whisper", "mlx-whisper", "whisperx"}
 ENGINE_NAMES = ("whisper", "openai", "deepgram", "mlx", "parakeet", "whisperx")
 
 
-def _service(backend: str):
-    """scribed's service handle for ``backend``."""
-    return scribed.services[backend]
-
-
 def _to_hearing_segment(
     seg: "ScribedSegment", *, final: Optional[bool] = None
 ) -> TranscriptSegment:
@@ -157,7 +152,9 @@ class ScribedSTT:
         if mono16.size == 0:
             return []
         wav = to_wav_bytes(mono16, STT_SAMPLE_RATE)
-        transcript = _service(self.backend).transcribe(wav, **self._kwargs(language))
+        transcript = scribed.services[self.backend].transcribe(
+            wav, **self._kwargs(language)
+        )
         return [_to_hearing_segment(s) for s in transcript.segments]
 
     async def stream_transcribe(
@@ -165,7 +162,7 @@ class ScribedSTT:
     ) -> AsyncIterator[TranscriptSegment]:
         """Stream finalized segments as utterances complete (via scribed's live path)."""
         source = _FramesSource(frames=frames, sample_rate=sample_rate)
-        agen = _service(self.backend).transcribe_live(
+        agen = scribed.services[self.backend].transcribe_live(
             source, vad=self.vad, **self._kwargs(None)
         )
         async for seg in agen:

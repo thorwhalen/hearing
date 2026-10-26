@@ -1,10 +1,8 @@
-"""Tests for the Deepgram, MLX (mlx-whisper / parakeet-mlx) and WhisperX engines.
+"""Tests for hearing's engine selection (aliases, constructors), Deepgram and the CLI.
 
-Offline only: every engine SDK is a fake module injected with
-``monkeypatch.setitem(sys.modules, ...)`` — no network, no model downloads, no
-MLX/torch install. Audio is tiny synthetic numpy. The fakes record what they were
-called with, so the tests pin both directions of each adapter: what hearing sends
-to the engine, and how the engine's native result lands on hearing's spine.
+Offline only: the Deepgram SDK is a fake module injected with
+``monkeypatch.setitem(sys.modules, ...)`` — no network, no model downloads. The
+MLX and WhisperX adapters live in scribed and are tested there.
 """
 
 from __future__ import annotations
