@@ -20,8 +20,7 @@ CLI's ``--engine``):
 - ``mlx`` / ``parakeet`` — Whisper / Parakeet-TDT on Apple Silicon (``hearing[mlx]``)
 - ``whisperx`` — WhisperX, aligned words + optional diarization (``hearing[whisperx]``)
 
-The last three are scribed backends that hearing itself contributes
-(:mod:`hearing.backends`); they are registered with scribed on first use.
+All of them are scribed backends; hearing only maps friendly names onto them.
 """
 
 from __future__ import annotations
@@ -65,15 +64,6 @@ WHISPER_SIZED_BACKENDS = frozenset({"faster-whisper", "mlx-whisper", "whisperx"}
 
 #: Engine names shown in help and error messages (one per backend).
 ENGINE_NAMES = ("whisper", "openai", "deepgram", "mlx", "parakeet", "whisperx")
-
-
-def _service(backend: str):
-    """scribed's service handle for ``backend``, registering hearing's backends first."""
-    from hearing.backends import BACKEND_MODULES, register_backends
-
-    if backend in BACKEND_MODULES:
-        register_backends([backend])
-    return scribed.services[backend]
 
 
 def _to_hearing_segment(
@@ -162,7 +152,9 @@ class ScribedSTT:
         if mono16.size == 0:
             return []
         wav = to_wav_bytes(mono16, STT_SAMPLE_RATE)
-        transcript = _service(self.backend).transcribe(wav, **self._kwargs(language))
+        transcript = scribed.services[self.backend].transcribe(
+            wav, **self._kwargs(language)
+        )
         return [_to_hearing_segment(s) for s in transcript.segments]
 
     async def stream_transcribe(
@@ -170,7 +162,7 @@ class ScribedSTT:
     ) -> AsyncIterator[TranscriptSegment]:
         """Stream finalized segments as utterances complete (via scribed's live path)."""
         source = _FramesSource(frames=frames, sample_rate=sample_rate)
-        agen = _service(self.backend).transcribe_live(
+        agen = scribed.services[self.backend].transcribe_live(
             source, vad=self.vad, **self._kwargs(None)
         )
         async for seg in agen:
@@ -187,11 +179,9 @@ def get_engine(name: str = "whisper", **kwargs) -> ScribedSTT:
     >>> get_engine("mlx").backend
     'mlx-whisper'
     """
-    from hearing.backends import BACKEND_MODULES
-
     key = name.lower()
     backend = ENGINE_ALIASES.get(key)
-    if backend is None and (key in BACKEND_MODULES or key in scribed.list_backends()):
+    if backend is None and key in scribed.list_backends():
         backend = key
     if backend is None:
         raise ValueError(

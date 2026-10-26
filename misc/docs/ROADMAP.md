@@ -21,7 +21,7 @@ its own development skill under `.claude/skills/`.
 | Channel handling (load multi-channel file, split mic/system, resample) | ✅ done | `hearing/capture.py` |
 | STT facade + default local engine (faster-whisper) | ✅ done | `hearing/stt.py` |
 | Cloud STT engine (OpenAI) behind the same facade | ✅ done | `OpenAISTT` (whisper-1 / gpt-4o-transcribe); `get_engine()`; `transcribe --engine openai`; verified live. |
-| More engines: Deepgram, Apple-Silicon MLX (mlx-whisper, parakeet-mlx), WhisperX | ✅ done | `DeepgramSTT`, `MLXSTT`, `WhisperXSTT`; `--engine deepgram\|mlx\|parakeet\|whisperx` (#3). MLX/WhisperX are scribed plugins in `hearing/backends/`, tested with fake engine modules only |
+| More engines: Deepgram, Apple-Silicon MLX (mlx-whisper, parakeet-mlx), WhisperX | ✅ done | `DeepgramSTT`, `MLXSTT`, `WhisperXSTT`; `--engine deepgram\|mlx\|parakeet\|whisperx` (#3). MLX/WhisperX are scribed backends (scribed 0.0.8+); hearing only maps the engine names |
 | "Me vs them" channel-trick diarizer | ✅ done | `hearing/diarize.py` (`ChannelTrickDiarizer`) |
 | Batch agents — Claude (default, pluggable) + offline extractive fallback | ✅ done | `hearing/agents.py` |
 | Pipeline facade `transcribe(...)` + `summarize(...)` (composition/DI) | ✅ done | `hearing/pipeline.py` |

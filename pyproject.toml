@@ -39,7 +39,7 @@ authors = [
     { name = "Thor Whalen" },
 ]
 dependencies = [
-    "scribed",  # transcription façade: STT engines, VAD, audio conditioning, live streaming
+    "scribed>=0.0.8",  # transcription façade: STT engines, VAD, audio conditioning, live streaming
     "numpy>=1.24",
     "soundfile>=0.12",
     "cw>=0.1.1,<0.2",
@@ -77,17 +77,15 @@ openai = [
 deepgram = [
     "scribed[deepgram]",
 ]
-# Apple-Silicon STT via MLX: mlx-whisper (default) and parakeet-mlx. These are
-# scribed backends that hearing contributes (hearing/backends/). The markers make
-# the extra a no-op anywhere MLX cannot run.
+# Apple-Silicon STT via MLX: scribed's mlx-whisper (default) and parakeet-mlx
+# backends (a no-op anywhere MLX cannot run).
 mlx = [
-    "mlx-whisper>=0.4; sys_platform == 'darwin' and platform_machine == 'arm64'",
-    "parakeet-mlx>=0.3; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "scribed[mlx]>=0.0.8",
 ]
 # WhisperX: batched Whisper + word alignment + optional pyannote diarization
 # (torch-heavy). Diarization also needs HF_TOKEN.
 whisperx = [
-    "whisperx>=3.3",
+    "scribed[whisperx]>=0.0.8",
 ]
 # Acoustic speaker diarization (separate individual remote speakers).
 diarize = [
