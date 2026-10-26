@@ -9,16 +9,6 @@
 - [API reference](api.html.md): | &#96;hearing&#96;   | hearing — pluggable meeting transcription &amp; context-aware AI agents.   |
 - [hearing](_autosummary/hearing.html.md): hearing — pluggable meeting transcription &amp; context-aware AI agents.
 - [hearing.agents](_autosummary/hearing.agents.html.md): The agent / “copilot” layer — the actual point of the hearing project.
-- [hearing.backends](_autosummary/hearing.backends.html.md): Extra scribed backends that hearing contributes: Apple-Silicon MLX and WhisperX.
-- [hearing.backends.mlx_whisper](_autosummary/hearing.backends.mlx_whisper.html.md): mlx-whisper (Whisper on Apple Silicon via MLX) backend for scribed, from hearing.
-- [hearing.backends.mlx_whisper.adapter](_autosummary/hearing.backends.mlx_whisper.adapter.html.md): Adapter for the mlx-whisper backend (Whisper on Apple Silicon via MLX).
-- [hearing.backends.mlx_whisper.config](_autosummary/hearing.backends.mlx_whisper.config.html.md): Configuration for the mlx-whisper backend (Whisper on Apple Silicon via MLX).
-- [hearing.backends.parakeet_mlx](_autosummary/hearing.backends.parakeet_mlx.html.md): parakeet-mlx (NVIDIA Parakeet-TDT on Apple Silicon via MLX) backend for scribed, from hearing.
-- [hearing.backends.parakeet_mlx.adapter](_autosummary/hearing.backends.parakeet_mlx.adapter.html.md): Adapter for the parakeet-mlx backend (NVIDIA Parakeet-TDT on Apple Silicon).
-- [hearing.backends.parakeet_mlx.config](_autosummary/hearing.backends.parakeet_mlx.config.html.md): Configuration for the parakeet-mlx backend (NVIDIA Parakeet-TDT on Apple Silicon).
-- [hearing.backends.whisperx](_autosummary/hearing.backends.whisperx.html.md): WhisperX (batched Whisper + alignment + optional diarization) backend for scribed, from hearing.
-- [hearing.backends.whisperx.adapter](_autosummary/hearing.backends.whisperx.adapter.html.md): Adapter for the WhisperX backend (transcribe -&gt; align -&gt; optionally diarize).
-- [hearing.backends.whisperx.config](_autosummary/hearing.backends.whisperx.config.html.md): Configuration for the WhisperX backend.
 - [hearing.capture](_autosummary/hearing.capture.html.md): Audio capture and channel handling for the hearing pipeline.
 - [hearing.cli](_autosummary/hearing.cli.html.md): Command-line interface for hearing, dispatched with &#96;cw&#96;.
 - [hearing.context](_autosummary/hearing.context.html.md): Context stores and retrieval (RAG) for context-connected agents.
@@ -30,7 +20,7 @@
 - [hearing.types](_autosummary/hearing.types.html.md): Shared data model for the hearing pipeline.
 - [hearing.vad](_autosummary/hearing.vad.html.md): Voice-activity detection and utterance segmentation — re-exported from scribed.
 - [For AI agents](ai-agents.html.md): &#96;hearing&#96; ships artifacts for coding agents alongside its code. This page lists
-- [About this build](about-this-build.html.md): This documentation was built on &#42;&#42;2026-10-20 16:48 UTC&#42;&#42; from commit &lt;a href="https://github.com/tho...
+- [About this build](about-this-build.html.md): This documentation was built on &#42;&#42;2026-10-26 16:06 UTC&#42;&#42; from commit &lt;a href="https://github.com/tho...
 
 ## Optional
 

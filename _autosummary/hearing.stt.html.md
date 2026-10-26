@@ -22,8 +22,7 @@ CLI’s `--engine`):
 - `mlx` / `parakeet` — Whisper / Parakeet-TDT on Apple Silicon (`hearing[mlx]`)
 - `whisperx` — WhisperX, aligned words + optional diarization (`hearing[whisperx]`)
 
-The last three are scribed backends that hearing itself contributes
-([`hearing.backends`](hearing.backends.html.md#module-hearing.backends)); they are registered with scribed on first use.
+All of them are scribed backends; hearing only maps friendly names onto them.
 
 ### Module Attributes
 

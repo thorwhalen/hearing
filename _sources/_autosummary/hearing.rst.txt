@@ -30,7 +30,6 @@
    :recursive:
 
    agents
-   backends
    capture
    cli
    context

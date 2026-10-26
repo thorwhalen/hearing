@@ -1,4 +1,4 @@
-> built 2026-10-20 16:48 UTC from f3b19fb (main) · hearing 0.0.14. Details: build_info.json
+> built 2026-10-26 16:06 UTC from 227c749 (main) · hearing 0.0.15. Details: build_info.json
 
 # index.html.md
 
@@ -365,393 +365,6 @@ audio at all.
 
 * **Return type:**
   [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
-
-
-# _autosummary/hearing.backends.html.md
-
-# hearing.backends
-
-Extra scribed backends that hearing contributes: Apple-Silicon MLX and WhisperX.
-
-hearing’s STT runs through scribed (see [`hearing.stt`](_autosummary/hearing.stt.html.md#module-hearing.stt)). scribed already ships
-the cloud engines (OpenAI, Deepgram, AssemblyAI, …) and faster-whisper; the
-engines below are not in scribed yet, so hearing provides them as \*\*scribed
-plugins\*\*, registered at runtime with `scribed.register_backend()`:
-
-- `mlx-whisper` — Whisper on Apple Silicon via MLX (`pip install 'hearing[mlx]'`)
-- `parakeet-mlx` — NVIDIA Parakeet-TDT on Apple Silicon via MLX (same extra)
-- `whisperx` — WhisperX: batched Whisper + word alignment + optional pyannote
-  diarization (`pip install 'hearing[whisperx]'`)
-
-Each backend is a subpackage laid out exactly like a `scribed.backends.<id>`
-package (`config.py` with `BACKEND_CONFIG`, `adapter.py` with `Adapter`),
-so it can move into scribed verbatim. Registration is lazy and non-clobbering:
-[`register_backends()`](_autosummary/hearing.backends.html.md#hearing.backends.register_backends) only adds an id scribed does not already provide, so
-once scribed ships one of these, scribed’s own implementation wins.
-
-Nothing here imports an engine SDK at import time; the adapters import it on first
-transcription and raise an informative error (naming the extra) when it is absent,
-or — for the MLX engines — when not running on Apple Silicon.
-
-### Module Attributes
-
-| [`BACKEND_MODULES`](_autosummary/hearing.backends.html.md#hearing.backends.BACKEND_MODULES)   | Subpackages of this package that are scribed backends (backend id -> module).   |
-|--------------------------------------------------------------------|---------------------------------------------------------------------------------|
-
-### Functions
-
-| [`backend_config`](_autosummary/hearing.backends.html.md#hearing.backends.backend_config)(backend_id)                     | The `BACKEND_CONFIG` of one of hearing's backends (no SDK import).         |
-|-------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|
-| [`is_apple_silicon`](_autosummary/hearing.backends.html.md#hearing.backends.is_apple_silicon)(\*[, system, machine])        | True on macOS running on an ARM (M-series) CPU — where MLX works.          |
-| [`logprob_to_confidence`](_autosummary/hearing.backends.html.md#hearing.backends.logprob_to_confidence)(avg_logprob)             | Map Whisper's average log-probability to a rough `[0, 1]` confidence.      |
-| [`register_backends`](_autosummary/hearing.backends.html.md#hearing.backends.register_backends)([backend_ids, registry])     | Register hearing's backends with scribed's registry; return the ids added. |
-| [`require_apple_silicon`](_autosummary/hearing.backends.html.md#hearing.backends.require_apple_silicon)(engine, \*[, check])     | Raise an informative `RuntimeError` unless running on Apple Silicon.       |
-| [`require_module`](_autosummary/hearing.backends.html.md#hearing.backends.require_module)(module_name, \*, engine, extra) | Import `module_name` or raise an `ImportError` that names the extra.       |
-| [`to_waveform_16k`](_autosummary/hearing.backends.html.md#hearing.backends.to_waveform_16k)(audio)                         | Decode any scribed audio input to a float32 mono 16 kHz numpy array.       |
-| [`whisper_result_to_segments`](_autosummary/hearing.backends.html.md#hearing.backends.whisper_result_to_segments)(result)             | Build scribed `Segment`s from an openai-whisper-style result dict.         |
-
-### hearing.backends.BACKEND_MODULES *: [Dict](https://docs.python.org/3/library/typing.html#typing.Dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'mlx-whisper': 'hearing.backends.mlx_whisper', 'parakeet-mlx': 'hearing.backends.parakeet_mlx', 'whisperx': 'hearing.backends.whisperx'}*
-
-Subpackages of this package that are scribed backends (backend id -> module).
-
-### hearing.backends.backend_config(backend_id)
-
-The `BACKEND_CONFIG` of one of hearing’s backends (no SDK import).
-
-* **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
-
-### hearing.backends.is_apple_silicon(\*, system=<function system>, machine=<function machine>)
-
-True on macOS running on an ARM (M-series) CPU — where MLX works.
-
-* **Return type:**
-  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
-
-### hearing.backends.logprob_to_confidence(avg_logprob)
-
-Map Whisper’s average log-probability to a rough `[0, 1]` confidence.
-
-* **Return type:**
-  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]
-
-### hearing.backends.register_backends(backend_ids=None, , registry=None)
-
-Register hearing’s backends with scribed’s registry; return the ids added.
-
-Idempotent and non-clobbering: an id scribed already knows is left alone.
-The adapter itself is loaded lazily by scribed (from `module_path`).
-
-* **Parameters:**
-  * **backend_ids** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Iterable`](https://docs.python.org/3/library/typing.html#typing.Iterable)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]) – which backends to register (default: all of them).
-  * **registry** ([`Any`](https://docs.python.org/3/library/typing.html#typing.Any)) – the scribed registry module (injectable for tests).
-* **Return type:**
-  [`List`](https://docs.python.org/3/library/typing.html#typing.List)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
-
-### hearing.backends.require_apple_silicon(engine, , check=None)
-
-Raise an informative `RuntimeError` unless running on Apple Silicon.
-
-* **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
-
-### hearing.backends.require_module(module_name, , engine, extra)
-
-Import `module_name` or raise an `ImportError` that names the extra.
-
-* **Return type:**
-  [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)
-
-### hearing.backends.to_waveform_16k(audio)
-
-Decode any scribed audio input to a float32 mono 16 kHz numpy array.
-
-Whisper-family engines accept such an array directly, which avoids their
-ffmpeg-based file loading (hearing hands utterances over as WAV bytes).
-
-* **Return type:**
-  [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)
-
-### hearing.backends.whisper_result_to_segments(result)
-
-Build scribed `Segment`s from an openai-whisper-style result dict.
-
-Handles both mlx-whisper (word `probability`) and WhisperX (word `score`,
-optional `speaker` on segments and words). Times are float seconds.
-
-```pycon
->>> segs = whisper_result_to_segments({"segments": [
-...     {"start": 0.0, "end": 1.5, "text": " hi there",
-...      "words": [{"word": " hi", "start": 0.0, "end": 0.4, "probability": 0.9}]}
-... ]})
->>> segs[0].text, segs[0].span.end_ms, segs[0].words[0].text
-('hi there', 1500, 'hi')
-```
-
-* **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)
-
-### Modules
-
-| [`mlx_whisper`](_autosummary/hearing.backends.mlx_whisper.html.md#module-hearing.backends.mlx_whisper)   | mlx-whisper (Whisper on Apple Silicon via MLX) backend for scribed, from hearing.                |
-|----------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
-| [`parakeet_mlx`](_autosummary/hearing.backends.parakeet_mlx.html.md#module-hearing.backends.parakeet_mlx) | parakeet-mlx (NVIDIA Parakeet-TDT on Apple Silicon via MLX) backend for scribed, from hearing.   |
-| [`whisperx`](_autosummary/hearing.backends.whisperx.html.md#module-hearing.backends.whisperx)         | WhisperX (batched Whisper + alignment + optional diarization) backend for scribed, from hearing. |
-
-
-# _autosummary/hearing.backends.mlx_whisper.adapter.html.md
-
-# hearing.backends.mlx_whisper.adapter
-
-Adapter for the mlx-whisper backend (Whisper on Apple Silicon via MLX).
-
-Decodes the input to a float32 mono 16 kHz array (no ffmpeg needed), calls
-`mlx_whisper.transcribe(array, path_or_hf_repo=...)` and maps its
-openai-whisper-shaped result dict onto a `scribed.base.Transcript`.
-`mlx_whisper` is imported on first use, after the Apple-Silicon check, so this
-module imports anywhere.
-
-### Module Attributes
-
-| [`MODEL_REPO_TEMPLATE`](_autosummary/hearing.backends.mlx_whisper.adapter.html.md#hearing.backends.mlx_whisper.adapter.MODEL_REPO_TEMPLATE)   | How a bare Whisper size maps to an `mlx-community` repo id.                                                          |
-|------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
-| [`MODEL_REPO_OVERRIDES`](_autosummary/hearing.backends.mlx_whisper.adapter.html.md#hearing.backends.mlx_whisper.adapter.MODEL_REPO_OVERRIDES)  | Sizes whose mlx-community repo does not follow [`MODEL_REPO_TEMPLATE`](_autosummary/hearing.backends.mlx_whisper.adapter.html.md#hearing.backends.mlx_whisper.adapter.MODEL_REPO_TEMPLATE). |
-
-### Functions
-
-| [`resolve_model_repo`](_autosummary/hearing.backends.mlx_whisper.adapter.html.md#hearing.backends.mlx_whisper.adapter.resolve_model_repo)(model)   | Resolve a model name to a Hugging Face repo id for `mlx_whisper`.   |
-|------------------------------------------------------------------------------|---------------------------------------------------------------------|
-
-### Classes
-
-| [`Adapter`](_autosummary/hearing.backends.mlx_whisper.adapter.html.md#hearing.backends.mlx_whisper.adapter.Adapter)(config)   | mlx-whisper adapter (Apple Silicon only).   |
-|--------------------------------------------------------------------|---------------------------------------------|
-
-### *class* hearing.backends.mlx_whisper.adapter.Adapter(config)
-
-Bases: `BaseTranscriberAdapter`
-
-mlx-whisper adapter (Apple Silicon only).
-
-#### module_name *= 'mlx_whisper'*
-
-Engine module name — the seam tests use to inject a fake backend.
-
-### hearing.backends.mlx_whisper.adapter.MODEL_REPO_OVERRIDES *= {'large-v3-turbo': 'mlx-community/whisper-large-v3-turbo', 'turbo': 'mlx-community/whisper-large-v3-turbo'}*
-
-Sizes whose mlx-community repo does not follow [`MODEL_REPO_TEMPLATE`](_autosummary/hearing.backends.mlx_whisper.adapter.html.md#hearing.backends.mlx_whisper.adapter.MODEL_REPO_TEMPLATE).
-
-### hearing.backends.mlx_whisper.adapter.MODEL_REPO_TEMPLATE *= 'mlx-community/whisper-{model}-mlx'*
-
-How a bare Whisper size maps to an `mlx-community` repo id.
-
-### hearing.backends.mlx_whisper.adapter.resolve_model_repo(model)
-
-Resolve a model name to a Hugging Face repo id for `mlx_whisper`.
-
-```pycon
->>> resolve_model_repo("base")
-'mlx-community/whisper-base-mlx'
->>> resolve_model_repo("turbo")
-'mlx-community/whisper-large-v3-turbo'
->>> resolve_model_repo("someone/custom-whisper")
-'someone/custom-whisper'
-```
-
-* **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
-
-
-# _autosummary/hearing.backends.mlx_whisper.config.html.md
-
-# hearing.backends.mlx_whisper.config
-
-Configuration for the mlx-whisper backend (Whisper on Apple Silicon via MLX).
-
-[mlx-whisper](https://pypi.org/project/mlx-whisper/) is Apple’s (ml-explore)
-port of OpenAI Whisper to MLX: it runs on the M-series GPU with unified memory, and
-returns openai-whisper-shaped results (segments, optional word timestamps).
-macOS on Apple Silicon only.
-
-`model` is either a Hugging Face repo id (`"mlx-community/whisper-large-v3-turbo"`,
-the default) or a bare Whisper size (`"tiny"`, `"base"`, `"small"`,
-`"medium"`, `"large-v3"`, `"turbo"`), resolved by
-[`hearing.backends.mlx_whisper.adapter.resolve_model_repo()`](_autosummary/hearing.backends.mlx_whisper.adapter.html.md#hearing.backends.mlx_whisper.adapter.resolve_model_repo).
-
-### Module Attributes
-
-| [`DEFAULT_MODEL`](_autosummary/hearing.backends.mlx_whisper.config.html.md#hearing.backends.mlx_whisper.config.DEFAULT_MODEL)   | Default MLX Whisper weights (fast and accurate on M2+).   |
-|------------------------------------------------------------------|-----------------------------------------------------------|
-
-### hearing.backends.mlx_whisper.config.DEFAULT_MODEL *= 'mlx-community/whisper-large-v3-turbo'*
-
-Default MLX Whisper weights (fast and accurate on M2+).
-
-
-# _autosummary/hearing.backends.mlx_whisper.html.md
-
-# hearing.backends.mlx_whisper
-
-mlx-whisper (Whisper on Apple Silicon via MLX) backend for scribed, from hearing.
-
-### Modules
-
-| [`adapter`](_autosummary/hearing.backends.mlx_whisper.adapter.html.md#module-hearing.backends.mlx_whisper.adapter)   | Adapter for the mlx-whisper backend (Whisper on Apple Silicon via MLX).       |
-|--------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------|
-| [`config`](_autosummary/hearing.backends.mlx_whisper.config.html.md#module-hearing.backends.mlx_whisper.config)     | Configuration for the mlx-whisper backend (Whisper on Apple Silicon via MLX). |
-
-
-# _autosummary/hearing.backends.parakeet_mlx.adapter.html.md
-
-# hearing.backends.parakeet_mlx.adapter
-
-Adapter for the parakeet-mlx backend (NVIDIA Parakeet-TDT on Apple Silicon).
-
-Loads a model with `parakeet_mlx.from_pretrained(repo)` (cached per repo),
-transcribes a temporary audio file, and maps the returned `AlignedResult`’s
-sentences (text + float-second `start`/`end`) onto scribed segments.
-Parakeet’s tokens are sub-word pieces, so no word list is emitted.
-`parakeet_mlx` is imported on first use, after the Apple-Silicon check.
-
-### Classes
-
-| [`Adapter`](_autosummary/hearing.backends.parakeet_mlx.adapter.html.md#hearing.backends.parakeet_mlx.adapter.Adapter)(config)   | parakeet-mlx adapter (Apple Silicon only; caches one model per repo).   |
-|--------------------------------------------------------------------|-------------------------------------------------------------------------|
-
-### *class* hearing.backends.parakeet_mlx.adapter.Adapter(config)
-
-Bases: `BaseTranscriberAdapter`
-
-parakeet-mlx adapter (Apple Silicon only; caches one model per repo).
-
-#### module_name *= 'parakeet_mlx'*
-
-Engine module name — the seam tests use to inject a fake backend.
-
-
-# _autosummary/hearing.backends.parakeet_mlx.config.html.md
-
-# hearing.backends.parakeet_mlx.config
-
-Configuration for the parakeet-mlx backend (NVIDIA Parakeet-TDT on Apple Silicon).
-
-[parakeet-mlx](https://pypi.org/project/parakeet-mlx/) runs NVIDIA’s
-Parakeet-TDT models on Apple Silicon via MLX: among the fastest accurate local
-English (v2) / 25-European-language (v3) engines. macOS on Apple Silicon only.
-The language is detected by the model itself (no `language` argument).
-
-### Module Attributes
-
-| [`DEFAULT_MODEL`](_autosummary/hearing.backends.parakeet_mlx.config.html.md#hearing.backends.parakeet_mlx.config.DEFAULT_MODEL)   | multilingual, 25 European languages).   |
-|------------------------------------------------------------------|-----------------------------------------|
-
-### hearing.backends.parakeet_mlx.config.DEFAULT_MODEL *= 'mlx-community/parakeet-tdt-0.6b-v3'*
-
-multilingual, 25 European languages).
-
-* **Type:**
-  Default Parakeet weights (v3
-
-
-# _autosummary/hearing.backends.parakeet_mlx.html.md
-
-# hearing.backends.parakeet_mlx
-
-parakeet-mlx (NVIDIA Parakeet-TDT on Apple Silicon via MLX) backend for scribed, from hearing.
-
-### Modules
-
-| [`adapter`](_autosummary/hearing.backends.parakeet_mlx.adapter.html.md#module-hearing.backends.parakeet_mlx.adapter)   | Adapter for the parakeet-mlx backend (NVIDIA Parakeet-TDT on Apple Silicon).       |
-|---------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
-| [`config`](_autosummary/hearing.backends.parakeet_mlx.config.html.md#module-hearing.backends.parakeet_mlx.config)     | Configuration for the parakeet-mlx backend (NVIDIA Parakeet-TDT on Apple Silicon). |
-
-
-# _autosummary/hearing.backends.whisperx.adapter.html.md
-
-# hearing.backends.whisperx.adapter
-
-Adapter for the WhisperX backend (transcribe -> align -> optionally diarize).
-
-Pipeline, on a float32 mono 16 kHz array (no ffmpeg needed):
-
-1. `whisperx.load_model(model, device, compute_type=...)` (cached) then
-   `.transcribe(audio, batch_size=..., language=...)`;
-2. if `align`: `whisperx.load_align_model` + `whisperx.align` for accurate
-   word timestamps;
-3. if `diarize`: pyannote via WhisperX’s `DiarizationPipeline` +
-   `whisperx.assign_word_speakers` (needs a Hugging Face token, env `HF_TOKEN`).
-
-The result is openai-whisper-shaped, mapped by
-[`hearing.backends.whisper_result_to_segments()`](_autosummary/hearing.backends.html.md#hearing.backends.whisper_result_to_segments). `whisperx` (and `torch`,
-for device auto-detection) are imported on first use.
-
-### Module Attributes
-
-| [`DEFAULT_COMPUTE_TYPES`](_autosummary/hearing.backends.whisperx.adapter.html.md#hearing.backends.whisperx.adapter.DEFAULT_COMPUTE_TYPES)   | `compute_type` used when none is given, by device.   |
-|--------------------------------------------------------------------------|------------------------------------------------------|
-
-### Classes
-
-| [`Adapter`](_autosummary/hearing.backends.whisperx.adapter.html.md#hearing.backends.whisperx.adapter.Adapter)(config)   | WhisperX adapter (caches ASR, alignment and diarization models).   |
-|--------------------------------------------------------------------|--------------------------------------------------------------------|
-
-### *class* hearing.backends.whisperx.adapter.Adapter(config)
-
-Bases: `BaseTranscriberAdapter`
-
-WhisperX adapter (caches ASR, alignment and diarization models).
-
-#### module_name *= 'whisperx'*
-
-Engine module name — the seam tests use to inject a fake backend.
-
-### hearing.backends.whisperx.adapter.DEFAULT_COMPUTE_TYPES *= {'cpu': 'int8', 'cuda': 'float16'}*
-
-`compute_type` used when none is given, by device.
-
-
-# _autosummary/hearing.backends.whisperx.config.html.md
-
-# hearing.backends.whisperx.config
-
-Configuration for the WhisperX backend.
-
-[WhisperX](https://github.com/m-bain/whisperX) = batched faster-whisper +
-wav2vec2 forced alignment (accurate word timestamps) + optional pyannote speaker
-diarization, in one pass — the sweet spot for multi-speaker meetings.
-
-Diarization is off by default (in hearing, speakers are a separate concern — see
-the `hearing-diarization` skill); pass `diarize=True` to have WhisperX label
-speakers. It needs a Hugging Face token (env `HF_TOKEN`) that has accepted the
-pyannote model terms. `device`/`compute_type` default to CUDA + float16 when a
-GPU is visible, else CPU + int8.
-
-### Module Attributes
-
-| [`DEFAULT_MODEL`](_autosummary/hearing.backends.whisperx.config.html.md#hearing.backends.whisperx.config.DEFAULT_MODEL)     | Default Whisper model size for WhisperX.                              |
-|--------------------------------------------------------------------|-----------------------------------------------------------------------|
-| [`HF_TOKEN_ENV_VARS`](_autosummary/hearing.backends.whisperx.config.html.md#hearing.backends.whisperx.config.HF_TOKEN_ENV_VARS) | Env var(s) holding the Hugging Face token pyannote diarization needs. |
-
-### hearing.backends.whisperx.config.DEFAULT_MODEL *= 'large-v3'*
-
-Default Whisper model size for WhisperX.
-
-### hearing.backends.whisperx.config.HF_TOKEN_ENV_VARS *= ('HF_TOKEN', 'HUGGING_FACE_HUB_TOKEN')*
-
-Env var(s) holding the Hugging Face token pyannote diarization needs.
-
-
-# _autosummary/hearing.backends.whisperx.html.md
-
-# hearing.backends.whisperx
-
-WhisperX (batched Whisper + alignment + optional diarization) backend for scribed, from hearing.
-
-### Modules
-
-| [`adapter`](_autosummary/hearing.backends.whisperx.adapter.html.md#module-hearing.backends.whisperx.adapter)   | Adapter for the WhisperX backend (transcribe -> align -> optionally diarize).   |
-|-----------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
-| [`config`](_autosummary/hearing.backends.whisperx.config.html.md#module-hearing.backends.whisperx.config)     | Configuration for the WhisperX backend.                                         |
 
 
 # _autosummary/hearing.capture.html.md
@@ -1585,19 +1198,18 @@ file is multi-channel, and the free “me vs them” channel-trick diarizer.
 
 ### Modules
 
-| [`agents`](_autosummary/hearing.agents.html.md#module-hearing.agents)         | The agent / "copilot" layer — the actual point of the hearing project.           |
-|---------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
-| [`backends`](_autosummary/hearing.backends.html.md#module-hearing.backends)     | Extra scribed backends that hearing contributes: Apple-Silicon MLX and WhisperX. |
-| [`capture`](_autosummary/hearing.capture.html.md#module-hearing.capture)       | Audio capture and channel handling for the hearing pipeline.                     |
-| [`cli`](_autosummary/hearing.cli.html.md#module-hearing.cli)               | Command-line interface for hearing, dispatched with `cw`.                        |
-| [`context`](_autosummary/hearing.context.html.md#module-hearing.context)       | Context stores and retrieval (RAG) for context-connected agents.                 |
-| [`diarize`](_autosummary/hearing.diarize.html.md#module-hearing.diarize)       | Diarization and speaker labelling for the hearing pipeline.                      |
-| [`interfaces`](_autosummary/hearing.interfaces.html.md#module-hearing.interfaces) | Facade Protocols for the four pipeline concerns.                                 |
-| [`pipeline`](_autosummary/hearing.pipeline.html.md#module-hearing.pipeline)     | Pipeline assembly — compose the four concerns by dependency injection.           |
-| [`storage`](_autosummary/hearing.storage.html.md#module-hearing.storage)       | Transcript persistence via key-value stores (python-storage / `dol`).            |
-| [`stt`](_autosummary/hearing.stt.html.md#module-hearing.stt)               | Speech-to-text for hearing — now backed by the scribed transcription façade.     |
-| [`types`](_autosummary/hearing.types.html.md#module-hearing.types)           | Shared data model for the hearing pipeline.                                      |
-| [`vad`](_autosummary/hearing.vad.html.md#module-hearing.vad)               | Voice-activity detection and utterance segmentation — re-exported from scribed.  |
+| [`agents`](_autosummary/hearing.agents.html.md#module-hearing.agents)         | The agent / "copilot" layer — the actual point of the hearing project.          |
+|---------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
+| [`capture`](_autosummary/hearing.capture.html.md#module-hearing.capture)       | Audio capture and channel handling for the hearing pipeline.                    |
+| [`cli`](_autosummary/hearing.cli.html.md#module-hearing.cli)               | Command-line interface for hearing, dispatched with `cw`.                       |
+| [`context`](_autosummary/hearing.context.html.md#module-hearing.context)       | Context stores and retrieval (RAG) for context-connected agents.                |
+| [`diarize`](_autosummary/hearing.diarize.html.md#module-hearing.diarize)       | Diarization and speaker labelling for the hearing pipeline.                     |
+| [`interfaces`](_autosummary/hearing.interfaces.html.md#module-hearing.interfaces) | Facade Protocols for the four pipeline concerns.                                |
+| [`pipeline`](_autosummary/hearing.pipeline.html.md#module-hearing.pipeline)     | Pipeline assembly — compose the four concerns by dependency injection.          |
+| [`storage`](_autosummary/hearing.storage.html.md#module-hearing.storage)       | Transcript persistence via key-value stores (python-storage / `dol`).           |
+| [`stt`](_autosummary/hearing.stt.html.md#module-hearing.stt)               | Speech-to-text for hearing — now backed by the scribed transcription façade.    |
+| [`types`](_autosummary/hearing.types.html.md#module-hearing.types)           | Shared data model for the hearing pipeline.                                     |
+| [`vad`](_autosummary/hearing.vad.html.md#module-hearing.vad)               | Voice-activity detection and utterance segmentation — re-exported from scribed. |
 
 
 # _autosummary/hearing.interfaces.html.md
@@ -1962,8 +1574,7 @@ CLI’s `--engine`):
 - `mlx` / `parakeet` — Whisper / Parakeet-TDT on Apple Silicon (`hearing[mlx]`)
 - `whisperx` — WhisperX, aligned words + optional diarization (`hearing[whisperx]`)
 
-The last three are scribed backends that hearing itself contributes
-([`hearing.backends`](_autosummary/hearing.backends.html.md#module-hearing.backends)); they are registered with scribed on first use.
+All of them are scribed backends; hearing only maps friendly names onto them.
 
 ### Module Attributes
 
@@ -2371,18 +1982,18 @@ rate of the incoming blocks (used only for the ms arithmetic).
 
 # About this build
 
-This documentation was built on **2026-10-20 16:48 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/f3b19fb7936820c6781502e5119e709450d71245"><code>f3b19fb</code></a> on branch <code>main</code>, for **hearing 0.0.14** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-26 16:06 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/227c749fd2f87617ccec8ed586b7f7e448048efe"><code>227c749</code></a> on branch <code>main</code>, for **hearing 0.0.15** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.0.14) is behind the latest release on PyPI (0.0.15): `pip install hearing` gives newer code than these docs describe.
+- The documented version (0.0.15) is behind the latest release on PyPI (0.0.16): `pip install hearing` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                           |
 |---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/f3b19fb7936820c6781502e5119e709450d71245"><code>f3b19fb7936820c6781502e5119e709450d71245</code></a> |
+| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/227c749fd2f87617ccec8ed586b7f7e448048efe"><code>227c749fd2f87617ccec8ed586b7f7e448048efe</code></a> |
 | Branch              | <code>main</code>                                                                                                                                         |
 | Tags at this commit | none                                                                                                                                                      |
 | Working tree        | clean                                                                                                                                                     |
@@ -2393,9 +2004,9 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>thorwhalen/hearing</code>                                                            |
-| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/39460460500">39460460500</a>   |
+| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/40355560472">40355560472</a>   |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>f3b19fb7936820c6781502e5119e709450d71245</code> (in the history of the built commit) |
+| Event commit | <code>227c749fd2f87617ccec8ed586b7f7e448048efe</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -2420,13 +2031,13 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/hearing/0.0.15/">0.0.15</a>, newer than the documented version (0.0.14).
+Latest release: <a href="https://pypi.org/project/hearing/0.0.16/">0.0.16</a>, newer than the documented version (0.0.15).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/thorwhalen/hearing && cd hearing
-git checkout f3b19fb7936820c6781502e5119e709450d71245
+git checkout 227c749fd2f87617ccec8ed586b7f7e448048efe
 pip install "epythet==0.2.22"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
