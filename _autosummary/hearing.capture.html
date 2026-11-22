@@ -290,7 +290,10 @@ hearing owns only the multi-channel / “me vs them” concerns.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#hearing.capture.DeviceCapture" title="hearing.capture.DeviceCapture"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DeviceCapture</span></code></a>([device, block_ms, ...])</p></td>
 <td><p>Live macOS capture from an audio <em>device</em> (the milestone-2 capture source).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.capture.StreamingFileCapture" title="hearing.capture.StreamingFileCapture"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StreamingFileCapture</span></code></a>(path[, block_ms, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hearing.capture.ProcessTapCapture" title="hearing.capture.ProcessTapCapture"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ProcessTapCapture</span></code></a>([app, pid, exclude, mute, ...])</p></td>
+<td><p>Live macOS capture of what <em>apps play</em>, with no virtual device (pcmtap).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hearing.capture.StreamingFileCapture" title="hearing.capture.StreamingFileCapture"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StreamingFileCapture</span></code></a>(path[, block_ms, ...])</p></td>
 <td><p>A <em>streaming</em> <a class="reference internal" href="hearing.interfaces.html#hearing.interfaces.CaptureSource" title="hearing.interfaces.CaptureSource"><code class="xref py py-class docutils literal notranslate"><span class="pre">CaptureSource</span></code></a> over a file.</p></td>
 </tr>
 </tbody>
@@ -378,6 +381,39 @@ hardware to exercise; constructing it is cheap (the device opens in
 <dt class="sig sig-object py" id="hearing.capture.DeviceCapture.list_devices">
 <span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">list_devices</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/capture.html#DeviceCapture.list_devices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.capture.DeviceCapture.list_devices" title="Link to this definition">¶</a></dt>
 <dd><p>Return available audio devices (helps pick the Aggregate Device).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hearing.capture.ProcessTapCapture">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hearing.capture.</span></span><span class="sig-name descname"><span class="pre">ProcessTapCapture</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">block_ms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">48000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tap_factory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/capture.html#ProcessTapCapture"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.capture.ProcessTapCapture" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Live macOS capture of what <em>apps play</em>, with no virtual device (pcmtap).</p>
+<p>Uses Core Audio process taps (macOS 14.2+) through
+<a class="reference external" href="https://github.com/thorwhalen/pcmtap">pcmtap</a>: one app (<code class="docutils literal notranslate"><span class="pre">app=&quot;zoom.us&quot;</span></code>, a
+browser, …) or, with no <code class="docutils literal notranslate"><span class="pre">app</span></code>, the whole Mac. Yields the audio as the
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">SYSTEM</span></code> channel (“them”); the app can be muted on
+the speakers while it is recorded (<code class="docutils literal notranslate"><span class="pre">mute=True</span></code>). It carries no microphone: use
+it where “them” is wanted alone, or alongside a mic source.</p>
+<p>Needs the <code class="docutils literal notranslate"><span class="pre">tap</span></code> extra (<code class="docutils literal notranslate"><span class="pre">hearing[tap]</span></code>, i.e. pcmtap) and the System Audio
+Recording permission (<code class="docutils literal notranslate"><span class="pre">pcmtap</span> <span class="pre">permission</span> <span class="pre">--request</span></code>). <code class="xref py py-attr docutils literal notranslate"><span class="pre">sample_rate</span></code> is the
+tap’s own, known once capture starts (<code class="docutils literal notranslate"><span class="pre">astream</span></code> sets it).</p>
+<p><code class="docutils literal notranslate"><span class="pre">tap_factory</span></code> is the seam: any callable taking <code class="docutils literal notranslate"><span class="pre">(app,</span> <span class="pre">pid=,</span> <span class="pre">exclude=,</span> <span class="pre">mute=)</span></code>
+and returning a context manager that iterates <code class="docutils literal notranslate"><span class="pre">bytes</span></code> chunks of interleaved
+float32 and has a <code class="docutils literal notranslate"><span class="pre">format</span></code> with <code class="docutils literal notranslate"><span class="pre">sample_rate</span></code> and <code class="docutils literal notranslate"><span class="pre">channels</span></code> (default
+<code class="xref py py-class docutils literal notranslate"><span class="pre">pcmtap.Tap</span></code>). Tests pass a fake.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="hearing.capture.ProcessTapCapture.astream">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">astream</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hearing/capture.html#ProcessTapCapture.astream"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hearing.capture.ProcessTapCapture.astream" title="Link to this definition">¶</a></dt>
+<dd><p>Open the tap and yield <code class="docutils literal notranslate"><span class="pre">(Channel.SYSTEM,</span> <span class="pre">mono</span> <span class="pre">block)</span></code> blocks until it ends or is cancelled.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.AsyncIterator" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AsyncIterator</span></code></a>[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference internal" href="hearing.types.html#hearing.types.Channel" title="hearing.types.Channel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Channel</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>]]</span></p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -518,6 +554,10 @@ indices are out of range are silently omitted.</p>
 <li><a class="reference internal" href="#hearing.capture.DeviceCapture.list_devices"><code class="docutils literal notranslate"><span class="pre">DeviceCapture.list_devices()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#hearing.capture.ProcessTapCapture"><code class="docutils literal notranslate"><span class="pre">ProcessTapCapture</span></code></a><ul>
+<li><a class="reference internal" href="#hearing.capture.ProcessTapCapture.astream"><code class="docutils literal notranslate"><span class="pre">ProcessTapCapture.astream()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#hearing.capture.StreamingFileCapture"><code class="docutils literal notranslate"><span class="pre">StreamingFileCapture</span></code></a><ul>
 <li><a class="reference internal" href="#hearing.capture.StreamingFileCapture.astream"><code class="docutils literal notranslate"><span class="pre">StreamingFileCapture.astream()</span></code></a></li>
 <li><a class="reference internal" href="#hearing.capture.StreamingFileCapture.channels"><code class="docutils literal notranslate"><span class="pre">StreamingFileCapture.channels()</span></code></a></li>
@@ -536,7 +576,7 @@ indices are out of range are silently omitted.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=2a6a9ca9"></script>
+</div><script src="../_static/documentation_options.js?v=0adb0642"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

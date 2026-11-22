@@ -19,7 +19,7 @@ hearing info                             # check what's installed/available
 
 | [`info`](#hearing.cli.info)()                                            | Report which optional components are installed and what's missing.         |
 |----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|
-| [`live`](#hearing.cli.live)([path, engine, model, device, ...])          | Run the LIVE streaming pipeline, printing segments as utterances finalize. |
+| [`live`](#hearing.cli.live)([path, engine, model, device, tap_app, ...]) | Run the LIVE streaming pipeline, printing segments as utterances finalize. |
 | [`main`](#hearing.cli.main)([argv])                                      | Entry point for the `hearing` console script.                              |
 | [`meetings`](#hearing.cli.meetings)(store, \*[, show])                       | List transcripts saved in a store (or print one with --show ID).           |
 | [`serve`](#hearing.cli.serve)(\*[, host, port, reload])                   | Serve the HTTP API (FastAPI) the frontend talks to.                        |
@@ -33,7 +33,7 @@ Report which optional components are installed and what’s missing.
 * **Return type:**
   [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
-### hearing.cli.live(path=None, , engine='whisper', model=None, device=None, block_ms=200, realtime=False)
+### hearing.cli.live(path=None, , engine='whisper', model=None, device=None, tap_app=None, block_ms=200, realtime=False)
 
 Run the LIVE streaming pipeline, printing segments as utterances finalize.
 
@@ -45,6 +45,8 @@ Run the LIVE streaming pipeline, printing segments as utterances finalize.
   * **model** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – STT model override (omit for the engine’s default).
   * **device** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – audio device index/name for live capture (an Aggregate Device
     with mic + BlackHole; see the hearing-audio-capture skill).
+  * **tap_app** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – capture what this app plays (e.g. ‘zoom.us’), with no virtual
+    device (pcmtap; macOS 14.2+); use ‘all’ for the whole Mac.
   * **block_ms** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – streaming block size in milliseconds.
   * **realtime** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – when streaming a file, pace it in real time (else as-fast-as).
 * **Return type:**

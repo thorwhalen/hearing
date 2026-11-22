@@ -1,4 +1,4 @@
-> built 2026-10-26 16:06 UTC from 227c749 (main) · hearing 0.0.15. Details: build_info.json
+> built 2026-11-22 12:15 UTC from 6636725 (main) · hearing 0.0.16. Details: build_info.json
 
 # index.html.md
 
@@ -113,6 +113,8 @@ Capturing from a live **device** (`DeviceCapture`, an Aggregate Device with mic
 
 + BlackHole) is implemented but needs that hardware to verify; streaming a file
   works anywhere.
+
+To capture what an app plays with **no virtual device**, use `ProcessTapCapture` (Core Audio process taps through [pcmtap](https://github.com/thorwhalen/pcmtap), macOS 14.2+; add the `tap` extra): `hearing live --tap-app zoom.us` (or `--tap-app all` for the whole Mac). It yields the `SYSTEM` (“them”) channel only; the permission is granted once with `pcmtap permission --request`. Tested against a fake tap; not yet run against a live call.
 
 **Command palette (⌘K).** Press ⌘K (or click the button) for a command palette —
 export the transcript (markdown/SRT/JSON), focus search, clear. Each command is
@@ -390,10 +392,11 @@ hearing owns only the multi-channel / “me vs them” concerns.
 
 ### Classes
 
-| [`ChannelSplitFileCapture`](_autosummary/hearing.capture.html.md#hearing.capture.ChannelSplitFileCapture)(path[, ...])        | A batch [`CaptureSource`](_autosummary/hearing.interfaces.html.md#hearing.interfaces.CaptureSource) over an audio file.   |
-|----------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
-| [`DeviceCapture`](_autosummary/hearing.capture.html.md#hearing.capture.DeviceCapture)([device, block_ms, ...])      | Live macOS capture from an audio *device* (the milestone-2 capture source).                                                   |
-| [`StreamingFileCapture`](_autosummary/hearing.capture.html.md#hearing.capture.StreamingFileCapture)(path[, block_ms, ...]) | A *streaming* [`CaptureSource`](_autosummary/hearing.interfaces.html.md#hearing.interfaces.CaptureSource) over a file.    |
+| [`ChannelSplitFileCapture`](_autosummary/hearing.capture.html.md#hearing.capture.ChannelSplitFileCapture)(path[, ...])              | A batch [`CaptureSource`](_autosummary/hearing.interfaces.html.md#hearing.interfaces.CaptureSource) over an audio file.   |
+|----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| [`DeviceCapture`](_autosummary/hearing.capture.html.md#hearing.capture.DeviceCapture)([device, block_ms, ...])            | Live macOS capture from an audio *device* (the milestone-2 capture source).                                                   |
+| [`ProcessTapCapture`](_autosummary/hearing.capture.html.md#hearing.capture.ProcessTapCapture)([app, pid, exclude, mute, ...]) | Live macOS capture of what *apps play*, with no virtual device (pcmtap).                                                      |
+| [`StreamingFileCapture`](_autosummary/hearing.capture.html.md#hearing.capture.StreamingFileCapture)(path[, block_ms, ...])       | A *streaming* [`CaptureSource`](_autosummary/hearing.interfaces.html.md#hearing.interfaces.CaptureSource) over a file.    |
 
 ### *class* hearing.capture.ChannelSplitFileCapture(path, mic_channels=(0,), system_channels=(1,))
 
@@ -462,6 +465,35 @@ Open the device and yield `(channel, block)` blocks until cancelled.
 #### *static* list_devices()
 
 Return available audio devices (helps pick the Aggregate Device).
+
+### *class* hearing.capture.ProcessTapCapture(app=None, pid=None, exclude=False, mute=False, block_ms=200, sample_rate=48000, tap_factory=None)
+
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+
+Live macOS capture of what *apps play*, with no virtual device (pcmtap).
+
+Uses Core Audio process taps (macOS 14.2+) through
+[pcmtap](https://github.com/thorwhalen/pcmtap): one app (`app="zoom.us"`, a
+browser, …) or, with no `app`, the whole Mac. Yields the audio as the
+`SYSTEM` channel (“them”); the app can be muted on
+the speakers while it is recorded (`mute=True`). It carries no microphone: use
+it where “them” is wanted alone, or alongside a mic source.
+
+Needs the `tap` extra (`hearing[tap]`, i.e. pcmtap) and the System Audio
+Recording permission (`pcmtap permission --request`). `sample_rate` is the
+tap’s own, known once capture starts (`astream` sets it).
+
+`tap_factory` is the seam: any callable taking `(app, pid=, exclude=, mute=)`
+and returning a context manager that iterates `bytes` chunks of interleaved
+float32 and has a `format` with `sample_rate` and `channels` (default
+`pcmtap.Tap`). Tests pass a fake.
+
+#### *async* astream()
+
+Open the tap and yield `(Channel.SYSTEM, mono block)` blocks until it ends or is cancelled.
+
+* **Return type:**
+  [`AsyncIterator`](https://docs.python.org/3/library/typing.html#typing.AsyncIterator)[[`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`Channel`](_autosummary/hearing.types.html.md#hearing.types.Channel), `ndarray`]]
 
 ### *class* hearing.capture.StreamingFileCapture(path, block_ms=200, realtime=False, mic_channels=(0,), system_channels=(1,))
 
@@ -537,7 +569,7 @@ hearing info                             # check what's installed/available
 
 | [`info`](_autosummary/hearing.cli.html.md#hearing.cli.info)()                                            | Report which optional components are installed and what's missing.         |
 |----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|
-| [`live`](_autosummary/hearing.cli.html.md#hearing.cli.live)([path, engine, model, device, ...])          | Run the LIVE streaming pipeline, printing segments as utterances finalize. |
+| [`live`](_autosummary/hearing.cli.html.md#hearing.cli.live)([path, engine, model, device, tap_app, ...]) | Run the LIVE streaming pipeline, printing segments as utterances finalize. |
 | [`main`](_autosummary/hearing.cli.html.md#hearing.cli.main)([argv])                                      | Entry point for the `hearing` console script.                              |
 | [`meetings`](_autosummary/hearing.cli.html.md#hearing.cli.meetings)(store, \*[, show])                       | List transcripts saved in a store (or print one with --show ID).           |
 | [`serve`](_autosummary/hearing.cli.html.md#hearing.cli.serve)(\*[, host, port, reload])                   | Serve the HTTP API (FastAPI) the frontend talks to.                        |
@@ -551,7 +583,7 @@ Report which optional components are installed and what’s missing.
 * **Return type:**
   [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
-### hearing.cli.live(path=None, , engine='whisper', model=None, device=None, block_ms=200, realtime=False)
+### hearing.cli.live(path=None, , engine='whisper', model=None, device=None, tap_app=None, block_ms=200, realtime=False)
 
 Run the LIVE streaming pipeline, printing segments as utterances finalize.
 
@@ -563,6 +595,8 @@ Run the LIVE streaming pipeline, printing segments as utterances finalize.
   * **model** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – STT model override (omit for the engine’s default).
   * **device** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – audio device index/name for live capture (an Aggregate Device
     with mic + BlackHole; see the hearing-audio-capture skill).
+  * **tap_app** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – capture what this app plays (e.g. ‘zoom.us’), with no virtual
+    device (pcmtap; macOS 14.2+); use ‘all’ for the whole Mac.
   * **block_ms** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – streaming block size in milliseconds.
   * **realtime** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – when streaming a file, pace it in real time (else as-fast-as).
 * **Return type:**
@@ -1982,18 +2016,18 @@ rate of the incoming blocks (used only for the ms arithmetic).
 
 # About this build
 
-This documentation was built on **2026-10-26 16:06 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/227c749fd2f87617ccec8ed586b7f7e448048efe"><code>227c749</code></a> on branch <code>main</code>, for **hearing 0.0.15** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-11-22 12:15 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/6636725e5dc4630c40f5e2a571f0504652bbe3cc"><code>6636725</code></a> on branch <code>main</code>, for **hearing 0.0.16** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.0.15) is behind the latest release on PyPI (0.0.16): `pip install hearing` gives newer code than these docs describe.
+- The documented version (0.0.16) is behind the latest release on PyPI (0.0.17): `pip install hearing` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                           |
 |---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/227c749fd2f87617ccec8ed586b7f7e448048efe"><code>227c749fd2f87617ccec8ed586b7f7e448048efe</code></a> |
+| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/6636725e5dc4630c40f5e2a571f0504652bbe3cc"><code>6636725e5dc4630c40f5e2a571f0504652bbe3cc</code></a> |
 | Branch              | <code>main</code>                                                                                                                                         |
 | Tags at this commit | none                                                                                                                                                      |
 | Working tree        | clean                                                                                                                                                     |
@@ -2004,18 +2038,18 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>thorwhalen/hearing</code>                                                            |
-| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/40355560472">40355560472</a>   |
+| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/45021232315">45021232315</a>   |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>227c749fd2f87617ccec8ed586b7f7e448048efe</code> (in the history of the built commit) |
+| Event commit | <code>6636725e5dc4630c40f5e2a571f0504652bbe3cc</code> (in the history of the built commit) |
 
 ## Tools
 
 |          |         |
 |----------|---------|
-| epythet  | 0.2.22  |
+| epythet  | 0.2.23  |
 | Sphinx   | 9.1.1   |
 | docutils | 0.22.4  |
-| Python   | 3.12.15 |
+| Python   | 3.12.16 |
 
 ## Configuration as resolved
 
@@ -2031,14 +2065,14 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/hearing/0.0.16/">0.0.16</a>, newer than the documented version (0.0.15).
+Latest release: <a href="https://pypi.org/project/hearing/0.0.17/">0.0.17</a>, newer than the documented version (0.0.16).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/thorwhalen/hearing && cd hearing
-git checkout 227c749fd2f87617ccec8ed586b7f7e448048efe
-pip install "epythet==0.2.22"
+git checkout 6636725e5dc4630c40f5e2a571f0504652bbe3cc
+pip install "epythet==0.2.23"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
 

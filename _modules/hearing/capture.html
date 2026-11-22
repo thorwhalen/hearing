@@ -269,7 +269,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncIterator</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncIterator</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
@@ -513,6 +513,75 @@
                     <span class="k">yield</span> <span class="n">channel</span><span class="p">,</span> <span class="n">samples</span></div>
 </div>
 
+
+
+<div class="viewcode-block" id="ProcessTapCapture">
+<a class="viewcode-back" href="../../_autosummary/hearing.capture.html#hearing.capture.ProcessTapCapture">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProcessTapCapture</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Live macOS capture of what *apps play*, with no virtual device (pcmtap).</span>
+
+<span class="sd">    Uses Core Audio process taps (macOS 14.2+) through</span>
+<span class="sd">    `pcmtap &lt;https://github.com/thorwhalen/pcmtap&gt;`_: one app (``app="zoom.us"``, a</span>
+<span class="sd">    browser, ...) or, with no ``app``, the whole Mac. Yields the audio as the</span>
+<span class="sd">    :attr:`~hearing.types.Channel.SYSTEM` channel ("them"); the app can be muted on</span>
+<span class="sd">    the speakers while it is recorded (``mute=True``). It carries no microphone: use</span>
+<span class="sd">    it where "them" is wanted alone, or alongside a mic source.</span>
+
+<span class="sd">    Needs the ``tap`` extra (``hearing[tap]``, i.e. pcmtap) and the System Audio</span>
+<span class="sd">    Recording permission (``pcmtap permission --request``). :attr:`sample_rate` is the</span>
+<span class="sd">    tap's own, known once capture starts (``astream`` sets it).</span>
+
+<span class="sd">    ``tap_factory`` is the seam: any callable taking ``(app, pid=, exclude=, mute=)``</span>
+<span class="sd">    and returning a context manager that iterates ``bytes`` chunks of interleaved</span>
+<span class="sd">    float32 and has a ``format`` with ``sample_rate`` and ``channels`` (default</span>
+<span class="sd">    :class:`pcmtap.Tap`). Tests pass a fake.</span>
+<span class="sd">    """</span>
+
+    <span class="n">app</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">pid</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">exclude</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">mute</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">block_ms</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span>
+    <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">48_000</span>
+    <span class="n">tap_factory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_open_tap</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">factory</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tap_factory</span>
+        <span class="k">if</span> <span class="n">factory</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">pcmtap</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tap</span> <span class="k">as</span> <span class="n">factory</span>
+            <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                    <span class="s2">"ProcessTapCapture needs pcmtap (macOS 14.2+): add the 'tap' extra "</span>
+                    <span class="s2">"of hearing (hearing[tap])."</span>
+                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">return</span> <span class="n">factory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">pid</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pid</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">exclude</span><span class="p">,</span> <span class="n">mute</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mute</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ProcessTapCapture.astream">
+<a class="viewcode-back" href="../../_autosummary/hearing.capture.html#hearing.capture.ProcessTapCapture.astream">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">astream</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Channel</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Open the tap and yield ``(Channel.SYSTEM, mono block)`` blocks until it ends or is cancelled."""</span>
+        <span class="n">loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">get_running_loop</span><span class="p">()</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_tap</span><span class="p">()</span> <span class="k">as</span> <span class="n">tap</span><span class="p">:</span>
+            <span class="n">fmt</span> <span class="o">=</span> <span class="n">tap</span><span class="o">.</span><span class="n">format</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fmt</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">)</span>
+            <span class="n">block</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">block_ms</span> <span class="o">/</span> <span class="mi">1000</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">))</span>
+            <span class="n">chunks</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">tap</span><span class="p">)</span>
+            <span class="n">pending</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">raw</span> <span class="o">=</span> <span class="k">await</span> <span class="n">loop</span><span class="o">.</span><span class="n">run_in_executor</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="nb">next</span><span class="p">,</span> <span class="n">chunks</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># the tap ended: flush the partial block</span>
+                    <span class="k">if</span> <span class="n">pending</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="n">Channel</span><span class="o">.</span><span class="n">SYSTEM</span><span class="p">,</span> <span class="n">pending</span>
+                    <span class="k">return</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"&lt;f4"</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">fmt</span><span class="o">.</span><span class="n">channels</span><span class="p">))</span>
+                <span class="n">pending</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">pending</span><span class="p">,</span> <span class="n">to_mono</span><span class="p">(</span><span class="n">data</span><span class="p">)])</span>
+                <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">pending</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">block</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">Channel</span><span class="o">.</span><span class="n">SYSTEM</span><span class="p">,</span> <span class="n">pending</span><span class="p">[:</span><span class="n">block</span><span class="p">]</span>
+                    <span class="n">pending</span> <span class="o">=</span> <span class="n">pending</span><span class="p">[</span><span class="n">block</span><span class="p">:]</span></div>
+</div>
+
 </pre></div>
         </article>
       </div>
@@ -541,7 +610,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=2a6a9ca9"></script>
+</div><script src="../../_static/documentation_options.js?v=0adb0642"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

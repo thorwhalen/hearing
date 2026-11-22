@@ -432,6 +432,7 @@
     <span class="n">engine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"whisper"</span><span class="p">,</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tap_app</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">block_ms</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
     <span class="n">realtime</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -445,12 +446,14 @@
 <span class="sd">        model: STT model override (omit for the engine's default).</span>
 <span class="sd">        device: audio device index/name for live capture (an Aggregate Device</span>
 <span class="sd">            with mic + BlackHole; see the hearing-audio-capture skill).</span>
+<span class="sd">        tap_app: capture what this app plays (e.g. 'zoom.us'), with no virtual</span>
+<span class="sd">            device (pcmtap; macOS 14.2+); use 'all' for the whole Mac.</span>
 <span class="sd">        block_ms: streaming block size in milliseconds.</span>
 <span class="sd">        realtime: when streaming a file, pace it in real time (else as-fast-as).</span>
 <span class="sd">    """</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 
-    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.capture</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeviceCapture</span><span class="p">,</span> <span class="n">StreamingFileCapture</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.capture</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeviceCapture</span><span class="p">,</span> <span class="n">ProcessTapCapture</span><span class="p">,</span> <span class="n">StreamingFileCapture</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">live_transcribe</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.stt</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_engine</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">_ms_to_clock</span>
@@ -458,6 +461,11 @@
     <span class="n">stt</span> <span class="o">=</span> <span class="n">get_engine</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">model_size</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">path</span><span class="p">:</span>
         <span class="n">source</span> <span class="o">=</span> <span class="n">StreamingFileCapture</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">block_ms</span><span class="o">=</span><span class="n">block_ms</span><span class="p">,</span> <span class="n">realtime</span><span class="o">=</span><span class="n">realtime</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">tap_app</span><span class="p">:</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">ProcessTapCapture</span><span class="p">(</span>
+            <span class="n">app</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">tap_app</span> <span class="o">==</span> <span class="s2">"all"</span> <span class="k">else</span> <span class="n">tap_app</span><span class="p">,</span> <span class="n">block_ms</span><span class="o">=</span><span class="n">block_ms</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Listening (Ctrl+C to stop)…"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">source</span> <span class="o">=</span> <span class="n">DeviceCapture</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">block_ms</span><span class="o">=</span><span class="n">block_ms</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">"Listening (Ctrl+C to stop)…"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
@@ -627,7 +635,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=2a6a9ca9"></script>
+</div><script src="../../_static/documentation_options.js?v=0adb0642"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

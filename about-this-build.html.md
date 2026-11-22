@@ -2,18 +2,18 @@
 
 # About this build
 
-This documentation was built on **2026-10-26 16:06 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/227c749fd2f87617ccec8ed586b7f7e448048efe"><code>227c749</code></a> on branch <code>main</code>, for **hearing 0.0.15** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-11-22 12:15 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/6636725e5dc4630c40f5e2a571f0504652bbe3cc"><code>6636725</code></a> on branch <code>main</code>, for **hearing 0.0.16** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.0.15) is behind the latest release on PyPI (0.0.16): `pip install hearing` gives newer code than these docs describe.
+- The documented version (0.0.16) is behind the latest release on PyPI (0.0.17): `pip install hearing` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                           |
 |---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/227c749fd2f87617ccec8ed586b7f7e448048efe"><code>227c749fd2f87617ccec8ed586b7f7e448048efe</code></a> |
+| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/6636725e5dc4630c40f5e2a571f0504652bbe3cc"><code>6636725e5dc4630c40f5e2a571f0504652bbe3cc</code></a> |
 | Branch              | <code>main</code>                                                                                                                                         |
 | Tags at this commit | none                                                                                                                                                      |
 | Working tree        | clean                                                                                                                                                     |
@@ -24,18 +24,18 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>thorwhalen/hearing</code>                                                            |
-| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/40355560472">40355560472</a>   |
+| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/45021232315">45021232315</a>   |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>227c749fd2f87617ccec8ed586b7f7e448048efe</code> (in the history of the built commit) |
+| Event commit | <code>6636725e5dc4630c40f5e2a571f0504652bbe3cc</code> (in the history of the built commit) |
 
 ## Tools
 
 |          |         |
 |----------|---------|
-| epythet  | 0.2.22  |
+| epythet  | 0.2.23  |
 | Sphinx   | 9.1.1   |
 | docutils | 0.22.4  |
-| Python   | 3.12.15 |
+| Python   | 3.12.16 |
 
 ## Configuration as resolved
 
@@ -51,14 +51,14 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/hearing/0.0.16/">0.0.16</a>, newer than the documented version (0.0.15).
+Latest release: <a href="https://pypi.org/project/hearing/0.0.17/">0.0.17</a>, newer than the documented version (0.0.16).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/thorwhalen/hearing && cd hearing
-git checkout 227c749fd2f87617ccec8ed586b7f7e448048efe
-pip install "epythet==0.2.22"
+git checkout 6636725e5dc4630c40f5e2a571f0504652bbe3cc
+pip install "epythet==0.2.23"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
 

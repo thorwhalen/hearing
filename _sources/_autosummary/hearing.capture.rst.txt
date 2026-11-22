@@ -16,5 +16,6 @@ hearing.capture
    
       ChannelSplitFileCapture
       DeviceCapture
+      ProcessTapCapture
       StreamingFileCapture
    

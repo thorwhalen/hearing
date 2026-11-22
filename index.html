@@ -366,7 +366,7 @@ the default) or <code class="docutils literal notranslate"><span class="pre">Emb
 <code class="docutils literal notranslate"><span class="pre">--retriever</span> <span class="pre">keyword|embedding</span></code>. Swap in any vector backend behind the same
 <code class="docutils literal notranslate"><span class="pre">Retriever</span></code> interface.</p>
 <section id="live-streaming-milestone-2-core-working">
-<h3>Live / streaming (milestone 2 — core working)<a class="headerlink" href="#live-streaming-milestone-2-core-working" title="Link to this heading">¶</a></h3>
+<span id="live--streaming-milestone-2--core-working"></span><h3>Live / streaming (milestone 2 — core working)<a class="headerlink" href="#live-streaming-milestone-2-core-working" title="Link to this heading">¶</a></h3>
 <p>The same pipeline runs as a low-latency loop: VAD finds utterance boundaries,
 each finalized utterance is transcribed and emitted as it completes, and the
 channel split still labels “me vs them” — the <code class="docutils literal notranslate"><span class="pre">STTEngine</span></code> and agent interfaces
@@ -393,6 +393,7 @@ are unchanged from batch.</p>
 <li><p>BlackHole) is implemented but needs that hardware to verify; streaming a file
 works anywhere.</p></li>
 </ul>
+<p>To capture what an app plays with <strong>no virtual device</strong>, use <code class="docutils literal notranslate"><span class="pre">ProcessTapCapture</span></code> (Core Audio process taps through <a class="reference external" href="https://github.com/thorwhalen/pcmtap">pcmtap</a>, macOS 14.2+; add the <code class="docutils literal notranslate"><span class="pre">tap</span></code> extra): <code class="docutils literal notranslate"><span class="pre">hearing</span> <span class="pre">live</span> <span class="pre">--tap-app</span> <span class="pre">zoom.us</span></code> (or <code class="docutils literal notranslate"><span class="pre">--tap-app</span> <span class="pre">all</span></code> for the whole Mac). It yields the <code class="docutils literal notranslate"><span class="pre">SYSTEM</span></code> (“them”) channel only; the permission is granted once with <code class="docutils literal notranslate"><span class="pre">pcmtap</span> <span class="pre">permission</span> <span class="pre">--request</span></code>. Tested against a fake tap; not yet run against a live call.</p>
 <p><strong>Command palette (⌘K).</strong> Press ⌘K (or click the button) for a command palette —
 export the transcript (markdown/SRT/JSON), focus search, clear. Each command is
 defined once (<code class="docutils literal notranslate"><span class="pre">frontend/src/commands.ts</span></code>, the acture pattern) and also projects to
@@ -462,7 +463,7 @@ with zodal/acture) — see <code class="docutils literal notranslate"><span clas
 <p>Full status in <a class="reference internal" href="#misc/docs/ROADMAP.md"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">misc/docs/ROADMAP.md</span></code></span></a>.</p>
 </section>
 <section id="web-ui-http-api-react-frontend">
-<h2>Web UI (HTTP API + React frontend)<a class="headerlink" href="#web-ui-http-api-react-frontend" title="Link to this heading">¶</a></h2>
+<span id="web-ui-http-api--react-frontend"></span><h2>Web UI (HTTP API + React frontend)<a class="headerlink" href="#web-ui-http-api-react-frontend" title="Link to this heading">¶</a></h2>
 <p>A FastAPI layer wraps the same facades, and a schema-driven React frontend
 (zodal + Zod) renders the diarized transcript (me/them lanes) and the AI notes.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">'hearing[http,whisper,agents]'</span>
@@ -479,7 +480,7 @@ TypeScript data shapes live in <code class="docutils literal notranslate"><span 
 Python backend and the UI share one contract. See the <code class="docutils literal notranslate"><span class="pre">hearing-frontend</span></code> skill.</p>
 </section>
 <section id="architecture-development">
-<h2>Architecture &amp; development<a class="headerlink" href="#architecture-development" title="Link to this heading">¶</a></h2>
+<span id="architecture--development"></span><h2>Architecture &amp; development<a class="headerlink" href="#architecture-development" title="Link to this heading">¶</a></h2>
 <p>This project is developed with a suite of agent <strong>skills</strong> under
 <code class="docutils literal notranslate"><span class="pre">.claude/skills/</span></code> — start with the <code class="docutils literal notranslate"><span class="pre">hearing</span></code> skill (the project-manager /
 orchestrator), which routes to the per-concern skills (<code class="docutils literal notranslate"><span class="pre">hearing-architecture</span></code>,
@@ -496,7 +497,7 @@ is grounded in are in <code class="docutils literal notranslate"><span class="pr
 </section>
 </section>
 
-<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-10-26 16:06 UTC from <a href="https://github.com/thorwhalen/hearing/commit/227c749fd2f87617ccec8ed586b7f7e448048efe">227c749</a> (main) · hearing 0.0.15 · <a href="about-this-build.html">about this build</a></p>
+<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-11-22 12:15 UTC from <a href="https://github.com/thorwhalen/hearing/commit/6636725e5dc4630c40f5e2a571f0504652bbe3cc">6636725</a> (main) · hearing 0.0.16 · <a href="about-this-build.html">about this build</a></p>
         </article>
       </div>
       <footer>
@@ -564,7 +565,7 @@ is grounded in are in <code class="docutils literal notranslate"><span class="pr
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=2a6a9ca9"></script>
+</div><script src="_static/documentation_options.js?v=0adb0642"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

@@ -1,39 +1,39 @@
 {
   "schema_version": 1,
-  "built_at": "2026-10-26T16:06:21Z",
+  "built_at": "2026-11-22T12:15:49Z",
   "package": {
     "name": "hearing",
-    "version": "0.0.15",
+    "version": "0.0.16",
     "display_name": "hearing",
     "source": "pyproject.toml"
   },
   "git": {
     "available": true,
-    "commit": "227c749fd2f87617ccec8ed586b7f7e448048efe",
-    "short_commit": "227c749",
+    "commit": "6636725e5dc4630c40f5e2a571f0504652bbe3cc",
+    "short_commit": "6636725",
     "branch": "main",
     "tags": [],
     "dirty": false,
     "remote_url": "https://github.com/thorwhalen/hearing",
-    "commit_url": "https://github.com/thorwhalen/hearing/commit/227c749fd2f87617ccec8ed586b7f7e448048efe",
+    "commit_url": "https://github.com/thorwhalen/hearing/commit/6636725e5dc4630c40f5e2a571f0504652bbe3cc",
     "error": null
   },
   "ci": {
     "provider": "github",
     "repository": "thorwhalen/hearing",
-    "sha": "227c749fd2f87617ccec8ed586b7f7e448048efe",
+    "sha": "6636725e5dc4630c40f5e2a571f0504652bbe3cc",
     "sha_in_history": true,
     "ref": "refs/heads/main",
     "ref_name": "main",
-    "run_id": "40355560472",
-    "run_url": "https://github.com/thorwhalen/hearing/actions/runs/40355560472",
+    "run_id": "45021232315",
+    "run_url": "https://github.com/thorwhalen/hearing/actions/runs/45021232315",
     "server_url": "https://github.com"
   },
   "tools": {
-    "epythet": "0.2.22",
+    "epythet": "0.2.23",
     "sphinx": "9.1.1",
     "docutils": "0.22.4",
-    "python": "3.12.15"
+    "python": "3.12.16"
   },
   "config": {
     "theme": "auto",
@@ -56,20 +56,20 @@
   },
   "site": {
     "modules_documented": 12,
-    "objects_documented": 139
+    "objects_documented": 141
   },
   "pypi": {
     "checked": true,
-    "latest": "0.0.16",
+    "latest": "0.0.17",
     "relation": "behind",
     "error": null
   },
-  "reproduce": "git clone https://github.com/thorwhalen/hearing && cd hearing\ngit checkout 227c749fd2f87617ccec8ed586b7f7e448048efe\npip install \"epythet==0.2.22\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
+  "reproduce": "git clone https://github.com/thorwhalen/hearing && cd hearing\ngit checkout 6636725e5dc4630c40f5e2a571f0504652bbe3cc\npip install \"epythet==0.2.23\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
   "warnings": [],
   "alignment": {
     "aligned": false,
     "notes": [
-      "The documented version (0.0.15) is behind the latest release on PyPI (0.0.16): `pip install hearing` gives newer code than these docs describe."
+      "The documented version (0.0.16) is behind the latest release on PyPI (0.0.17): `pip install hearing` gives newer code than these docs describe."
     ]
   }
 }

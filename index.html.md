@@ -110,6 +110,8 @@ Capturing from a live **device** (`DeviceCapture`, an Aggregate Device with mic
 + BlackHole) is implemented but needs that hardware to verify; streaming a file
   works anywhere.
 
+To capture what an app plays with **no virtual device**, use `ProcessTapCapture` (Core Audio process taps through [pcmtap](https://github.com/thorwhalen/pcmtap), macOS 14.2+; add the `tap` extra): `hearing live --tap-app zoom.us` (or `--tap-app all` for the whole Mac). It yields the `SYSTEM` (“them”) channel only; the permission is granted once with `pcmtap permission --request`. Tested against a fake tap; not yet run against a live call.
+
 **Command palette (⌘K).** Press ⌘K (or click the button) for a command palette —
 export the transcript (markdown/SRT/JSON), focus search, clear. Each command is
 defined once (`frontend/src/commands.ts`, the acture pattern) and also projects to

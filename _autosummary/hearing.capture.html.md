@@ -19,10 +19,11 @@ hearing owns only the multi-channel / “me vs them” concerns.
 
 ### Classes
 
-| [`ChannelSplitFileCapture`](#hearing.capture.ChannelSplitFileCapture)(path[, ...])        | A batch [`CaptureSource`](hearing.interfaces.html.md#hearing.interfaces.CaptureSource) over an audio file.   |
-|----------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
-| [`DeviceCapture`](#hearing.capture.DeviceCapture)([device, block_ms, ...])      | Live macOS capture from an audio *device* (the milestone-2 capture source).                                                   |
-| [`StreamingFileCapture`](#hearing.capture.StreamingFileCapture)(path[, block_ms, ...]) | A *streaming* [`CaptureSource`](hearing.interfaces.html.md#hearing.interfaces.CaptureSource) over a file.    |
+| [`ChannelSplitFileCapture`](#hearing.capture.ChannelSplitFileCapture)(path[, ...])              | A batch [`CaptureSource`](hearing.interfaces.html.md#hearing.interfaces.CaptureSource) over an audio file.   |
+|----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| [`DeviceCapture`](#hearing.capture.DeviceCapture)([device, block_ms, ...])            | Live macOS capture from an audio *device* (the milestone-2 capture source).                                                   |
+| [`ProcessTapCapture`](#hearing.capture.ProcessTapCapture)([app, pid, exclude, mute, ...]) | Live macOS capture of what *apps play*, with no virtual device (pcmtap).                                                      |
+| [`StreamingFileCapture`](#hearing.capture.StreamingFileCapture)(path[, block_ms, ...])       | A *streaming* [`CaptureSource`](hearing.interfaces.html.md#hearing.interfaces.CaptureSource) over a file.    |
 
 ### *class* hearing.capture.ChannelSplitFileCapture(path, mic_channels=(0,), system_channels=(1,))
 
@@ -91,6 +92,35 @@ Open the device and yield `(channel, block)` blocks until cancelled.
 #### *static* list_devices()
 
 Return available audio devices (helps pick the Aggregate Device).
+
+### *class* hearing.capture.ProcessTapCapture(app=None, pid=None, exclude=False, mute=False, block_ms=200, sample_rate=48000, tap_factory=None)
+
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+
+Live macOS capture of what *apps play*, with no virtual device (pcmtap).
+
+Uses Core Audio process taps (macOS 14.2+) through
+[pcmtap](https://github.com/thorwhalen/pcmtap): one app (`app="zoom.us"`, a
+browser, …) or, with no `app`, the whole Mac. Yields the audio as the
+`SYSTEM` channel (“them”); the app can be muted on
+the speakers while it is recorded (`mute=True`). It carries no microphone: use
+it where “them” is wanted alone, or alongside a mic source.
+
+Needs the `tap` extra (`hearing[tap]`, i.e. pcmtap) and the System Audio
+Recording permission (`pcmtap permission --request`). `sample_rate` is the
+tap’s own, known once capture starts (`astream` sets it).
+
+`tap_factory` is the seam: any callable taking `(app, pid=, exclude=, mute=)`
+and returning a context manager that iterates `bytes` chunks of interleaved
+float32 and has a `format` with `sample_rate` and `channels` (default
+`pcmtap.Tap`). Tests pass a fake.
+
+#### *async* astream()
+
+Open the tap and yield `(Channel.SYSTEM, mono block)` blocks until it ends or is cancelled.
+
+* **Return type:**
+  [`AsyncIterator`](https://docs.python.org/3/library/typing.html#typing.AsyncIterator)[[`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`Channel`](hearing.types.html.md#hearing.types.Channel), `ndarray`]]
 
 ### *class* hearing.capture.StreamingFileCapture(path, block_ms=200, realtime=False, mic_channels=(0,), system_channels=(1,))
 
