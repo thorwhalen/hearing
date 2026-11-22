@@ -168,6 +168,7 @@ def live(
     engine: str = "whisper",
     model: Optional[str] = None,
     device: Optional[str] = None,
+    tap_app: Optional[str] = None,
     block_ms: int = 200,
     realtime: bool = False,
 ) -> None:
@@ -181,12 +182,14 @@ def live(
         model: STT model override (omit for the engine's default).
         device: audio device index/name for live capture (an Aggregate Device
             with mic + BlackHole; see the hearing-audio-capture skill).
+        tap_app: capture what this app plays (e.g. 'zoom.us'), with no virtual
+            device (pcmtap; macOS 14.2+); use 'all' for the whole Mac.
         block_ms: streaming block size in milliseconds.
         realtime: when streaming a file, pace it in real time (else as-fast-as).
     """
     import asyncio
 
-    from hearing.capture import DeviceCapture, StreamingFileCapture
+    from hearing.capture import DeviceCapture, ProcessTapCapture, StreamingFileCapture
     from hearing.pipeline import live_transcribe
     from hearing.stt import get_engine
     from hearing.types import _ms_to_clock
@@ -194,6 +197,11 @@ def live(
     stt = get_engine(engine, model_size=model)
     if path:
         source = StreamingFileCapture(path, block_ms=block_ms, realtime=realtime)
+    elif tap_app:
+        source = ProcessTapCapture(
+            app=None if tap_app == "all" else tap_app, block_ms=block_ms
+        )
+        print("Listening (Ctrl+C to stop)…", file=sys.stderr)
     else:
         source = DeviceCapture(device=device, block_ms=block_ms)
         print("Listening (Ctrl+C to stop)…", file=sys.stderr)
