@@ -16,7 +16,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import AsyncIterator, Iterator, Optional, Sequence
+from typing import AsyncIterator, Callable, Iterator, Optional, Sequence
 
 import numpy as np
 
@@ -224,3 +224,66 @@ class DeviceCapture:
                 )
                 for channel, samples in chans.items():
                     yield channel, samples
+
+
+@dataclass
+class ProcessTapCapture:
+    """Live macOS capture of what *apps play*, with no virtual device (pcmtap).
+
+    Uses Core Audio process taps (macOS 14.2+) through
+    `pcmtap <https://github.com/thorwhalen/pcmtap>`_: one app (``app="zoom.us"``, a
+    browser, ...) or, with no ``app``, the whole Mac. Yields the audio as the
+    :attr:`~hearing.types.Channel.SYSTEM` channel ("them"); the app can be muted on
+    the speakers while it is recorded (``mute=True``). It carries no microphone: use
+    it where "them" is wanted alone, or alongside a mic source.
+
+    Needs the ``tap`` extra (``hearing[tap]``, i.e. pcmtap) and the System Audio
+    Recording permission (``pcmtap permission --request``). :attr:`sample_rate` is the
+    tap's own, known once capture starts (``astream`` sets it).
+
+    ``tap_factory`` is the seam: any callable taking ``(app, pid=, exclude=, mute=)``
+    and returning a context manager that iterates ``bytes`` chunks of interleaved
+    float32 and has a ``format`` with ``sample_rate`` and ``channels`` (default
+    :class:`pcmtap.Tap`). Tests pass a fake.
+    """
+
+    app: Optional[str | Sequence[str]] = None
+    pid: Optional[int | Sequence[int]] = None
+    exclude: bool = False
+    mute: bool = False
+    block_ms: int = 200
+    sample_rate: int = 48_000
+    tap_factory: Optional[Callable] = None
+
+    def _open_tap(self):
+        factory = self.tap_factory
+        if factory is None:
+            try:
+                from pcmtap import Tap as factory
+            except ImportError as e:
+                raise ImportError(
+                    "ProcessTapCapture needs pcmtap (macOS 14.2+): add the 'tap' extra "
+                    "of hearing (hearing[tap])."
+                ) from e
+        return factory(self.app, pid=self.pid, exclude=self.exclude, mute=self.mute)
+
+    async def astream(self) -> AsyncIterator[tuple[Channel, np.ndarray]]:
+        """Open the tap and yield ``(Channel.SYSTEM, mono block)`` blocks until it ends or is cancelled."""
+        loop = asyncio.get_running_loop()
+        with self._open_tap() as tap:
+            fmt = tap.format
+            self.sample_rate = int(fmt.sample_rate)
+            block = max(1, int(self.block_ms / 1000 * self.sample_rate))
+            chunks = iter(tap)
+            pending = np.zeros(0, dtype=np.float32)
+            while True:
+                raw = await loop.run_in_executor(None, next, chunks, None)
+                if raw is None:  # the tap ended: flush the partial block
+                    if pending.size:
+                        yield Channel.SYSTEM, pending
+                    return
+                data = np.frombuffer(raw, dtype="<f4").reshape(-1, int(fmt.channels))
+                pending = np.concatenate([pending, to_mono(data)])
+                while len(pending) >= block:
+                    yield Channel.SYSTEM, pending[:block]
+                    pending = pending[block:]

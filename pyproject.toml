@@ -95,6 +95,10 @@ diarize = [
 capture = [
     "sounddevice>=0.4",
 ]
+# Live capture of what apps play, with no virtual device (macOS 14.2+ Core Audio taps).
+tap = [
+    "pcmtap>=0.0.2; sys_platform == 'darwin'",
+]
 # Neural VAD for the live pipeline (the dependency-free EnergyVAD is the default).
 vad = [
     "silero-vad>=5.0",
