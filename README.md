@@ -2,8 +2,7 @@
 
 Pluggable meeting transcription & context-connected AI agents — batch today, live next.
 
-`hearing` captures, transcribes, and reasons over meeting audio as four small,
-**swappable** concerns wired by composition, not baked together:
+`hearing` captures, transcribes, and reasons over meeting audio as four small, **swappable** concerns wired by composition, not baked together:
 
 ```
 capture ──audio──▶ STT ──segments──▶ diarization ──labeled──▶ agents
@@ -13,6 +12,7 @@ capture ──audio──▶ STT ──segments──▶ diarization ──label
 
 The one-liner just works; everything else is an optional keyword argument.
 
+<!-- wads-docs: skip needs a meeting.wav recording -->
 ```python
 from hearing import transcribe
 
@@ -47,11 +47,7 @@ The live path (`hearing live`, `stream_transcribe`) works with every engine: eng
 
 ## What works today (the batch milestone)
 
-Give it a recording and get back a **speaker-labelled transcript** plus optional
-**AI meeting notes**. If the file has the mic on one channel and the system audio
-(everyone else) on another, you get "me vs them" labelling *for free* — no
-diarization model, no voice enrollment — because the channel itself tells you
-who is local.
+Give it a recording and get back a **speaker-labelled transcript** plus optional **AI meeting notes**. If the file has the mic on one channel and the system audio (everyone else) on another, you get "me vs them" labelling *for free* — no diarization model, no voice enrollment — because the channel itself tells you who is local.
 
 ```bash
 hearing transcribe meeting.wav                      # diarized transcript to stdout
@@ -69,22 +65,13 @@ hearing meetings   ./meetings                       # list saved transcripts (--
 hearing info                                        # what's installed / available
 ```
 
-**Context-connected agents.** Point `--context-dir` at a folder of `.md`/`.txt`
-notes (prior meetings' takeaways, project docs); the agent does RAG over them and
-brings in facts that aren't in the transcript (who owns what, prior decisions,
-budgets, deadlines). The retriever and a web-search hook are pluggable
-Protocols (`hearing/context.py`): `KeywordRetriever` (TF-IDF, dependency-free,
-the default) or `EmbeddingRetriever` (OpenAI semantic recall) — choose with
-`--retriever keyword|embedding`. Swap in any vector backend behind the same
-`Retriever` interface.
+**Context-connected agents.** Point `--context-dir` at a folder of `.md`/`.txt` notes (prior meetings' takeaways, project docs); the agent does RAG over them and brings in facts that aren't in the transcript (who owns what, prior decisions, budgets, deadlines). The retriever and a web-search hook are pluggable Protocols (`hearing/context.py`): `KeywordRetriever` (TF-IDF, dependency-free, the default) or `EmbeddingRetriever` (OpenAI semantic recall) — choose with `--retriever keyword|embedding`. Swap in any vector backend behind the same `Retriever` interface.
 
 ### Live / streaming (milestone 2 — core working)
 
-The same pipeline runs as a low-latency loop: VAD finds utterance boundaries,
-each finalized utterance is transcribed and emitted as it completes, and the
-channel split still labels "me vs them" — the `STTEngine` and agent interfaces
-are unchanged from batch.
+The same pipeline runs as a low-latency loop: VAD finds utterance boundaries, each finalized utterance is transcribed and emitted as it completes, and the channel split still labels "me vs them" — the `STTEngine` and agent interfaces are unchanged from batch.
 
+<!-- wads-docs: skip needs a meeting.wav recording -->
 ```python
 import asyncio
 from hearing import live_transcribe
@@ -104,19 +91,13 @@ asyncio.run(main())
 ```
 
 Capturing from a live **device** (`DeviceCapture`, an Aggregate Device with mic
-+ BlackHole) is implemented but needs that hardware to verify; streaming a file
-works anywhere.
++ BlackHole) is implemented but needs that hardware to verify; streaming a file works anywhere.
 
 To capture what an app plays with **no virtual device**, use `ProcessTapCapture` (Core Audio process taps through [pcmtap](https://github.com/thorwhalen/pcmtap), macOS 14.2+; add the `tap` extra): `hearing live --tap-app zoom.us` (or `--tap-app all` for the whole Mac). It yields the `SYSTEM` ("them") channel only; the permission is granted once with `pcmtap permission --request`. Tested against a fake tap; not yet run against a live call.
 
-**Command palette (⌘K).** Press ⌘K (or click the button) for a command palette —
-export the transcript (markdown/SRT/JSON), focus search, clear. Each command is
-defined once (`frontend/src/commands.ts`, the acture pattern) and also projects to
-an AI/MCP tool schema via `toAITools()`, so the same definition can drive the
-palette and an AI assistant. Run the frontend's unit tests with `npm test`.
+**Command palette (⌘K).** Press ⌘K (or click the button) for a command palette — export the transcript (markdown/SRT/JSON), focus search, clear. Each command is defined once (`frontend/src/commands.ts`, the acture pattern) and also projects to an AI/MCP tool schema via `toAITools()`, so the same definition can drive the palette and an AI assistant. Run the frontend's unit tests with `npm test`.
 
-Example transcript + Claude summary (from `examples/demo_meeting.py`, which
-synthesizes a two-speaker meeting with macOS `say` — no mic needed):
+Example transcript + Claude summary (from `examples/demo_meeting.py`, which synthesizes a two-speaker meeting with macOS `say` — no mic needed):
 
 ```
 [00:00:00] me:   Hi everyone, thanks for joining the planning sync. I'll own the
@@ -136,6 +117,7 @@ synthesizes a two-speaker meeting with macOS `say` — no mic needed):
 
 Every concern is a `typing.Protocol`; swap one by changing a single argument.
 
+<!-- wads-docs: skip needs a meeting.wav recording -->
 ```python
 from hearing import transcribe
 from hearing.stt import FasterWhisperSTT
@@ -152,37 +134,23 @@ transcribe(
 )
 ```
 
-The shared data spine is `hearing.types.TranscriptSegment` — a frozen, standoff
-interval annotation (time is **integer milliseconds**, never float). See
-`hearing/interfaces.py` for the four facade Protocols (`CaptureSource`,
-`STTEngine`, `Diarizer`, `AgentConsumer`).
+The shared data spine is `hearing.types.TranscriptSegment` — a frozen, standoff interval annotation (time is **integer milliseconds**, never float). See `hearing/interfaces.py` for the four facade Protocols (`CaptureSource`, `STTEngine`, `Diarizer`, `AgentConsumer`).
 
 ## Capturing the audio (macOS)
 
-`hearing` reads multi-channel audio files and splits the channels. To get a
-recording with mic on one channel and system audio (the other participants) on
-another, use **BlackHole + an Aggregate Device** or **Core Audio taps** — the
-mechanics, the channel layout, and the iOS limits are documented in the
-`hearing-audio-capture` agent skill (`.claude/skills/hearing-audio-capture/`).
-Live device capture is the next milestone; today you bring a recording.
+`hearing` reads multi-channel audio files and splits the channels. To get a recording with mic on one channel and system audio (the other participants) on another, use **BlackHole + an Aggregate Device** or **Core Audio taps** — the mechanics, the channel layout, and the iOS limits are documented in the `hearing-audio-capture` agent skill (`.claude/skills/hearing-audio-capture/`). Live device capture is the next milestone; today you bring a recording.
 
 ## Not yet (designed, on the roadmap)
 
-- **Native streaming engines** (Deepgram websocket, OpenAI Realtime,
-  WhisperLive) behind the same `STTEngine` facade — today every engine streams
-  through VAD-segmented batch calls — and **semantic turn detection** — see
-  `hearing-live-pipeline`.
-- **Live device capture verified on hardware** (`DeviceCapture` is written; needs
-  a BlackHole + Aggregate Device) — see `hearing-audio-capture`.
-- **TypeScript frontend** (schema-driven transcript viewer + copilot overlay
-  with zodal/acture) — see `hearing-frontend`.
+- **Native streaming engines** (Deepgram websocket, OpenAI Realtime, WhisperLive) behind the same `STTEngine` facade — today every engine streams through VAD-segmented batch calls — and **semantic turn detection** — see `hearing-live-pipeline`.
+- **Live device capture verified on hardware** (`DeviceCapture` is written; needs a BlackHole + Aggregate Device) — see `hearing-audio-capture`.
+- **TypeScript frontend** (schema-driven transcript viewer + copilot overlay with zodal/acture) — see `hearing-frontend`.
 
 Full status in [`misc/docs/ROADMAP.md`](misc/docs/ROADMAP.md).
 
 ## Web UI (HTTP API + React frontend)
 
-A FastAPI layer wraps the same facades, and a schema-driven React frontend
-(zodal + Zod) renders the diarized transcript (me/them lanes) and the AI notes.
+A FastAPI layer wraps the same facades, and a schema-driven React frontend (zodal + Zod) renders the diarized transcript (me/them lanes) and the AI notes.
 
 ```bash
 pip install 'hearing[http,whisper,agents]'
@@ -191,21 +159,11 @@ hearing serve                      # API on http://127.0.0.1:8000 (docs at /docs
 cd frontend && npm install && npm run dev   # UI on http://localhost:5173 (proxies /api)
 ```
 
-Then drop an audio file on the page → diarized transcript + AI meeting notes.
-Tick **Live stream** to watch finalized segments append in real time as the live
-pipeline produces them (`POST /api/transcribe/stream`, NDJSON). The
-TypeScript data shapes live in `frontend/src/schema.ts` as zodal collections
-(one Zod schema per surface) and double as the API response validator, so the
-Python backend and the UI share one contract. See the `hearing-frontend` skill.
+Then drop an audio file on the page → diarized transcript + AI meeting notes. Tick **Live stream** to watch finalized segments append in real time as the live pipeline produces them (`POST /api/transcribe/stream`, NDJSON). The TypeScript data shapes live in `frontend/src/schema.ts` as zodal collections (one Zod schema per surface) and double as the API response validator, so the Python backend and the UI share one contract. See the `hearing-frontend` skill.
 
 ## Architecture & development
 
-This project is developed with a suite of agent **skills** under
-`.claude/skills/` — start with the `hearing` skill (the project-manager /
-orchestrator), which routes to the per-concern skills (`hearing-architecture`,
-`hearing-audio-capture`, `hearing-stt`, `hearing-diarization`, `hearing-agents`,
-`hearing-live-pipeline`, `hearing-frontend`). The two research reports the design
-is grounded in are in `misc/docs/`.
+This project is developed with a suite of agent **skills** under `.claude/skills/` — start with the `hearing` skill (the project-manager / orchestrator), which routes to the per-concern skills (`hearing-architecture`, `hearing-audio-capture`, `hearing-stt`, `hearing-diarization`, `hearing-agents`, `hearing-live-pipeline`, `hearing-frontend`). The two research reports the design is grounded in are in `misc/docs/`.
 
 ## License
 
