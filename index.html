@@ -263,14 +263,14 @@
 <section id="hearing">
 <h1>hearing<a class="headerlink" href="#hearing" title="Link to this heading">¶</a></h1>
 <p>Pluggable meeting transcription &amp; context-connected AI agents — batch today, live next.</p>
-<p><code class="docutils literal notranslate"><span class="pre">hearing</span></code> captures, transcribes, and reasons over meeting audio as four small,
-<strong>swappable</strong> concerns wired by composition, not baked together:</p>
+<p><code class="docutils literal notranslate"><span class="pre">hearing</span></code> captures, transcribes, and reasons over meeting audio as four small, <strong>swappable</strong> concerns wired by composition, not baked together:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>capture ──audio──▶ STT ──segments──▶ diarization ──labeled──▶ agents
 (mic + system,     (local or          (who spoke              (summaries, actions,
  separate channels) cloud, pluggable)  when / "me vs them")     live notes, research)
 </pre></div>
 </div>
 <p>The one-liner just works; everything else is an optional keyword argument.</p>
+<!-- wads-docs: skip needs a meeting.wav recording -->
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">hearing</span><span class="w"> </span><span class="kn">import</span> <span class="n">transcribe</span>
 
 <span class="n">transcript</span> <span class="o">=</span> <span class="n">transcribe</span><span class="p">(</span><span class="s2">"meeting.wav"</span><span class="p">)</span>  <span class="c1"># -&gt; Transcript (list of segments)</span>
@@ -337,11 +337,7 @@ pip<span class="w"> </span>install<span class="w"> </span><span class="s1">'hear
 </section>
 <section id="what-works-today-the-batch-milestone">
 <h2>What works today (the batch milestone)<a class="headerlink" href="#what-works-today-the-batch-milestone" title="Link to this heading">¶</a></h2>
-<p>Give it a recording and get back a <strong>speaker-labelled transcript</strong> plus optional
-<strong>AI meeting notes</strong>. If the file has the mic on one channel and the system audio
-(everyone else) on another, you get “me vs them” labelling <em>for free</em> — no
-diarization model, no voice enrollment — because the channel itself tells you
-who is local.</p>
+<p>Give it a recording and get back a <strong>speaker-labelled transcript</strong> plus optional <strong>AI meeting notes</strong>. If the file has the mic on one channel and the system audio (everyone else) on another, you get “me vs them” labelling <em>for free</em> — no diarization model, no voice enrollment — because the channel itself tells you who is local.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>hearing<span class="w"> </span>transcribe<span class="w"> </span>meeting.wav<span class="w">                      </span><span class="c1"># diarized transcript to stdout</span>
 hearing<span class="w"> </span>transcribe<span class="w"> </span>meeting.wav<span class="w"> </span>--model<span class="w"> </span>small<span class="w"> </span>--out<span class="w"> </span>notes.json
 hearing<span class="w"> </span>transcribe<span class="w"> </span>meeting.wav<span class="w"> </span>--engine<span class="w"> </span>openai<span class="w">      </span><span class="c1"># cloud STT (OpenAI); needs OPENAI_API_KEY + hearing[openai]</span>
@@ -357,20 +353,11 @@ hearing<span class="w"> </span>meetings<span class="w">   </span>./meetings<span
 hearing<span class="w"> </span>info<span class="w">                                        </span><span class="c1"># what's installed / available</span>
 </pre></div>
 </div>
-<p><strong>Context-connected agents.</strong> Point <code class="docutils literal notranslate"><span class="pre">--context-dir</span></code> at a folder of <code class="docutils literal notranslate"><span class="pre">.md</span></code>/<code class="docutils literal notranslate"><span class="pre">.txt</span></code>
-notes (prior meetings’ takeaways, project docs); the agent does RAG over them and
-brings in facts that aren’t in the transcript (who owns what, prior decisions,
-budgets, deadlines). The retriever and a web-search hook are pluggable
-Protocols (<code class="docutils literal notranslate"><span class="pre">hearing/context.py</span></code>): <code class="docutils literal notranslate"><span class="pre">KeywordRetriever</span></code> (TF-IDF, dependency-free,
-the default) or <code class="docutils literal notranslate"><span class="pre">EmbeddingRetriever</span></code> (OpenAI semantic recall) — choose with
-<code class="docutils literal notranslate"><span class="pre">--retriever</span> <span class="pre">keyword|embedding</span></code>. Swap in any vector backend behind the same
-<code class="docutils literal notranslate"><span class="pre">Retriever</span></code> interface.</p>
+<p><strong>Context-connected agents.</strong> Point <code class="docutils literal notranslate"><span class="pre">--context-dir</span></code> at a folder of <code class="docutils literal notranslate"><span class="pre">.md</span></code>/<code class="docutils literal notranslate"><span class="pre">.txt</span></code> notes (prior meetings’ takeaways, project docs); the agent does RAG over them and brings in facts that aren’t in the transcript (who owns what, prior decisions, budgets, deadlines). The retriever and a web-search hook are pluggable Protocols (<code class="docutils literal notranslate"><span class="pre">hearing/context.py</span></code>): <code class="docutils literal notranslate"><span class="pre">KeywordRetriever</span></code> (TF-IDF, dependency-free, the default) or <code class="docutils literal notranslate"><span class="pre">EmbeddingRetriever</span></code> (OpenAI semantic recall) — choose with <code class="docutils literal notranslate"><span class="pre">--retriever</span> <span class="pre">keyword|embedding</span></code>. Swap in any vector backend behind the same <code class="docutils literal notranslate"><span class="pre">Retriever</span></code> interface.</p>
 <section id="live-streaming-milestone-2-core-working">
 <span id="live--streaming-milestone-2--core-working"></span><h3>Live / streaming (milestone 2 — core working)<a class="headerlink" href="#live-streaming-milestone-2-core-working" title="Link to this heading">¶</a></h3>
-<p>The same pipeline runs as a low-latency loop: VAD finds utterance boundaries,
-each finalized utterance is transcribed and emitted as it completes, and the
-channel split still labels “me vs them” — the <code class="docutils literal notranslate"><span class="pre">STTEngine</span></code> and agent interfaces
-are unchanged from batch.</p>
+<p>The same pipeline runs as a low-latency loop: VAD finds utterance boundaries, each finalized utterance is transcribed and emitted as it completes, and the channel split still labels “me vs them” — the <code class="docutils literal notranslate"><span class="pre">STTEngine</span></code> and agent interfaces are unchanged from batch.</p>
+<!-- wads-docs: skip needs a meeting.wav recording -->
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hearing</span><span class="w"> </span><span class="kn">import</span> <span class="n">live_transcribe</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.capture</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -390,17 +377,11 @@ are unchanged from batch.</p>
 </div>
 <p>Capturing from a live <strong>device</strong> (<code class="docutils literal notranslate"><span class="pre">DeviceCapture</span></code>, an Aggregate Device with mic</p>
 <ul class="simple">
-<li><p>BlackHole) is implemented but needs that hardware to verify; streaming a file
-works anywhere.</p></li>
+<li><p>BlackHole) is implemented but needs that hardware to verify; streaming a file works anywhere.</p></li>
 </ul>
 <p>To capture what an app plays with <strong>no virtual device</strong>, use <code class="docutils literal notranslate"><span class="pre">ProcessTapCapture</span></code> (Core Audio process taps through <a class="reference external" href="https://github.com/thorwhalen/pcmtap">pcmtap</a>, macOS 14.2+; add the <code class="docutils literal notranslate"><span class="pre">tap</span></code> extra): <code class="docutils literal notranslate"><span class="pre">hearing</span> <span class="pre">live</span> <span class="pre">--tap-app</span> <span class="pre">zoom.us</span></code> (or <code class="docutils literal notranslate"><span class="pre">--tap-app</span> <span class="pre">all</span></code> for the whole Mac). It yields the <code class="docutils literal notranslate"><span class="pre">SYSTEM</span></code> (“them”) channel only; the permission is granted once with <code class="docutils literal notranslate"><span class="pre">pcmtap</span> <span class="pre">permission</span> <span class="pre">--request</span></code>. Tested against a fake tap; not yet run against a live call.</p>
-<p><strong>Command palette (⌘K).</strong> Press ⌘K (or click the button) for a command palette —
-export the transcript (markdown/SRT/JSON), focus search, clear. Each command is
-defined once (<code class="docutils literal notranslate"><span class="pre">frontend/src/commands.ts</span></code>, the acture pattern) and also projects to
-an AI/MCP tool schema via <code class="docutils literal notranslate"><span class="pre">toAITools()</span></code>, so the same definition can drive the
-palette and an AI assistant. Run the frontend’s unit tests with <code class="docutils literal notranslate"><span class="pre">npm</span> <span class="pre">test</span></code>.</p>
-<p>Example transcript + Claude summary (from <code class="docutils literal notranslate"><span class="pre">examples/demo_meeting.py</span></code>, which
-synthesizes a two-speaker meeting with macOS <code class="docutils literal notranslate"><span class="pre">say</span></code> — no mic needed):</p>
+<p><strong>Command palette (⌘K).</strong> Press ⌘K (or click the button) for a command palette — export the transcript (markdown/SRT/JSON), focus search, clear. Each command is defined once (<code class="docutils literal notranslate"><span class="pre">frontend/src/commands.ts</span></code>, the acture pattern) and also projects to an AI/MCP tool schema via <code class="docutils literal notranslate"><span class="pre">toAITools()</span></code>, so the same definition can drive the palette and an AI assistant. Run the frontend’s unit tests with <code class="docutils literal notranslate"><span class="pre">npm</span> <span class="pre">test</span></code>.</p>
+<p>Example transcript + Claude summary (from <code class="docutils literal notranslate"><span class="pre">examples/demo_meeting.py</span></code>, which synthesizes a two-speaker meeting with macOS <code class="docutils literal notranslate"><span class="pre">say</span></code> — no mic needed):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">]</span> <span class="n">me</span><span class="p">:</span>   <span class="n">Hi</span> <span class="n">everyone</span><span class="p">,</span> <span class="n">thanks</span> <span class="k">for</span> <span class="n">joining</span> <span class="n">the</span> <span class="n">planning</span> <span class="n">sync</span><span class="o">.</span> <span class="n">I</span><span class="s1">'ll own the</span>
                  <span class="n">API</span> <span class="n">design</span> <span class="ow">and</span> <span class="n">send</span> <span class="n">a</span> <span class="n">draft</span> <span class="n">by</span> <span class="n">Friday</span><span class="o">.</span> <span class="n">What</span> <span class="ow">is</span> <span class="n">our</span> <span class="n">deadline</span><span class="o">...</span>
 <span class="p">[</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">08</span><span class="p">]</span> <span class="n">them</span><span class="p">:</span> <span class="n">Thanks</span><span class="o">.</span> <span class="n">The</span> <span class="n">launch</span> <span class="n">deadline</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">end</span> <span class="n">of</span> <span class="n">the</span> <span class="n">month</span><span class="o">.</span> <span class="n">Let</span><span class="s1">'s</span>
@@ -418,6 +399,7 @@ synthesizes a two-speaker meeting with macOS <code class="docutils literal notra
 <section id="composition-dependency-injection">
 <h3>Composition (dependency injection)<a class="headerlink" href="#composition-dependency-injection" title="Link to this heading">¶</a></h3>
 <p>Every concern is a <code class="docutils literal notranslate"><span class="pre">typing.Protocol</span></code>; swap one by changing a single argument.</p>
+<!-- wads-docs: skip needs a meeting.wav recording -->
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">hearing</span><span class="w"> </span><span class="kn">import</span> <span class="n">transcribe</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.stt</span><span class="w"> </span><span class="kn">import</span> <span class="n">FasterWhisperSTT</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hearing.diarize</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChannelTrickDiarizer</span><span class="p">,</span> <span class="n">PyannoteDiarizer</span>
@@ -433,60 +415,36 @@ synthesizes a two-speaker meeting with macOS <code class="docutils literal notra
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>The shared data spine is <code class="docutils literal notranslate"><span class="pre">hearing.types.TranscriptSegment</span></code> — a frozen, standoff
-interval annotation (time is <strong>integer milliseconds</strong>, never float). See
-<code class="docutils literal notranslate"><span class="pre">hearing/interfaces.py</span></code> for the four facade Protocols (<code class="docutils literal notranslate"><span class="pre">CaptureSource</span></code>,
-<code class="docutils literal notranslate"><span class="pre">STTEngine</span></code>, <code class="docutils literal notranslate"><span class="pre">Diarizer</span></code>, <code class="docutils literal notranslate"><span class="pre">AgentConsumer</span></code>).</p>
+<p>The shared data spine is <code class="docutils literal notranslate"><span class="pre">hearing.types.TranscriptSegment</span></code> — a frozen, standoff interval annotation (time is <strong>integer milliseconds</strong>, never float). See <code class="docutils literal notranslate"><span class="pre">hearing/interfaces.py</span></code> for the four facade Protocols (<code class="docutils literal notranslate"><span class="pre">CaptureSource</span></code>, <code class="docutils literal notranslate"><span class="pre">STTEngine</span></code>, <code class="docutils literal notranslate"><span class="pre">Diarizer</span></code>, <code class="docutils literal notranslate"><span class="pre">AgentConsumer</span></code>).</p>
 </section>
 </section>
 <section id="capturing-the-audio-macos">
 <h2>Capturing the audio (macOS)<a class="headerlink" href="#capturing-the-audio-macos" title="Link to this heading">¶</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">hearing</span></code> reads multi-channel audio files and splits the channels. To get a
-recording with mic on one channel and system audio (the other participants) on
-another, use <strong>BlackHole + an Aggregate Device</strong> or <strong>Core Audio taps</strong> — the
-mechanics, the channel layout, and the iOS limits are documented in the
-<code class="docutils literal notranslate"><span class="pre">hearing-audio-capture</span></code> agent skill (<code class="docutils literal notranslate"><span class="pre">.claude/skills/hearing-audio-capture/</span></code>).
-Live device capture is the next milestone; today you bring a recording.</p>
+<p><code class="docutils literal notranslate"><span class="pre">hearing</span></code> reads multi-channel audio files and splits the channels. To get a recording with mic on one channel and system audio (the other participants) on another, use <strong>BlackHole + an Aggregate Device</strong> or <strong>Core Audio taps</strong> — the mechanics, the channel layout, and the iOS limits are documented in the <code class="docutils literal notranslate"><span class="pre">hearing-audio-capture</span></code> agent skill (<code class="docutils literal notranslate"><span class="pre">.claude/skills/hearing-audio-capture/</span></code>). Live device capture is the next milestone; today you bring a recording.</p>
 </section>
 <section id="not-yet-designed-on-the-roadmap">
 <h2>Not yet (designed, on the roadmap)<a class="headerlink" href="#not-yet-designed-on-the-roadmap" title="Link to this heading">¶</a></h2>
 <ul class="simple">
-<li><p><strong>Native streaming engines</strong> (Deepgram websocket, OpenAI Realtime,
-WhisperLive) behind the same <code class="docutils literal notranslate"><span class="pre">STTEngine</span></code> facade — today every engine streams
-through VAD-segmented batch calls — and <strong>semantic turn detection</strong> — see
-<code class="docutils literal notranslate"><span class="pre">hearing-live-pipeline</span></code>.</p></li>
-<li><p><strong>Live device capture verified on hardware</strong> (<code class="docutils literal notranslate"><span class="pre">DeviceCapture</span></code> is written; needs
-a BlackHole + Aggregate Device) — see <code class="docutils literal notranslate"><span class="pre">hearing-audio-capture</span></code>.</p></li>
-<li><p><strong>TypeScript frontend</strong> (schema-driven transcript viewer + copilot overlay
-with zodal/acture) — see <code class="docutils literal notranslate"><span class="pre">hearing-frontend</span></code>.</p></li>
+<li><p><strong>Native streaming engines</strong> (Deepgram websocket, OpenAI Realtime, WhisperLive) behind the same <code class="docutils literal notranslate"><span class="pre">STTEngine</span></code> facade — today every engine streams through VAD-segmented batch calls — and <strong>semantic turn detection</strong> — see <code class="docutils literal notranslate"><span class="pre">hearing-live-pipeline</span></code>.</p></li>
+<li><p><strong>Live device capture verified on hardware</strong> (<code class="docutils literal notranslate"><span class="pre">DeviceCapture</span></code> is written; needs a BlackHole + Aggregate Device) — see <code class="docutils literal notranslate"><span class="pre">hearing-audio-capture</span></code>.</p></li>
+<li><p><strong>TypeScript frontend</strong> (schema-driven transcript viewer + copilot overlay with zodal/acture) — see <code class="docutils literal notranslate"><span class="pre">hearing-frontend</span></code>.</p></li>
 </ul>
 <p>Full status in <a class="reference internal" href="#misc/docs/ROADMAP.md"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">misc/docs/ROADMAP.md</span></code></span></a>.</p>
 </section>
 <section id="web-ui-http-api-react-frontend">
 <span id="web-ui-http-api--react-frontend"></span><h2>Web UI (HTTP API + React frontend)<a class="headerlink" href="#web-ui-http-api-react-frontend" title="Link to this heading">¶</a></h2>
-<p>A FastAPI layer wraps the same facades, and a schema-driven React frontend
-(zodal + Zod) renders the diarized transcript (me/them lanes) and the AI notes.</p>
+<p>A FastAPI layer wraps the same facades, and a schema-driven React frontend (zodal + Zod) renders the diarized transcript (me/them lanes) and the AI notes.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">'hearing[http,whisper,agents]'</span>
 hearing<span class="w"> </span>serve<span class="w">                      </span><span class="c1"># API on http://127.0.0.1:8000 (docs at /docs)</span>
 
 <span class="nb">cd</span><span class="w"> </span>frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>install<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>run<span class="w"> </span>dev<span class="w">   </span><span class="c1"># UI on http://localhost:5173 (proxies /api)</span>
 </pre></div>
 </div>
-<p>Then drop an audio file on the page → diarized transcript + AI meeting notes.
-Tick <strong>Live stream</strong> to watch finalized segments append in real time as the live
-pipeline produces them (<code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/api/transcribe/stream</span></code>, NDJSON). The
-TypeScript data shapes live in <code class="docutils literal notranslate"><span class="pre">frontend/src/schema.ts</span></code> as zodal collections
-(one Zod schema per surface) and double as the API response validator, so the
-Python backend and the UI share one contract. See the <code class="docutils literal notranslate"><span class="pre">hearing-frontend</span></code> skill.</p>
+<p>Then drop an audio file on the page → diarized transcript + AI meeting notes. Tick <strong>Live stream</strong> to watch finalized segments append in real time as the live pipeline produces them (<code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/api/transcribe/stream</span></code>, NDJSON). The TypeScript data shapes live in <code class="docutils literal notranslate"><span class="pre">frontend/src/schema.ts</span></code> as zodal collections (one Zod schema per surface) and double as the API response validator, so the Python backend and the UI share one contract. See the <code class="docutils literal notranslate"><span class="pre">hearing-frontend</span></code> skill.</p>
 </section>
 <section id="architecture-development">
 <span id="architecture--development"></span><h2>Architecture &amp; development<a class="headerlink" href="#architecture-development" title="Link to this heading">¶</a></h2>
-<p>This project is developed with a suite of agent <strong>skills</strong> under
-<code class="docutils literal notranslate"><span class="pre">.claude/skills/</span></code> — start with the <code class="docutils literal notranslate"><span class="pre">hearing</span></code> skill (the project-manager /
-orchestrator), which routes to the per-concern skills (<code class="docutils literal notranslate"><span class="pre">hearing-architecture</span></code>,
-<code class="docutils literal notranslate"><span class="pre">hearing-audio-capture</span></code>, <code class="docutils literal notranslate"><span class="pre">hearing-stt</span></code>, <code class="docutils literal notranslate"><span class="pre">hearing-diarization</span></code>, <code class="docutils literal notranslate"><span class="pre">hearing-agents</span></code>,
-<code class="docutils literal notranslate"><span class="pre">hearing-live-pipeline</span></code>, <code class="docutils literal notranslate"><span class="pre">hearing-frontend</span></code>). The two research reports the design
-is grounded in are in <code class="docutils literal notranslate"><span class="pre">misc/docs/</span></code>.</p>
+<p>This project is developed with a suite of agent <strong>skills</strong> under <code class="docutils literal notranslate"><span class="pre">.claude/skills/</span></code> — start with the <code class="docutils literal notranslate"><span class="pre">hearing</span></code> skill (the project-manager / orchestrator), which routes to the per-concern skills (<code class="docutils literal notranslate"><span class="pre">hearing-architecture</span></code>, <code class="docutils literal notranslate"><span class="pre">hearing-audio-capture</span></code>, <code class="docutils literal notranslate"><span class="pre">hearing-stt</span></code>, <code class="docutils literal notranslate"><span class="pre">hearing-diarization</span></code>, <code class="docutils literal notranslate"><span class="pre">hearing-agents</span></code>, <code class="docutils literal notranslate"><span class="pre">hearing-live-pipeline</span></code>, <code class="docutils literal notranslate"><span class="pre">hearing-frontend</span></code>). The two research reports the design is grounded in are in <code class="docutils literal notranslate"><span class="pre">misc/docs/</span></code>.</p>
 </section>
 <section id="license">
 <h2>License<a class="headerlink" href="#license" title="Link to this heading">¶</a></h2>
@@ -497,7 +455,7 @@ is grounded in are in <code class="docutils literal notranslate"><span class="pr
 </section>
 </section>
 
-<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-11-22 12:15 UTC from <a href="https://github.com/thorwhalen/hearing/commit/6636725e5dc4630c40f5e2a571f0504652bbe3cc">6636725</a> (main) · hearing 0.0.16 · <a href="about-this-build.html">about this build</a></p>
+<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-11-23 07:46 UTC from <a href="https://github.com/thorwhalen/hearing/commit/05904fbda47c4e4d84e4a0e7671f512917910798">05904fb</a> (main) · hearing 0.0.17 · <a href="about-this-build.html">about this build</a></p>
         </article>
       </div>
       <footer>
@@ -565,7 +523,7 @@ is grounded in are in <code class="docutils literal notranslate"><span class="pr
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=0adb0642"></script>
+</div><script src="_static/documentation_options.js?v=a39b7224"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

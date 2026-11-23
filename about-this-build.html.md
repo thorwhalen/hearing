@@ -2,18 +2,18 @@
 
 # About this build
 
-This documentation was built on **2026-11-22 12:15 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/6636725e5dc4630c40f5e2a571f0504652bbe3cc"><code>6636725</code></a> on branch <code>main</code>, for **hearing 0.0.16** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-11-23 07:46 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/05904fbda47c4e4d84e4a0e7671f512917910798"><code>05904fb</code></a> on branch <code>main</code>, for **hearing 0.0.17** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.0.16) is behind the latest release on PyPI (0.0.17): `pip install hearing` gives newer code than these docs describe.
+- The documented version (0.0.17) is behind the latest release on PyPI (0.0.18): `pip install hearing` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                           |
 |---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/6636725e5dc4630c40f5e2a571f0504652bbe3cc"><code>6636725e5dc4630c40f5e2a571f0504652bbe3cc</code></a> |
+| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/05904fbda47c4e4d84e4a0e7671f512917910798"><code>05904fbda47c4e4d84e4a0e7671f512917910798</code></a> |
 | Branch              | <code>main</code>                                                                                                                                         |
 | Tags at this commit | none                                                                                                                                                      |
 | Working tree        | clean                                                                                                                                                     |
@@ -24,15 +24,15 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>thorwhalen/hearing</code>                                                            |
-| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/45021232315">45021232315</a>   |
+| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/45133400805">45133400805</a>   |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>6636725e5dc4630c40f5e2a571f0504652bbe3cc</code> (in the history of the built commit) |
+| Event commit | <code>05904fbda47c4e4d84e4a0e7671f512917910798</code> (in the history of the built commit) |
 
 ## Tools
 
 |          |         |
 |----------|---------|
-| epythet  | 0.2.23  |
+| epythet  | 0.2.24  |
 | Sphinx   | 9.1.1   |
 | docutils | 0.22.4  |
 | Python   | 3.12.16 |
@@ -51,14 +51,14 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/hearing/0.0.17/">0.0.17</a>, newer than the documented version (0.0.16).
+Latest release: <a href="https://pypi.org/project/hearing/0.0.18/">0.0.18</a>, newer than the documented version (0.0.17).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/thorwhalen/hearing && cd hearing
-git checkout 6636725e5dc4630c40f5e2a571f0504652bbe3cc
-pip install "epythet==0.2.23"
+git checkout 05904fbda47c4e4d84e4a0e7671f512917910798
+pip install "epythet==0.2.24"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
 
