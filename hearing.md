@@ -1,4 +1,4 @@
-> built 2026-11-23 07:46 UTC from 05904fb (main) · hearing 0.0.17. Details: build_info.json
+> built 2026-11-23 21:40 UTC from a916752 (main) · hearing 0.0.18. Details: build_info.json
 
 # index.html.md
 
@@ -1974,18 +1974,16 @@ rate of the incoming blocks (used only for the ms arithmetic).
 
 # About this build
 
-This documentation was built on **2026-11-23 07:46 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/05904fbda47c4e4d84e4a0e7671f512917910798"><code>05904fb</code></a> on branch <code>main</code>, for **hearing 0.0.17** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-11-23 21:40 UTC** from commit <a href="https://github.com/thorwhalen/hearing/commit/a91675234851b2c63be3ca8cdec360f7279ea06b"><code>a916752</code></a> on branch <code>main</code>, for **hearing 0.0.18** (from <code>pyproject.toml</code>).
 
-#### WARNING
-The documentation and the package may be misaligned:
-
-- The documented version (0.0.17) is behind the latest release on PyPI (0.0.18): `pip install hearing` gives newer code than these docs describe.
+#### NOTE
+Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
 
 ## Source
 
 |                     |                                                                                                                                                           |
 |---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/05904fbda47c4e4d84e4a0e7671f512917910798"><code>05904fbda47c4e4d84e4a0e7671f512917910798</code></a> |
+| Commit              | <a href="https://github.com/thorwhalen/hearing/commit/a91675234851b2c63be3ca8cdec360f7279ea06b"><code>a91675234851b2c63be3ca8cdec360f7279ea06b</code></a> |
 | Branch              | <code>main</code>                                                                                                                                         |
 | Tags at this commit | none                                                                                                                                                      |
 | Working tree        | clean                                                                                                                                                     |
@@ -1996,15 +1994,15 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>thorwhalen/hearing</code>                                                            |
-| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/45133400805">45133400805</a>   |
+| Run          | <a href="https://github.com/thorwhalen/hearing/actions/runs/45271728624">45271728624</a>   |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>05904fbda47c4e4d84e4a0e7671f512917910798</code> (in the history of the built commit) |
+| Event commit | <code>a91675234851b2c63be3ca8cdec360f7279ea06b</code> (in the history of the built commit) |
 
 ## Tools
 
 |          |         |
 |----------|---------|
-| epythet  | 0.2.24  |
+| epythet  | 0.2.25  |
 | Sphinx   | 9.1.1   |
 | docutils | 0.22.4  |
 | Python   | 3.12.16 |
@@ -2023,14 +2021,14 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/hearing/0.0.18/">0.0.18</a>, newer than the documented version (0.0.17).
+Latest release: <a href="https://pypi.org/project/hearing/0.0.18/">0.0.18</a>, the same as the documented version.
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/thorwhalen/hearing && cd hearing
-git checkout 05904fbda47c4e4d84e4a0e7671f512917910798
-pip install "epythet==0.2.24"
+git checkout a91675234851b2c63be3ca8cdec360f7279ea06b
+pip install "epythet==0.2.25"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
 
@@ -2053,7 +2051,7 @@ Skills are folders holding a `SKILL.md` (the [Agent Skills](https://agentskills.
 
 ### `hearing`
 
-The project-manager / orchestrator ENTRY POINT for the “hearing” project (thorwhalen/hearing — the pluggable macOS meeting-transcription + context-connected AI-agent library). Owns the vision, the milestone roadmap (batch first, live additive), the GitHub-as-memory workflow, and project status, and it ROUTES every task to the right hearing-\* sub-skill or global skill. Triggers on PM / orchestration / routing questions: “which skill owns this”, “which part do I work on”, “route this task”, “how does the hearing project fit together”, “what should I build next / where do I start”, the roadmap / milestones / batch-vs-live ordering, “project status / where things stand”, scaffold the package / project structure, set up the repo’s issues / discussions / ROADMAP, and any top-level “work on the hearing project” framing. For DEEP design contracts — the four swappable layers wiring, the shared segment data model, Protocol seams, batch/live unification — route to [[hearing-architecture]] instead. Routes to the hearing-\* sub-skills (hearing-architecture, hearing-audio-capture, hearing-stt, hearing-diarization, hearing-agents, hearing-live-pipeline, hearing-frontend) and to the relevant global skills rather than duplicating them.
+The project-manager / orchestrator ENTRY POINT for the “hearing” project (thorwhalen/hearing, the pluggable macOS meeting-transcription + context-connected AI-agent library). Owns the vision, the milestone roadmap (batch first, live additive), the GitHub-as-memory workflow and project status, and ROUTES every task to the right hearing-\* sub-skill or global skill. Triggers on PM / orchestration / routing questions (“which skill owns this”, “which part do I work on”, “route this task”, “how does the hearing project fit together”, “what should I build next”, “where do I start”), the roadmap and batch-vs-live ordering, project status, scaffolding the package, the repo’s issues / discussions / ROADMAP, and any top-level “work on the hearing project” framing. Deep design contracts (layer wiring, the shared segment model, Protocol seams) go to [[hearing-architecture]]; it routes to hearing-architecture, -audio-capture, -stt, -diarization, -agents, -live-pipeline and -frontend rather than duplicating them.
 
 Source: [`.claude/skills/hearing`](https://github.com/thorwhalen/hearing/tree/HEAD/.claude/skills/hearing).
 
@@ -2083,7 +2081,7 @@ Source: [`.claude/skills/hearing-diarization`](https://github.com/thorwhalen/hea
 
 ### `hearing-frontend`
 
-Use when building or designing the TypeScript/React frontend for the “hearing” meeting-transcription project — the transcript viewer, the live AI-copilot overlay, the agent-feedback panel (notes, suggested questions, surfaced docs, fact-checks), or the meeting/project-context UI. Covers schema-driven UI with zodal (defineCollection, Zod v4, content-metadata bifurcation routing transcript metadata to a DB and audio/recording content to object storage), command-dispatch with acture (one command → palette + hotkeys + AI tool + MCP + tests), how the Python backend (argh CLI + HTTP layer) feeds the UI, and how live finalized utterances stream to the client. Triggers on transcript view, copilot overlay, agent panel, feedback panel, suggested questions, surfaced docs, fact-check, meeting collection, segment schema, speaker/me-vs-them labels, zodal collection, acture command, bifurcation, lk.transcription, SSE/WebSocket transcript stream, novice-friendly frontend, declarative/schema UI for hearing. Explain JS/TS decisions for a frontend novice.
+Use when building or designing the TypeScript/React frontend for the “hearing” meeting-transcription project: the transcript viewer, the live AI-copilot overlay, the agent-feedback panel (notes, suggested questions, surfaced docs, fact-checks), or the meeting/project-context UI. Covers schema-driven UI with zodal (defineCollection, Zod v4, content-metadata bifurcation: transcript metadata to a DB, audio to object storage), command-dispatch with acture (one command → palette + hotkeys + AI tool + MCP + tests), how the Python backend (argh CLI + HTTP) feeds the UI, and how finalized utterances stream to the client. Triggers on transcript view, copilot overlay, agent panel, feedback panel, suggested questions, surfaced docs, fact-check, meeting collection, segment schema, me-vs-them labels, zodal collection, acture command, bifurcation, lk.transcription, SSE/WebSocket transcript stream, declarative/schema UI for hearing. Explain JS/TS decisions for a frontend novice.
 
 Source: [`.claude/skills/hearing-frontend`](https://github.com/thorwhalen/hearing/tree/HEAD/.claude/skills/hearing-frontend).
 
@@ -2095,7 +2093,7 @@ Source: [`.claude/skills/hearing-live-pipeline`](https://github.com/thorwhalen/h
 
 ### `hearing-stt`
 
-Use when choosing, wiring, swapping, or benchmarking a speech-to-text (STT/ASR) engine behind the hearing project’s transcription facade — the pluggable layer that turns audio into segments so the rest of the architecture never names a specific engine. Triggers on transcribe(audio)->segments, ASR engine selection, Whisper / whisper.cpp / faster-whisper / WhisperX / distil-whisper, NVIDIA Parakeet-TDT / Canary, Moonshine, Apple-Silicon MLX paths (lightning-whisper-mlx, mlx-audio, Lightning-SimulWhisper), cloud STT APIs (OpenAI gpt-4o-transcribe / -mini / gpt-realtime-whisper / gpt-4o-transcribe-diarize, Deepgram Nova-3, AssemblyAI Universal, Google Chirp, Azure Speech, Speechmatics, Rev), per-minute STT pricing, local-vs-cloud / on-device decision, WER tolerance, concurrency, self-hosting break-even (~100k min/month), CTranslate2 / int8 quantization, model-name versioning and the ~June-2026 OpenAI transcribe retirements, and “which engine should I use for meeting transcription”. Diarization (who-spoke-when) is a SEPARATE concern — see hearing-diarization.
+Use when choosing, wiring, swapping, or benchmarking a speech-to-text (STT/ASR) engine behind the hearing project’s transcription facade, the pluggable layer that turns audio into segments so nothing else names an engine. Triggers on transcribe(audio)->segments, ASR engine selection, Whisper / whisper.cpp / faster-whisper / WhisperX / distil-whisper, NVIDIA Parakeet-TDT / Canary, Moonshine, Apple-Silicon MLX paths (lightning-whisper-mlx, mlx-audio, Lightning-SimulWhisper), cloud STT APIs (OpenAI gpt-4o-transcribe / -mini / gpt-realtime-whisper / -diarize, Deepgram Nova-3, AssemblyAI, Google Chirp, Azure Speech, Speechmatics, Rev), per-minute STT pricing, local vs cloud, WER tolerance, concurrency, self-hosting break-even (~100k min/month), CTranslate2 / int8, model-name versioning and the ~June-2026 OpenAI transcribe retirements, and “which engine for meeting transcription”. Diarization (who-spoke-when) is separate: see hearing-diarization.
 
 Source: [`.claude/skills/hearing-stt`](https://github.com/thorwhalen/hearing/tree/HEAD/.claude/skills/hearing-stt).
 
